@@ -1016,6 +1016,7 @@ import {
     shouldRewriteModuleSpecifier,
     Signature,
     SignatureDeclaration,
+    SignatureDeclarationBase,
     SignatureFlags,
     SignatureKind,
     singleElementArray,
@@ -12554,6 +12555,17 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
 
     function getTypeOfVariableOrParameterOrProperty(symbol: Symbol): Type {
         const links = getSymbolLinks(symbol);
+        const declaration = symbol.valueDeclaration;
+        if (declaration && checkedThrows && catchVariableThrownTypeMap && isCatchClauseVariableDeclarationOrBindingElement(declaration)) {
+            const rootDecl = declaration.kind === SyntaxKind.VariableDeclaration
+                ? declaration as VariableDeclaration
+                : findAncestor(declaration, (n): n is VariableDeclaration => n.kind === SyntaxKind.VariableDeclaration);
+            if (rootDecl && catchVariableThrownTypeMap.has(rootDecl)) {
+                const type = getTypeOfVariableOrParameterOrPropertyWorker(symbol);
+                links.type = type;
+                return type;
+            }
+        }
         if (!links.type) {
             const type = getTypeOfVariableOrParameterOrPropertyWorker(symbol);
             // For a contextually typed parameter it is possible that a type has already
@@ -37892,28 +37904,10 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         }
 
         if (checkedThrows) {
-            const decl = signature.declaration;
-            if (decl && isFunctionLike(decl)) {
-                const funcDecl = decl as FunctionLikeDeclaration;
-                if (getFunctionBodyForThrownType(funcDecl)) {
-                    const isAsync = (getFunctionFlags(funcDecl) & FunctionFlags.Async) !== 0;
-                    if (!isAsync) {
-                        const thrown = thrownTypeOfFunctionLike(funcDecl);
-                        if (thrown !== neverType && !isHandledByTry(node) && !isHandledByPropagation(node)) {
-                            error(node, Diagnostics.Unhandled_thrown_type_Colon_0, typeToString(thrown));
-                        }
-                    }
-                } else {
-                    const symbol = getSymbolOfDeclaration(decl);
-                    const key = getFullyQualifiedName(symbol, node);
-                    const entry = throwMap[key];
-                    if (entry?.throws) {
-                        const thrown = getTypeFromThrowMapNames(entry.throws);
-                        if (thrown !== neverType && !isHandledByTry(node) && !isHandledByPropagation(node)) {
-                            error(node, Diagnostics.Unhandled_thrown_type_Colon_0, typeToString(thrown));
-                        }
-                    }
-                }
+            const effectiveThrows = getEffectiveThrows(signature, node);
+            const returnType = getReturnTypeOfSignature(signature);
+            if (effectiveThrows !== neverType && !isHandledByTry(node) && !isHandledByPropagation(node) && !isThenableType(returnType)) {
+                error(node, Diagnostics.Unhandled_thrown_type_Colon_0, typeToString(effectiveThrows));
             }
             const rejectEffect = getRejectEffectOfExpression(node);
             if (rejectEffect !== neverType && node.parent?.kind === SyntaxKind.ExpressionStatement) {
@@ -42256,6 +42250,25 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                     checkAsyncFunctionReturnType(node as FunctionLikeDeclaration, returnTypeNode, returnTypeErrorLocation);
                 }
             }
+            if (checkedThrows && node.kind !== SyntaxKind.Constructor && node.kind !== SyntaxKind.ConstructSignature && node.kind !== SyntaxKind.IndexSignature && node.kind !== SyntaxKind.JSDocFunctionType) {
+                const declWithEffects = node as SignatureDeclarationBase;
+                if (declWithEffects.throwsType || declWithEffects.rejectsType) {
+                    const signature = getSignatureFromDeclaration(node);
+                    if (signature) {
+                        const returnType = getReturnTypeOfSignature(signature);
+                        if (declWithEffects.rejectsType) {
+                            if (!isThenableType(returnType)) {
+                                error(declWithEffects.rejectsType, Diagnostics.rejects_clause_requires_a_Promise_like_return_type);
+                            }
+                        }
+                        if (declWithEffects.throwsType) {
+                            if (isThenableType(returnType)) {
+                                error(declWithEffects.throwsType, Diagnostics.throws_clause_is_not_allowed_on_a_Promise_like_return_type);
+                            }
+                        }
+                    }
+                }
+            }
             if (node.kind !== SyntaxKind.IndexSignature && node.kind !== SyntaxKind.JSDocFunctionType) {
                 registerForUnusedIdentifiersCheck(node);
             }
@@ -44428,6 +44441,36 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         checkSourceElement(body);
         checkAllCodePathsInNonVoidFunctionReturnOrThrow(node, getReturnTypeFromAnnotation(node));
 
+        if (checkedThrows && nodeIsPresent(body) && node.kind !== SyntaxKind.MethodSignature) {
+            const declWithEffects = node as SignatureDeclarationBase;
+            if (declWithEffects.throwsType || declWithEffects.rejectsType) {
+                const signature = getSignatureFromDeclaration(node);
+                if (signature) {
+                    if (declWithEffects.throwsType) {
+                        const declared = getDeclaredThrowsType(signature);
+                        if (declared !== undefined) {
+                            const inferred = thrownTypeOfFunctionLike(node as FunctionLikeDeclaration);
+                            if (!isTypeAssignableTo(inferred, declared)) {
+                                error(declWithEffects.throwsType, Diagnostics.Declared_throws_type_0_does_not_include_inferred_thrown_type_1, typeToString(declared), typeToString(inferred));
+                            }
+                        }
+                    }
+                    if (declWithEffects.rejectsType) {
+                        const declared = getDeclaredRejectsType(signature);
+                        if (declared !== undefined) {
+                            const funcDecl = node as FunctionLikeDeclaration;
+                            const inferred = (getFunctionFlags(funcDecl) & FunctionFlags.Async) !== 0
+                                ? getRejectEffectOfAsyncFunction(funcDecl)
+                                : getRejectEffectOfNonAsyncReturningPromise(funcDecl);
+                            if (!isTypeAssignableTo(inferred, declared)) {
+                                error(declWithEffects.rejectsType, Diagnostics.Declared_rejects_type_0_does_not_include_inferred_rejection_type_1, typeToString(declared), typeToString(inferred));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         addLazyDiagnostic(checkFunctionOrMethodDeclarationDiagnostics);
 
         // A js function declaration can have a @type tag instead of a return type node, but that type must have a call signature
@@ -44453,6 +44496,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                     getReturnTypeOfSignature(getSignatureFromDeclaration(node));
                 }
             }
+
         }
     }
 
@@ -46787,9 +46831,10 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 if (expr.kind !== SyntaxKind.CallExpression && expr.kind !== SyntaxKind.NewExpression) {
                     return neverType;
                 }
-                const calleeDecl = getCalleeDeclarationFromCall(expr as CallExpression | NewExpression);
-                if (!calleeDecl) return neverType;
-                return thrownTypeOfFunctionLike(calleeDecl);
+                const call = expr as CallExpression | NewExpression;
+                const signature = getResolvedSignature(call, /*candidatesOutArray*/ undefined);
+                if (!signature || signature === resolvingSignature) return neverType;
+                return getEffectiveThrows(signature, call);
             }
             default:
                 return neverType;
@@ -46846,6 +46891,74 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
             if (t && t !== errorType) types.push(t);
         }
         return types.length === 0 ? neverType : types.length === 1 ? types[0] : getUnionType(types);
+    }
+
+    function getDeclaredThrowsType(signature: Signature): Type | undefined {
+        if (signature.target && signature.mapper) {
+            const base = getDeclaredThrowsType(signature.target);
+            return base ? instantiateType(base, signature.mapper) : undefined;
+        }
+        if (signature.declaredThrowsType !== undefined) return signature.declaredThrowsType;
+        const decl = signature.declaration;
+        const declBase = decl as SignatureDeclaration & { throwsType?: TypeNode };
+        if (decl && declBase.throwsType) {
+            const t = getTypeFromTypeNode(declBase.throwsType);
+            signature.declaredThrowsType = t;
+            return t;
+        }
+        return undefined;
+    }
+
+    function getDeclaredRejectsType(signature: Signature): Type | undefined {
+        if (signature.target && signature.mapper) {
+            const base = getDeclaredRejectsType(signature.target);
+            return base ? instantiateType(base, signature.mapper) : undefined;
+        }
+        if (signature.declaredRejectsType !== undefined) return signature.declaredRejectsType;
+        const decl = signature.declaration;
+        const declBase = decl as SignatureDeclaration & { rejectsType?: TypeNode };
+        if (decl && declBase.rejectsType) {
+            const t = getTypeFromTypeNode(declBase.rejectsType);
+            signature.declaredRejectsType = t;
+            return t;
+        }
+        return undefined;
+    }
+
+    function getEffectiveThrows(signature: Signature, callNode: CallExpression | NewExpression): Type {
+        const declared = getDeclaredThrowsType(signature);
+        if (declared !== undefined) return declared;
+        const decl = signature.declaration;
+        if (!decl || !isFunctionLike(decl)) return neverType;
+        const funcDecl = decl as FunctionLikeDeclaration;
+        if (getFunctionBodyForThrownType(funcDecl)) {
+            return thrownTypeOfFunctionLike(funcDecl);
+        }
+        const symbol = getSymbolOfDeclaration(decl);
+        const key = getFullyQualifiedName(symbol, callNode);
+        const entry = throwMap[key];
+        if (entry?.throws) return getTypeFromThrowMapNames(entry.throws);
+        return neverType;
+    }
+
+    function getEffectiveRejects(signature: Signature, callNode?: CallExpression | NewExpression): Type {
+        const declared = getDeclaredRejectsType(signature);
+        if (declared !== undefined) return declared;
+        const decl = signature.declaration;
+        if (!decl || !isFunctionLike(decl)) return neverType;
+        const funcDecl = decl as FunctionLikeDeclaration;
+        const body = getFunctionBodyForThrownType(funcDecl);
+        if (!body) {
+            const symbol = getSymbolOfDeclaration(decl);
+            const key = getFullyQualifiedName(symbol, callNode);
+            const entry = throwMap[key];
+            if (entry?.rejects) return getTypeFromThrowMapNames(entry.rejects);
+            return neverType;
+        }
+        if ((getFunctionFlags(funcDecl) & FunctionFlags.Async) !== 0) {
+            return getRejectEffectOfAsyncFunction(funcDecl);
+        }
+        return getRejectEffectOfNonAsyncReturningPromise(funcDecl);
     }
 
     function getRejectEffectOfAsyncFunction(decl: FunctionLikeDeclaration): Type {
@@ -46929,26 +47042,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
             rejectEffectCache.set(expr, neverType);
             return neverType;
         }
-        const funcDecl = decl as FunctionLikeDeclaration;
-        const body = getFunctionBodyForThrownType(funcDecl);
-        if (!body) {
-            const symbol = getSymbolOfDeclaration(decl);
-            const key = getFullyQualifiedName(symbol, expr);
-            const entry = throwMap[key];
-            if (entry?.rejects) {
-                const effect = getTypeFromThrowMapNames(entry.rejects);
-                rejectEffectCache.set(expr, effect);
-                return effect;
-            }
-            rejectEffectCache.set(expr, neverType);
-            return neverType;
-        }
-        let effect: Type;
-        if ((getFunctionFlags(funcDecl) & FunctionFlags.Async) !== 0) {
-            effect = getRejectEffectOfAsyncFunction(funcDecl);
-        } else {
-            effect = getRejectEffectOfNonAsyncReturningPromise(funcDecl);
-        }
+        const effect = getEffectiveRejects(signature, call);
         rejectEffectCache.set(expr, effect);
         return effect;
     }

@@ -1,0 +1,299 @@
+//// [tests/cases/compiler/checkedThrowsDeclared.ts] ////
+
+=== checkedThrowsDeclared.ts ===
+function withThrows(): number throws Error {
+>withThrows : () => number
+>           : ^^^^^^      
+
+    return 1;
+>1 : 1
+>  : ^
+}
+
+declare function declaredThrows(): number throws RangeError;
+>declaredThrows : () => number
+>               : ^^^^^^      
+
+withThrows();
+>withThrows() : number
+>             : ^^^^^^
+>withThrows : () => number
+>           : ^^^^^^      
+
+declare function f(): number throws RangeError;
+>f : () => number
+>  : ^^^^^^      
+
+f();
+>f() : number
+>    : ^^^^^^
+>f : () => number
+>  : ^^^^^^      
+
+try {
+    f();
+>f() : number
+>    : ^^^^^^
+>f : () => number
+>  : ^^^^^^      
+
+} catch (e) {
+>e : RangeError
+>  : ^^^^^^^^^^
+
+    e;
+>e : RangeError
+>  : ^^^^^^^^^^
+}
+
+function implThrowsStricter(): number throws Error {
+>implThrowsStricter : () => number
+>                   : ^^^^^^      
+
+    throw new TypeError("x");
+>new TypeError("x") : TypeError
+>                   : ^^^^^^^^^
+>TypeError : TypeErrorConstructor
+>          : ^^^^^^^^^^^^^^^^^^^^
+>"x" : "x"
+>    : ^^^
+}
+
+function implThrowsNarrower(): number throws RangeError {
+>implThrowsNarrower : () => number
+>                   : ^^^^^^      
+
+    throw new TypeError("x");
+>new TypeError("x") : TypeError
+>                   : ^^^^^^^^^
+>TypeError : TypeErrorConstructor
+>          : ^^^^^^^^^^^^^^^^^^^^
+>"x" : "x"
+>    : ^^^
+}
+
+declare function g(): Promise<number> rejects TypeError;
+>g : () => Promise<number>
+>  : ^^^^^^               
+
+async function unhandledReject() {
+>unhandledReject : () => Promise<void>
+>                : ^^^^^^^^^^^^^^^^^^^
+
+    await g();
+>await g() : number
+>          : ^^^^^^
+>g() : Promise<number>
+>    : ^^^^^^^^^^^^^^^
+>g : () => Promise<number>
+>  : ^^^^^^               
+}
+
+async function tryHandlesReject() {
+>tryHandlesReject : () => Promise<void>
+>                 : ^^^^^^^^^^^^^^^^^^^
+
+    try {
+        await g();
+>await g() : number
+>          : ^^^^^^
+>g() : Promise<number>
+>    : ^^^^^^^^^^^^^^^
+>g : () => Promise<number>
+>  : ^^^^^^               
+
+    } catch (e) {
+>e : TypeError
+>  : ^^^^^^^^^
+
+        e;
+>e : TypeError
+>  : ^^^^^^^^^
+    }
+}
+
+function fireAndForgetDeclared() {
+>fireAndForgetDeclared : () => void
+>                      : ^^^^^^^^^^
+
+    g();
+>g() : Promise<number>
+>    : ^^^^^^^^^^^^^^^
+>g : () => Promise<number>
+>  : ^^^^^^               
+
+    void g();
+>void g() : undefined
+>         : ^^^^^^^^^
+>g() : Promise<number>
+>    : ^^^^^^^^^^^^^^^
+>g : () => Promise<number>
+>  : ^^^^^^               
+
+    g().catch(() => {});
+>g().catch(() => {}) : Promise<number | void>
+>                    : ^^^^^^^^^^^^^^^^^^^^^^
+>g().catch : <TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | null | undefined) => Promise<number | TResult>
+>          : ^       ^^^^^^^^^^          ^^^^^      ^^   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>g() : Promise<number>
+>    : ^^^^^^^^^^^^^^^
+>g : () => Promise<number>
+>  : ^^^^^^               
+>catch : <TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | null | undefined) => Promise<number | TResult>
+>      : ^       ^^^^^^^^^^          ^^^^^      ^^   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>() => {} : () => void
+>         : ^^^^^^^^^^
+}
+
+declare function badRejects(): number rejects Error;
+>badRejects : () => number
+>           : ^^^^^^      
+
+declare function badThrows(): Promise<number> throws Error;
+>badThrows : () => Promise<number>
+>          : ^^^^^^               
+
+function declaredWiderThanImpl(): number throws Error {
+>declaredWiderThanImpl : () => number
+>                      : ^^^^^^      
+
+    throw new RangeError("x");
+>new RangeError("x") : RangeError
+>                    : ^^^^^^^^^^
+>RangeError : RangeErrorConstructor
+>           : ^^^^^^^^^^^^^^^^^^^^^
+>"x" : "x"
+>    : ^^^
+}
+
+declare function overload(x: string): number throws Error;
+>overload : { (x: string): number; (x: number): Promise<number>; }
+>         : ^^^ ^^      ^^^      ^^^ ^^      ^^^               ^^^
+>x : string
+>  : ^^^^^^
+
+declare function overload(x: number): Promise<number> rejects TypeError;
+>overload : { (x: string): number; (x: number): Promise<number>; }
+>         : ^^^ ^^      ^^^      ^^^ ^^      ^^^               ^^^
+>x : number
+>  : ^^^^^^
+
+try {
+    overload("a");
+>overload("a") : number
+>              : ^^^^^^
+>overload : { (x: string): number; (x: number): Promise<number>; }
+>         : ^^^ ^^      ^^^      ^^^ ^^      ^^^               ^^^
+>"a" : "a"
+>    : ^^^
+
+} catch (e) {
+>e : Error
+>  : ^^^^^
+
+    e;
+>e : Error
+>  : ^^^^^
+}
+
+async function unhandledOverload() {
+>unhandledOverload : () => Promise<void>
+>                  : ^^^^^^^^^^^^^^^^^^^
+
+    await overload(1);
+>await overload(1) : number
+>                  : ^^^^^^
+>overload(1) : Promise<number>
+>            : ^^^^^^^^^^^^^^^
+>overload : { (x: string): number; (x: number): Promise<number>; }
+>         : ^^^ ^^      ^^^      ^^^ ^^      ^^^               ^^^
+>1 : 1
+>  : ^
+}
+
+type Fn = (x: string) => number throws Error;
+>Fn : Fn
+>   : ^^
+>x : string
+>  : ^^^^^^
+
+const fn: Fn = (x: string): number throws Error => {
+>fn : Fn
+>   : ^^
+>(x: string): number throws Error => {    throw new Error(x);} : (x: string) => number
+>                                                              : ^ ^^      ^^^^^      
+>x : string
+>  : ^^^^^^
+
+    throw new Error(x);
+>new Error(x) : Error
+>             : ^^^^^
+>Error : ErrorConstructor
+>      : ^^^^^^^^^^^^^^^^
+>x : string
+>  : ^^^^^^
+
+};
+try {
+    fn("");
+>fn("") : number
+>       : ^^^^^^
+>fn : Fn
+>   : ^^
+>"" : ""
+>   : ^^
+
+} catch (e) {
+>e : Error
+>  : ^^^^^
+
+    e;
+>e : Error
+>  : ^^^^^
+}
+
+interface X {
+    m(): number throws Error;
+>m : () => number
+>  : ^^^^^^      
+}
+const o: X = {
+>o : X
+>  : ^
+>{    m(): number throws Error {        throw new Error("");    },} : { m(): number; }
+>                                                                   : ^^^^^^^      ^^^
+
+    m(): number throws Error {
+>m : () => number
+>  : ^^^^^^      
+
+        throw new Error("");
+>new Error("") : Error
+>              : ^^^^^
+>Error : ErrorConstructor
+>      : ^^^^^^^^^^^^^^^^
+>"" : ""
+>   : ^^
+
+    },
+};
+try {
+    o.m();
+>o.m() : number
+>      : ^^^^^^
+>o.m : () => number
+>    : ^^^^^^      
+>o : X
+>  : ^
+>m : () => number
+>  : ^^^^^^      
+
+} catch (e) {
+>e : Error
+>  : ^^^^^
+
+    e;
+>e : Error
+>  : ^^^^^
+}
+

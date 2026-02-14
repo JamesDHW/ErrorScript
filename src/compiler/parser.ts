@@ -583,7 +583,9 @@ const forEachChildTable: ForEachChildTable = {
         return visitNodes(cbNode, cbNodes, node.modifiers) ||
             visitNodes(cbNode, cbNodes, node.typeParameters) ||
             visitNodes(cbNode, cbNodes, node.parameters) ||
-            visitNode(cbNode, node.type);
+            visitNode(cbNode, node.type) ||
+            visitNode(cbNode, node.throwsType) ||
+            visitNode(cbNode, node.rejectsType);
     },
     [SyntaxKind.CallSignature]: forEachChildInCallOrConstructSignature,
     [SyntaxKind.ConstructSignature]: forEachChildInCallOrConstructSignature,
@@ -596,6 +598,8 @@ const forEachChildTable: ForEachChildTable = {
             visitNodes(cbNode, cbNodes, node.typeParameters) ||
             visitNodes(cbNode, cbNodes, node.parameters) ||
             visitNode(cbNode, node.type) ||
+            visitNode(cbNode, node.throwsType) ||
+            visitNode(cbNode, node.rejectsType) ||
             visitNode(cbNode, node.body);
     },
     [SyntaxKind.MethodSignature]: function forEachChildInMethodSignature<T>(node: MethodSignature, cbNode: (node: Node) => T | undefined, cbNodes?: (nodes: NodeArray<Node>) => T | undefined): T | undefined {
@@ -604,7 +608,9 @@ const forEachChildTable: ForEachChildTable = {
             visitNode(cbNode, node.questionToken) ||
             visitNodes(cbNode, cbNodes, node.typeParameters) ||
             visitNodes(cbNode, cbNodes, node.parameters) ||
-            visitNode(cbNode, node.type);
+            visitNode(cbNode, node.type) ||
+            visitNode(cbNode, node.throwsType) ||
+            visitNode(cbNode, node.rejectsType);
     },
     [SyntaxKind.Constructor]: function forEachChildInConstructor<T>(node: ConstructorDeclaration, cbNode: (node: Node) => T | undefined, cbNodes?: (nodes: NodeArray<Node>) => T | undefined): T | undefined {
         return visitNodes(cbNode, cbNodes, node.modifiers) ||
@@ -620,6 +626,8 @@ const forEachChildTable: ForEachChildTable = {
             visitNodes(cbNode, cbNodes, node.typeParameters) ||
             visitNodes(cbNode, cbNodes, node.parameters) ||
             visitNode(cbNode, node.type) ||
+            visitNode(cbNode, node.throwsType) ||
+            visitNode(cbNode, node.rejectsType) ||
             visitNode(cbNode, node.body);
     },
     [SyntaxKind.SetAccessor]: function forEachChildInSetAccessor<T>(node: SetAccessorDeclaration, cbNode: (node: Node) => T | undefined, cbNodes?: (nodes: NodeArray<Node>) => T | undefined): T | undefined {
@@ -637,6 +645,8 @@ const forEachChildTable: ForEachChildTable = {
             visitNodes(cbNode, cbNodes, node.typeParameters) ||
             visitNodes(cbNode, cbNodes, node.parameters) ||
             visitNode(cbNode, node.type) ||
+            visitNode(cbNode, node.throwsType) ||
+            visitNode(cbNode, node.rejectsType) ||
             visitNode(cbNode, node.body);
     },
     [SyntaxKind.FunctionExpression]: function forEachChildInFunctionExpression<T>(node: FunctionExpression, cbNode: (node: Node) => T | undefined, cbNodes?: (nodes: NodeArray<Node>) => T | undefined): T | undefined {
@@ -646,6 +656,8 @@ const forEachChildTable: ForEachChildTable = {
             visitNodes(cbNode, cbNodes, node.typeParameters) ||
             visitNodes(cbNode, cbNodes, node.parameters) ||
             visitNode(cbNode, node.type) ||
+            visitNode(cbNode, node.throwsType) ||
+            visitNode(cbNode, node.rejectsType) ||
             visitNode(cbNode, node.body);
     },
     [SyntaxKind.ArrowFunction]: function forEachChildInArrowFunction<T>(node: ArrowFunction, cbNode: (node: Node) => T | undefined, cbNodes?: (nodes: NodeArray<Node>) => T | undefined): T | undefined {
@@ -653,6 +665,8 @@ const forEachChildTable: ForEachChildTable = {
             visitNodes(cbNode, cbNodes, node.typeParameters) ||
             visitNodes(cbNode, cbNodes, node.parameters) ||
             visitNode(cbNode, node.type) ||
+            visitNode(cbNode, node.throwsType) ||
+            visitNode(cbNode, node.rejectsType) ||
             visitNode(cbNode, node.equalsGreaterThanToken) ||
             visitNode(cbNode, node.body);
     },
@@ -1140,7 +1154,9 @@ const forEachChildTable: ForEachChildTable = {
 function forEachChildInCallOrConstructSignature<T>(node: CallSignatureDeclaration | ConstructSignatureDeclaration, cbNode: (node: Node) => T | undefined, cbNodes?: (nodes: NodeArray<Node>) => T | undefined): T | undefined {
     return visitNodes(cbNode, cbNodes, node.typeParameters) ||
         visitNodes(cbNode, cbNodes, node.parameters) ||
-        visitNode(cbNode, node.type);
+        visitNode(cbNode, node.type) ||
+        visitNode(cbNode, (node as CallSignatureDeclaration).throwsType) ||
+        visitNode(cbNode, (node as CallSignatureDeclaration).rejectsType);
 }
 
 function forEachChildInUnionOrIntersectionType<T>(node: UnionTypeNode | IntersectionTypeNode, cbNode: (node: Node) => T | undefined, cbNodes?: (nodes: NodeArray<Node>) => T | undefined): T | undefined {
@@ -4115,6 +4131,30 @@ namespace Parser {
         return false;
     }
 
+    function parseEffectClause(): { throwsType?: TypeNode; rejectsType?: TypeNode } {
+        let throwsType: TypeNode | undefined;
+        let rejectsType: TypeNode | undefined;
+        if (token() === SyntaxKind.ThrowsKeyword) {
+            nextToken();
+            throwsType = parseType();
+            if (token() === SyntaxKind.RejectsKeyword) {
+                parseErrorAtCurrentToken(Diagnostics.A_signature_cannot_have_both_throws_and_rejects_clauses);
+                nextToken();
+                rejectsType = parseType();
+            }
+        }
+        else if (token() === SyntaxKind.RejectsKeyword) {
+            nextToken();
+            rejectsType = parseType();
+            if (token() === SyntaxKind.ThrowsKeyword) {
+                parseErrorAtCurrentToken(Diagnostics.A_signature_cannot_have_both_throws_and_rejects_clauses);
+                nextToken();
+                throwsType = parseType();
+            }
+        }
+        return { throwsType, rejectsType };
+    }
+
     function parseParametersWorker(flags: SignatureFlags, allowAmbiguity: true): NodeArray<ParameterDeclaration>;
     function parseParametersWorker(flags: SignatureFlags, allowAmbiguity: false): NodeArray<ParameterDeclaration> | undefined;
     function parseParametersWorker(flags: SignatureFlags, allowAmbiguity: boolean): NodeArray<ParameterDeclaration> | undefined {
@@ -4191,9 +4231,10 @@ namespace Parser {
         const typeParameters = parseTypeParameters();
         const parameters = parseParameters(SignatureFlags.Type);
         const type = parseReturnType(SyntaxKind.ColonToken, /*isType*/ true);
+        const effect = kind === SyntaxKind.CallSignature ? parseEffectClause() : { throwsType: undefined as TypeNode | undefined, rejectsType: undefined as TypeNode | undefined };
         parseTypeMemberSemicolon();
         const node = kind === SyntaxKind.CallSignature
-            ? factory.createCallSignature(typeParameters, parameters, type)
+            ? factory.createCallSignature(typeParameters, parameters, type, effect.throwsType, effect.rejectsType)
             : factory.createConstructSignature(typeParameters, parameters, type);
         return withJSDoc(finishNode(node, pos), hasJSDoc);
     }
@@ -4275,7 +4316,8 @@ namespace Parser {
             const typeParameters = parseTypeParameters();
             const parameters = parseParameters(SignatureFlags.Type);
             const type = parseReturnType(SyntaxKind.ColonToken, /*isType*/ true);
-            node = factory.createMethodSignature(modifiers, name, questionToken, typeParameters, parameters, type);
+            const effect = parseEffectClause();
+            node = factory.createMethodSignature(modifiers, name, questionToken, typeParameters, parameters, type, effect.throwsType, effect.rejectsType);
         }
         else {
             const type = parseTypeAnnotation();
@@ -4514,9 +4556,10 @@ namespace Parser {
         const typeParameters = parseTypeParameters();
         const parameters = parseParameters(SignatureFlags.Type);
         const type = parseReturnType(SyntaxKind.EqualsGreaterThanToken, /*isType*/ false);
+        const effect = !isConstructorType ? parseEffectClause() : { throwsType: undefined as TypeNode | undefined, rejectsType: undefined as TypeNode | undefined };
         const node = isConstructorType
             ? factory.createConstructorTypeNode(modifiers, typeParameters, parameters, type)
-            : factory.createFunctionTypeNode(typeParameters, parameters, type);
+            : factory.createFunctionTypeNode(typeParameters, parameters, type, effect.throwsType, effect.rejectsType);
         return withJSDoc(finishNode(node, pos), hasJSDoc);
     }
 
@@ -5469,6 +5512,7 @@ namespace Parser {
         if (type && !allowAmbiguity && typeHasArrowFunctionBlockingParseError(type)) {
             return undefined;
         }
+        const effect = type ? parseEffectClause() : { throwsType: undefined as TypeNode | undefined, rejectsType: undefined as TypeNode | undefined };
 
         // Parsing a signature isn't enough.
         // Parenthesized arrow signatures often look like other valid expressions.
@@ -5526,7 +5570,7 @@ namespace Parser {
             }
         }
 
-        const node = factory.createArrowFunction(modifiers, typeParameters, parameters, type, equalsGreaterThanToken, body);
+        const node = factory.createArrowFunction(modifiers, typeParameters, parameters, type, equalsGreaterThanToken, body, effect.throwsType, effect.rejectsType);
         return withJSDoc(finishNode(node, pos), hasJSDoc);
     }
 
@@ -6786,11 +6830,12 @@ namespace Parser {
         const typeParameters = parseTypeParameters();
         const parameters = parseParameters(isGenerator | isAsync);
         const type = parseReturnType(SyntaxKind.ColonToken, /*isType*/ false);
+        const effect = type ? parseEffectClause() : { throwsType: undefined as TypeNode | undefined, rejectsType: undefined as TypeNode | undefined };
         const body = parseFunctionBlock(isGenerator | isAsync);
 
         setDecoratorContext(savedDecoratorContext);
 
-        const node = factory.createFunctionExpression(modifiers, asteriskToken, name, typeParameters, parameters, type, body);
+        const node = factory.createFunctionExpression(modifiers, asteriskToken, name, typeParameters, parameters, type, body, effect.throwsType, effect.rejectsType);
         return withJSDoc(finishNode(node, pos), hasJSDoc);
     }
 
@@ -7744,9 +7789,10 @@ namespace Parser {
         if (modifierFlags & ModifierFlags.Export) setAwaitContext(/*value*/ true);
         const parameters = parseParameters(isGenerator | isAsync);
         const type = parseReturnType(SyntaxKind.ColonToken, /*isType*/ false);
+        const effect = type ? parseEffectClause() : { throwsType: undefined as TypeNode | undefined, rejectsType: undefined as TypeNode | undefined };
         const body = parseFunctionBlockOrSemicolon(isGenerator | isAsync, Diagnostics.or_expected);
         setAwaitContext(savedAwaitContext);
-        const node = factory.createFunctionDeclaration(modifiers, asteriskToken, name, typeParameters, parameters, type, body);
+        const node = factory.createFunctionDeclaration(modifiers, asteriskToken, name, typeParameters, parameters, type, body, effect.throwsType, effect.rejectsType);
         return withJSDoc(finishNode(node, pos), hasJSDoc);
     }
 
@@ -7794,6 +7840,7 @@ namespace Parser {
         const typeParameters = parseTypeParameters();
         const parameters = parseParameters(isGenerator | isAsync);
         const type = parseReturnType(SyntaxKind.ColonToken, /*isType*/ false);
+        const effect = type ? parseEffectClause() : { throwsType: undefined as TypeNode | undefined, rejectsType: undefined as TypeNode | undefined };
         const body = parseFunctionBlockOrSemicolon(isGenerator | isAsync, diagnosticMessage);
         const node = factory.createMethodDeclaration(
             modifiers,
@@ -7804,6 +7851,8 @@ namespace Parser {
             parameters,
             type,
             body,
+            effect.throwsType,
+            effect.rejectsType,
         );
 
         // An exclamation token on a method is invalid syntax and will be handled by the grammar checker
@@ -7853,9 +7902,10 @@ namespace Parser {
         const typeParameters = parseTypeParameters();
         const parameters = parseParameters(SignatureFlags.None);
         const type = parseReturnType(SyntaxKind.ColonToken, /*isType*/ false);
+        const effect = kind === SyntaxKind.GetAccessor && type ? parseEffectClause() : { throwsType: undefined as TypeNode | undefined, rejectsType: undefined as TypeNode | undefined };
         const body = parseFunctionBlockOrSemicolon(flags);
         const node = kind === SyntaxKind.GetAccessor
-            ? factory.createGetAccessorDeclaration(modifiers, name, parameters, type, body)
+            ? factory.createGetAccessorDeclaration(modifiers, name, parameters, type, body, effect.throwsType, effect.rejectsType)
             : factory.createSetAccessorDeclaration(modifiers, name, parameters, body);
         // Keep track of `typeParameters` (for both) and `type` (for setters) if they were parsed those indicate grammar errors
         (node as Mutable<AccessorDeclaration>).typeParameters = typeParameters;

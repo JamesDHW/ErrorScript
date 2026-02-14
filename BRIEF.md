@@ -2,12 +2,12 @@
 
 ## 1. Purpose
 
-This feature introduces checked error semantics to TypeScript based entirely on inferred thrown types, without adding new language syntax (e.g. no `throws` keyword).
+This feature introduces checked error semantics to TypeScript. Effects may be inferred from bodies OR declared at declaration sites via `throws` / `rejects`. Inference remains the default; declarations exist primarily for `.d.ts` boundaries and (optionally) as contracts for `.ts`.
 
 The goal is to experimentally evaluate:
 
 - Whether inferred checked errors are ergonomically viable in TypeScript.
-- Whether error handling can be enforced statically without explicit annotations.
+- Whether error handling can be enforced statically with inference and optional declarations.
 - How well such a system integrates with async/Promise-based JavaScript.
 
 This is a compiler-level feature and cannot be implemented as an ESLint rule or language service plugin.
@@ -18,11 +18,11 @@ The system enforces that:
 
 - Any expression that may throw (or reject) must either be handled locally via try/catch or explicitly propagated.
 
-There is no explicit `throws` annotation. All thrown types are inferred from:
+Thrown/reject effects come from inference (see Core Semantics) or from declaration-site `throws` / `rejects` (see Declaration-Site Effects). When inferring, sources include:
 
 - `throw` statements
 - Calls to other functions
-- Known stdlib throw mappings (curated metadata)
+- Declaration-site effects on callees (e.g. in `.d.ts` or declared on `.ts` signatures)
 
 ## 3. Core Semantics
 
@@ -87,6 +87,21 @@ If a call expression may throw type `E`, then it must satisfy one of:
 Otherwise, a compile-time error is produced:
 
 - **Unhandled thrown type: E**
+
+### 3.4 Declaration-Site Effects (`throws` / `rejects`)
+
+Function, method, and constructor signatures may include:
+
+- **`throws E`** — for synchronous exceptions
+- **`rejects E`** — for Promise rejections
+
+These clauses are allowed in `.d.ts` and in `.ts`.
+
+**Precedence:**
+
+- **If a function has a body and no declared clause** → infer effects from the body (existing behavior).
+- **If a function has a body and a declared clause is present** → the declared clause is the contract; the body must be sound relative to it (see validation).
+- **If a signature has no body (e.g. `.d.ts`)** → the declared clause is the only source of truth (no inference).
 
 ## 4. try/catch/finally Semantics
 
@@ -216,15 +231,7 @@ Requires handling of `E1 | E2`.
 
 ## 6. Standard Library and Declaration Files
 
-Since `.d.ts` files do not contain bodies, thrown types cannot be inferred.
-
-To address this:
-
-- A curated metadata mapping provides thrown types for selected stdlib functions.
-- This mapping may be derived from eslint-plugin-exception-handling.
-- For declarations without mapping: they default to `never` OR a conservative `unknown` (implementation choice, but must be consistent).
-
-This metadata does not introduce a new language feature.
+`.d.ts` functions can declare `throws` / `rejects` at the declaration site; that is the primary mechanism for effects without a body. Curated stdlib mapping is **optional** as a bootstrap/migration tool, not the core plan—e.g. a small map may be used to seed declarations or for migration, but the main path is declaration-site effects in `.d.ts`. For declarations with no body and no declared clause, behavior is implementation-defined (e.g. `never` or conservative `unknown`; must be consistent).
 
 ## 7. Recursion Handling
 
@@ -238,7 +245,7 @@ This avoids fixpoint complexity in the PoC. Future improvements may replace this
 
 The following are explicitly out of scope:
 
-- Adding a `throws` keyword
+- Mandatory effect annotations on every function
 - Perfect interprocedural analysis
 - Precise modeling of all Promise combinators
 - Exhaustive stdlib throw coverage
@@ -305,8 +312,7 @@ void foo();
 
 ## 11. Design Principles
 
-- No new syntax.
-- Purely inferred.
+- Effects may be inferred from bodies OR declared at declaration sites via `throws` / `rejects`; inference remains the default; declarations exist primarily for `.d.ts` boundaries and (optionally) as contracts for `.ts`.
 - JS-compatible (anything can be thrown).
 - Try/catch absorbs.
 - Async integrates via rejection.
@@ -317,8 +323,8 @@ void foo();
 
 This feature should allow evaluation of:
 
-- Whether inferred-only checked errors are usable in a JS ecosystem.
+- Whether inference plus optional declarations are usable in a JS ecosystem.
 - Whether Promise rejection typing improves correctness.
 - Whether explicit ignore (`void`) is sufficient ergonomically.
-- Whether lack of explicit `throws` syntax is a blocker.
+- Whether declaration-site effects are necessary for adoption.
 - Whether inference noise becomes unmanageable.

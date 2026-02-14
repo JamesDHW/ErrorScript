@@ -1,0 +1,199 @@
+//// [tests/cases/compiler/checkedThrowsDeclared.ts] ////
+
+=== checkedThrowsDeclared.ts ===
+function withThrows(): number throws Error {
+>withThrows : Symbol(withThrows, Decl(checkedThrowsDeclared.ts, 0, 0))
+>Error : Symbol(Error, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2022.error.d.ts, --, --))
+
+    return 1;
+}
+
+declare function declaredThrows(): number throws RangeError;
+>declaredThrows : Symbol(declaredThrows, Decl(checkedThrowsDeclared.ts, 2, 1))
+>RangeError : Symbol(RangeError, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --))
+
+withThrows();
+>withThrows : Symbol(withThrows, Decl(checkedThrowsDeclared.ts, 0, 0))
+
+declare function f(): number throws RangeError;
+>f : Symbol(f, Decl(checkedThrowsDeclared.ts, 6, 13))
+>RangeError : Symbol(RangeError, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --))
+
+f();
+>f : Symbol(f, Decl(checkedThrowsDeclared.ts, 6, 13))
+
+try {
+    f();
+>f : Symbol(f, Decl(checkedThrowsDeclared.ts, 6, 13))
+
+} catch (e) {
+>e : Symbol(e, Decl(checkedThrowsDeclared.ts, 13, 9))
+
+    e;
+>e : Symbol(e, Decl(checkedThrowsDeclared.ts, 13, 9))
+}
+
+function implThrowsStricter(): number throws Error {
+>implThrowsStricter : Symbol(implThrowsStricter, Decl(checkedThrowsDeclared.ts, 15, 1))
+>Error : Symbol(Error, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2022.error.d.ts, --, --))
+
+    throw new TypeError("x");
+>TypeError : Symbol(TypeError, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --))
+}
+
+function implThrowsNarrower(): number throws RangeError {
+>implThrowsNarrower : Symbol(implThrowsNarrower, Decl(checkedThrowsDeclared.ts, 19, 1))
+>RangeError : Symbol(RangeError, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --))
+
+    throw new TypeError("x");
+>TypeError : Symbol(TypeError, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --))
+}
+
+declare function g(): Promise<number> rejects TypeError;
+>g : Symbol(g, Decl(checkedThrowsDeclared.ts, 23, 1))
+>Promise : Symbol(Promise, Decl(lib.es5.d.ts, --, --), Decl(lib.es2015.iterable.d.ts, --, --), Decl(lib.es2015.promise.d.ts, --, --), Decl(lib.es2015.symbol.wellknown.d.ts, --, --), Decl(lib.es2018.promise.d.ts, --, --))
+>TypeError : Symbol(TypeError, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --))
+
+async function unhandledReject() {
+>unhandledReject : Symbol(unhandledReject, Decl(checkedThrowsDeclared.ts, 25, 56))
+
+    await g();
+>g : Symbol(g, Decl(checkedThrowsDeclared.ts, 23, 1))
+}
+
+async function tryHandlesReject() {
+>tryHandlesReject : Symbol(tryHandlesReject, Decl(checkedThrowsDeclared.ts, 29, 1))
+
+    try {
+        await g();
+>g : Symbol(g, Decl(checkedThrowsDeclared.ts, 23, 1))
+
+    } catch (e) {
+>e : Symbol(e, Decl(checkedThrowsDeclared.ts, 34, 13))
+
+        e;
+>e : Symbol(e, Decl(checkedThrowsDeclared.ts, 34, 13))
+    }
+}
+
+function fireAndForgetDeclared() {
+>fireAndForgetDeclared : Symbol(fireAndForgetDeclared, Decl(checkedThrowsDeclared.ts, 37, 1))
+
+    g();
+>g : Symbol(g, Decl(checkedThrowsDeclared.ts, 23, 1))
+
+    void g();
+>g : Symbol(g, Decl(checkedThrowsDeclared.ts, 23, 1))
+
+    g().catch(() => {});
+>g().catch : Symbol(Promise.catch, Decl(lib.es5.d.ts, --, --))
+>g : Symbol(g, Decl(checkedThrowsDeclared.ts, 23, 1))
+>catch : Symbol(Promise.catch, Decl(lib.es5.d.ts, --, --))
+}
+
+declare function badRejects(): number rejects Error;
+>badRejects : Symbol(badRejects, Decl(checkedThrowsDeclared.ts, 43, 1))
+>Error : Symbol(Error, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2022.error.d.ts, --, --))
+
+declare function badThrows(): Promise<number> throws Error;
+>badThrows : Symbol(badThrows, Decl(checkedThrowsDeclared.ts, 45, 52))
+>Promise : Symbol(Promise, Decl(lib.es5.d.ts, --, --), Decl(lib.es2015.iterable.d.ts, --, --), Decl(lib.es2015.promise.d.ts, --, --), Decl(lib.es2015.symbol.wellknown.d.ts, --, --), Decl(lib.es2018.promise.d.ts, --, --))
+>Error : Symbol(Error, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2022.error.d.ts, --, --))
+
+function declaredWiderThanImpl(): number throws Error {
+>declaredWiderThanImpl : Symbol(declaredWiderThanImpl, Decl(checkedThrowsDeclared.ts, 47, 59))
+>Error : Symbol(Error, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2022.error.d.ts, --, --))
+
+    throw new RangeError("x");
+>RangeError : Symbol(RangeError, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --))
+}
+
+declare function overload(x: string): number throws Error;
+>overload : Symbol(overload, Decl(checkedThrowsDeclared.ts, 51, 1), Decl(checkedThrowsDeclared.ts, 53, 58))
+>x : Symbol(x, Decl(checkedThrowsDeclared.ts, 53, 26))
+>Error : Symbol(Error, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2022.error.d.ts, --, --))
+
+declare function overload(x: number): Promise<number> rejects TypeError;
+>overload : Symbol(overload, Decl(checkedThrowsDeclared.ts, 51, 1), Decl(checkedThrowsDeclared.ts, 53, 58))
+>x : Symbol(x, Decl(checkedThrowsDeclared.ts, 54, 26))
+>Promise : Symbol(Promise, Decl(lib.es5.d.ts, --, --), Decl(lib.es2015.iterable.d.ts, --, --), Decl(lib.es2015.promise.d.ts, --, --), Decl(lib.es2015.symbol.wellknown.d.ts, --, --), Decl(lib.es2018.promise.d.ts, --, --))
+>TypeError : Symbol(TypeError, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --))
+
+try {
+    overload("a");
+>overload : Symbol(overload, Decl(checkedThrowsDeclared.ts, 51, 1), Decl(checkedThrowsDeclared.ts, 53, 58))
+
+} catch (e) {
+>e : Symbol(e, Decl(checkedThrowsDeclared.ts, 57, 9))
+
+    e;
+>e : Symbol(e, Decl(checkedThrowsDeclared.ts, 57, 9))
+}
+
+async function unhandledOverload() {
+>unhandledOverload : Symbol(unhandledOverload, Decl(checkedThrowsDeclared.ts, 59, 1))
+
+    await overload(1);
+>overload : Symbol(overload, Decl(checkedThrowsDeclared.ts, 51, 1), Decl(checkedThrowsDeclared.ts, 53, 58))
+}
+
+type Fn = (x: string) => number throws Error;
+>Fn : Symbol(Fn, Decl(checkedThrowsDeclared.ts, 63, 1))
+>x : Symbol(x, Decl(checkedThrowsDeclared.ts, 65, 11))
+>Error : Symbol(Error, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2022.error.d.ts, --, --))
+
+const fn: Fn = (x: string): number throws Error => {
+>fn : Symbol(fn, Decl(checkedThrowsDeclared.ts, 66, 5))
+>Fn : Symbol(Fn, Decl(checkedThrowsDeclared.ts, 63, 1))
+>x : Symbol(x, Decl(checkedThrowsDeclared.ts, 66, 16))
+>Error : Symbol(Error, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2022.error.d.ts, --, --))
+
+    throw new Error(x);
+>Error : Symbol(Error, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2022.error.d.ts, --, --))
+>x : Symbol(x, Decl(checkedThrowsDeclared.ts, 66, 16))
+
+};
+try {
+    fn("");
+>fn : Symbol(fn, Decl(checkedThrowsDeclared.ts, 66, 5))
+
+} catch (e) {
+>e : Symbol(e, Decl(checkedThrowsDeclared.ts, 71, 9))
+
+    e;
+>e : Symbol(e, Decl(checkedThrowsDeclared.ts, 71, 9))
+}
+
+interface X {
+>X : Symbol(X, Decl(checkedThrowsDeclared.ts, 73, 1))
+
+    m(): number throws Error;
+>m : Symbol(X.m, Decl(checkedThrowsDeclared.ts, 75, 13))
+>Error : Symbol(Error, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2022.error.d.ts, --, --))
+}
+const o: X = {
+>o : Symbol(o, Decl(checkedThrowsDeclared.ts, 78, 5))
+>X : Symbol(X, Decl(checkedThrowsDeclared.ts, 73, 1))
+
+    m(): number throws Error {
+>m : Symbol(m, Decl(checkedThrowsDeclared.ts, 78, 14))
+>Error : Symbol(Error, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2022.error.d.ts, --, --))
+
+        throw new Error("");
+>Error : Symbol(Error, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2022.error.d.ts, --, --))
+
+    },
+};
+try {
+    o.m();
+>o.m : Symbol(X.m, Decl(checkedThrowsDeclared.ts, 75, 13))
+>o : Symbol(o, Decl(checkedThrowsDeclared.ts, 78, 5))
+>m : Symbol(X.m, Decl(checkedThrowsDeclared.ts, 75, 13))
+
+} catch (e) {
+>e : Symbol(e, Decl(checkedThrowsDeclared.ts, 85, 9))
+
+    e;
+>e : Symbol(e, Decl(checkedThrowsDeclared.ts, 85, 9))
+}
+

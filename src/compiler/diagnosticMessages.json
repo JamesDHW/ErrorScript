@@ -8563,5 +8563,25 @@
     "Unhandled promise rejection type: {0}.": {
         "category": "Error",
         "code": 18064
+    },
+    "A signature cannot have both 'throws' and 'rejects' clauses.": {
+        "category": "Error",
+        "code": 18065
+    },
+    "rejects clause requires a Promise-like return type.": {
+        "category": "Error",
+        "code": 18066
+    },
+    "throws clause is not allowed on a Promise-like return type.": {
+        "category": "Error",
+        "code": 18067
+    },
+    "Declared throws type '{0}' does not include inferred thrown type '{1}'.": {
+        "category": "Error",
+        "code": 18068
+    },
+    "Declared rejects type '{0}' does not include inferred rejection type '{1}'.": {
+        "category": "Error",
+        "code": 18069
     }
 }

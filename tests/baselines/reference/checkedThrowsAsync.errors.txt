@@ -1,0 +1,60 @@
+checkedThrowsAsync.ts(6,5): error TS18064: Unhandled promise rejection type: Error.
+checkedThrowsAsync.ts(18,5): error TS18064: Unhandled promise rejection type: Error.
+checkedThrowsAsync.ts(28,5): error TS18064: Unhandled promise rejection type: Error.
+checkedThrowsAsync.ts(38,5): error TS18064: Unhandled promise rejection type: "a" | 123.
+checkedThrowsAsync.ts(41,1): error TS18063: Unhandled thrown type: SyntaxError.
+
+
+==== checkedThrowsAsync.ts (5 errors) ====
+    async function boom() {
+        throw new Error("x");
+    }
+    
+    async function awaitRequiresHandling() {
+        await boom();
+        ~~~~~~~~~~~~
+!!! error TS18064: Unhandled promise rejection type: Error.
+    }
+    
+    async function tryHandlesAwaitedRejection() {
+        try {
+            await boom();
+        } catch (e) {
+            e.message;
+        }
+    }
+    
+    function fireAndForget() {
+        boom();
+        ~~~~~~
+!!! error TS18064: Unhandled promise rejection type: Error.
+        void boom();
+        boom().catch(() => {});
+    }
+    
+    function wrap() {
+        return boom();
+    }
+    
+    async function wrapperPropagation() {
+        await wrap();
+        ~~~~~~~~~~~~
+!!! error TS18064: Unhandled promise rejection type: Error.
+    }
+    
+    async function a() {
+        throw "a";
+    }
+    async function b() {
+        throw 123;
+    }
+    async function promiseAllUnion() {
+        await Promise.all([a(), b()]);
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!!! error TS18064: Unhandled promise rejection type: "a" | 123.
+    }
+    
+    JSON.parse("{");
+    ~~~~~~~~~~~~~~~
+!!! error TS18063: Unhandled thrown type: SyntaxError.
+    

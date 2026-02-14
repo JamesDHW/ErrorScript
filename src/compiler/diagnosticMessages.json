@@ -8559,5 +8559,9 @@
     "Unhandled thrown type: {0}.": {
         "category": "Error",
         "code": 18063
+    },
+    "Unhandled promise rejection type: {0}.": {
+        "category": "Error",
+        "code": 18064
     }
 }

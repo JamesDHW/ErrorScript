@@ -1150,6 +1150,7 @@ import {
 } from "./_namespaces/ts.js";
 import * as moduleSpecifiers from "./_namespaces/ts.moduleSpecifiers.js";
 import * as performance from "./_namespaces/ts.performance.js";
+import { getNativeThrowMap } from "./nativeThrowMap.js";
 
 const ambientModuleSymbolRegex = /^".+"$/;
 const anon = "(anonymous)" as __String & string;
@@ -1544,6 +1545,10 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
     type ThrownTypeCacheEntry = { kind: "computing" } | { kind: "done"; type: Type };
     var thrownTypeCache = checkedThrows ? new Map<FunctionLikeDeclaration, ThrownTypeCacheEntry>() : undefined;
     var catchVariableThrownTypeMap = checkedThrows ? new Map<VariableDeclaration, Type>() : undefined;
+    var rejectEffectCache = checkedThrows ? new Map<Node, Type>() : undefined;
+    type RejectEffectAsyncCacheEntry = { kind: "computing" } | { kind: "done"; type: Type };
+    var rejectEffectAsyncCache = checkedThrows ? new Map<FunctionLikeDeclaration, RejectEffectAsyncCacheEntry>() : undefined;
+    const throwMap = getNativeThrowMap();
     var exactOptionalPropertyTypes = compilerOptions.exactOptionalPropertyTypes;
     var noUncheckedSideEffectImports = compilerOptions.noUncheckedSideEffectImports !== false;
     var stableTypeOrdering = !!compilerOptions.stableTypeOrdering;
@@ -37891,11 +37896,28 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
             if (decl && isFunctionLike(decl)) {
                 const funcDecl = decl as FunctionLikeDeclaration;
                 if (getFunctionBodyForThrownType(funcDecl)) {
-                    const thrown = thrownTypeOfFunctionLike(funcDecl);
-                    if (thrown !== neverType && !isHandledByTry(node) && !isHandledByPropagation(node)) {
-                        error(node, Diagnostics.Unhandled_thrown_type_Colon_0, typeToString(thrown));
+                    const isAsync = (getFunctionFlags(funcDecl) & FunctionFlags.Async) !== 0;
+                    if (!isAsync) {
+                        const thrown = thrownTypeOfFunctionLike(funcDecl);
+                        if (thrown !== neverType && !isHandledByTry(node) && !isHandledByPropagation(node)) {
+                            error(node, Diagnostics.Unhandled_thrown_type_Colon_0, typeToString(thrown));
+                        }
+                    }
+                } else {
+                    const symbol = getSymbolOfDeclaration(decl);
+                    const key = getFullyQualifiedName(symbol, node);
+                    const entry = throwMap[key];
+                    if (entry?.throws) {
+                        const thrown = getTypeFromThrowMapNames(entry.throws);
+                        if (thrown !== neverType && !isHandledByTry(node) && !isHandledByPropagation(node)) {
+                            error(node, Diagnostics.Unhandled_thrown_type_Colon_0, typeToString(thrown));
+                        }
                     }
                 }
+            }
+            const rejectEffect = getRejectEffectOfExpression(node);
+            if (rejectEffect !== neverType && node.parent?.kind === SyntaxKind.ExpressionStatement) {
+                error(node, Diagnostics.Unhandled_promise_rejection_type_Colon_0, typeToString(rejectEffect));
             }
         }
 
@@ -39993,6 +40015,12 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         const awaitedType = checkAwaitedType(operandType, /*withAlias*/ true, node, Diagnostics.Type_of_await_operand_must_either_be_a_valid_promise_or_must_not_contain_a_callable_then_member);
         if (awaitedType === operandType && !isErrorType(awaitedType) && !(operandType.flags & TypeFlags.AnyOrUnknown)) {
             addErrorOrSuggestion(/*isError*/ false, createDiagnosticForNode(node, Diagnostics.await_has_no_effect_on_the_type_of_this_expression));
+        }
+        if (checkedThrows) {
+            const rejectEffect = getRejectEffectOfExpression(node.expression);
+            if (rejectEffect !== neverType && !isHandledByTry(node)) {
+                error(node, Diagnostics.Unhandled_promise_rejection_type_Colon_0, typeToString(rejectEffect));
+            }
         }
         return awaitedType;
     }
@@ -46753,6 +46781,9 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
             }
             case SyntaxKind.ExpressionStatement: {
                 const expr = (stmt as ExpressionStatement).expression;
+                if (expr.kind === SyntaxKind.AwaitExpression) {
+                    return getRejectEffectOfExpression((expr as AwaitExpression).expression);
+                }
                 if (expr.kind !== SyntaxKind.CallExpression && expr.kind !== SyntaxKind.NewExpression) {
                     return neverType;
                 }
@@ -46805,6 +46836,121 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         const funcDecl = decl as FunctionLikeDeclaration;
         if (!getFunctionBodyForThrownType(funcDecl)) return undefined;
         return funcDecl;
+    }
+
+    function getTypeFromThrowMapNames(names: string[]): Type {
+        if (!checkedThrows || names.length === 0) return neverType;
+        const types: Type[] = [];
+        for (const name of names) {
+            const t = getGlobalType(name as __String, 0, /*reportErrors*/ false);
+            if (t && t !== errorType) types.push(t);
+        }
+        return types.length === 0 ? neverType : types.length === 1 ? types[0] : getUnionType(types);
+    }
+
+    function getRejectEffectOfAsyncFunction(decl: FunctionLikeDeclaration): Type {
+        if (!checkedThrows || !rejectEffectAsyncCache) return neverType;
+        const cached = rejectEffectAsyncCache.get(decl);
+        if (cached?.kind === "done") return cached.type;
+        if (cached?.kind === "computing") return unknownType;
+        const body = getFunctionBodyForThrownType(decl);
+        if (!body) {
+            rejectEffectAsyncCache.set(decl, { kind: "done", type: neverType });
+            return neverType;
+        }
+        rejectEffectAsyncCache.set(decl, { kind: "computing" });
+        const types: Type[] = [];
+        const bodyThrown = thrownTypeOfStatement(body);
+        if (bodyThrown !== neverType) types.push(bodyThrown);
+        forEachReturnStatement(body, returnStmt => {
+            if (returnStmt.expression) {
+                const e = getRejectEffectOfExpression(returnStmt.expression);
+                if (e !== neverType && e !== unknownType) types.push(e);
+                else if (e === unknownType) types.push(unknownType);
+            }
+        });
+        const result = types.length === 0 ? neverType : types.some(t => t === unknownType) ? unknownType : types.length === 1 ? types[0] : getUnionType(types);
+        rejectEffectAsyncCache.set(decl, { kind: "done", type: result });
+        return result;
+    }
+
+    function getRejectEffectOfNonAsyncReturningPromise(decl: FunctionLikeDeclaration): Type {
+        const body = getFunctionBodyForThrownType(decl);
+        if (!body) return neverType;
+        const types: Type[] = [];
+        forEachReturnStatement(body, returnStmt => {
+            if (returnStmt.expression) {
+                const e = getRejectEffectOfExpression(returnStmt.expression);
+                if (e !== neverType) types.push(e);
+            }
+        });
+        return types.length === 0 ? neverType : types.length === 1 ? types[0] : getUnionType(types);
+    }
+
+    function getRejectEffectOfExpression(expr: Expression): Type {
+        if (!checkedThrows || !rejectEffectCache) return neverType;
+        expr = skipParentheses(expr);
+        if (expr.kind === SyntaxKind.AwaitExpression) {
+            return getRejectEffectOfExpression((expr as AwaitExpression).expression);
+        }
+        if (expr.kind !== SyntaxKind.CallExpression && expr.kind !== SyntaxKind.NewExpression) return neverType;
+        const cached = rejectEffectCache.get(expr);
+        if (cached !== undefined) return cached;
+        const call = expr as CallExpression;
+        const invoked = call.expression;
+        if (invoked.kind === SyntaxKind.PropertyAccessExpression) {
+            const pa = invoked as PropertyAccessExpression;
+            if (idText(pa.name) === "all" && isIdentifier(pa.expression) && idText(pa.expression) === "Promise") {
+                const firstArg = call.arguments?.[0];
+                if (firstArg && firstArg.kind === SyntaxKind.ArrayLiteralExpression) {
+                    const arr = firstArg as ArrayLiteralExpression;
+                    const types: Type[] = [];
+                    for (const el of arr.elements) {
+                        if (!isSpreadElement(el)) {
+                            const e = getRejectEffectOfExpression(el);
+                            if (e !== neverType) types.push(e);
+                        }
+                    }
+                    const effect = types.length === 0 ? neverType : types.some(t => t === unknownType) ? unknownType : types.length === 1 ? types[0] : getUnionType(types);
+                    rejectEffectCache.set(expr, effect);
+                    return effect;
+                }
+                rejectEffectCache.set(expr, unknownType);
+                return unknownType;
+            }
+        }
+        const signature = getResolvedSignature(call, /*candidatesOutArray*/ undefined);
+        if (!signature || signature === resolvingSignature) {
+            rejectEffectCache.set(expr, neverType);
+            return neverType;
+        }
+        const decl = signature.declaration;
+        if (!decl || !isFunctionLike(decl)) {
+            rejectEffectCache.set(expr, neverType);
+            return neverType;
+        }
+        const funcDecl = decl as FunctionLikeDeclaration;
+        const body = getFunctionBodyForThrownType(funcDecl);
+        if (!body) {
+            const symbol = getSymbolOfDeclaration(decl);
+            const key = getFullyQualifiedName(symbol, expr);
+            const entry = throwMap[key];
+            if (entry?.rejects) {
+                const effect = getTypeFromThrowMapNames(entry.rejects);
+                rejectEffectCache.set(expr, effect);
+                return effect;
+            }
+            rejectEffectCache.set(expr, neverType);
+            return neverType;
+        }
+        let effect: Type;
+        if ((getFunctionFlags(funcDecl) & FunctionFlags.Async) !== 0) {
+            effect = getRejectEffectOfAsyncFunction(funcDecl);
+        } else {
+            effect = getRejectEffectOfNonAsyncReturningPromise(funcDecl);
+        }
+        rejectEffectCache.set(expr, effect);
+        return effect;
     }
 
     function thrownTypeOfFunctionLike(node: FunctionLikeDeclaration): Type {

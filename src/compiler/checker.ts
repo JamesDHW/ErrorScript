@@ -1545,7 +1545,11 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
     var checkedThrows = !!compilerOptions.checkedThrows;
     type ThrownTypeCacheEntry = { kind: "computing" } | { kind: "done"; type: Type };
     var thrownTypeCache = checkedThrows ? new Map<FunctionLikeDeclaration, ThrownTypeCacheEntry>() : undefined;
-    var catchVariableThrownTypeMap = checkedThrows ? new Map<VariableDeclaration, Type>() : undefined;
+    var catchVariableThrownTypeMap = checkedThrows ? new Map<string, Type>() : undefined;
+    function getCatchVariableMapKey(decl: VariableDeclaration): string {
+        const file = getSourceFileOfNode(decl);
+        return `${file.fileName}:${decl.pos}`;
+    }
     var rejectEffectCache = checkedThrows ? new Map<Node, Type>() : undefined;
     type RejectEffectAsyncCacheEntry = { kind: "computing" } | { kind: "done"; type: Type };
     var rejectEffectAsyncCache = checkedThrows ? new Map<FunctionLikeDeclaration, RejectEffectAsyncCacheEntry>() : undefined;
@@ -11890,8 +11894,16 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 const rootDecl = declaration.kind === SyntaxKind.VariableDeclaration
                     ? declaration as VariableDeclaration
                     : findAncestor(declaration, (n): n is VariableDeclaration => n.kind === SyntaxKind.VariableDeclaration);
-                if (rootDecl) {
-                    const tTry = catchVariableThrownTypeMap.get(rootDecl);
+                    if (rootDecl) {
+                    let tTry = catchVariableThrownTypeMap.get(getCatchVariableMapKey(rootDecl));
+                    if (tTry === undefined) {
+                        const catchClause = rootDecl.parent && isCatchClause(rootDecl.parent) ? rootDecl.parent : findAncestor(rootDecl, isCatchClause);
+                        const tryStmt = catchClause?.parent?.kind === SyntaxKind.TryStatement ? catchClause.parent as TryStatement : undefined;
+                        if (tryStmt?.tryBlock) {
+                            tTry = thrownTypeOfStatement(tryStmt.tryBlock);
+                            catchVariableThrownTypeMap.set(getCatchVariableMapKey(rootDecl), tTry);
+                        }
+                    }
                     if (tTry !== undefined) return tTry;
                 }
             }
@@ -12560,9 +12572,10 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
             const rootDecl = declaration.kind === SyntaxKind.VariableDeclaration
                 ? declaration as VariableDeclaration
                 : findAncestor(declaration, (n): n is VariableDeclaration => n.kind === SyntaxKind.VariableDeclaration);
-            if (rootDecl && catchVariableThrownTypeMap.has(rootDecl)) {
+            const mapKey = rootDecl ? getCatchVariableMapKey(rootDecl) : undefined;
+            if (mapKey && catchVariableThrownTypeMap.has(mapKey)) {
                 const type = getTypeOfVariableOrParameterOrPropertyWorker(symbol);
-                links.type = type;
+                if (!checkedThrows) links.type = type;
                 return type;
             }
         }
@@ -12573,10 +12586,14 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
             // to preserve this type. In fact, we need to _prefer_ that type, but it won't
             // be assigned until contextual typing is complete, so we need to defer in
             // cases where contextual typing may take place.
-            if (!links.type && !isParameterOfContextSensitiveSignature(symbol)) {
+            const isCatchVarWithCheckedThrows = declaration && isCatchClauseVariableDeclarationOrBindingElement(declaration) && checkedThrows;
+            if (!links.type && !isParameterOfContextSensitiveSignature(symbol) && !isCatchVarWithCheckedThrows) {
                 links.type = type;
             }
             return type;
+        }
+        if (declaration && isCatchClauseVariableDeclarationOrBindingElement(declaration) && checkedThrows && catchVariableThrownTypeMap) {
+            return getTypeOfVariableOrParameterOrPropertyWorker(symbol);
         }
         return links.type;
     }
@@ -47130,7 +47147,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 const declaration = catchClause.variableDeclaration;
                 if (checkedThrows && catchVariableThrownTypeMap && !getEffectiveTypeAnnotationNode(declaration)) {
                     const tTry = thrownTypeOfStatement(node.tryBlock);
-                    catchVariableThrownTypeMap.set(declaration, tTry);
+                    catchVariableThrownTypeMap.set(getCatchVariableMapKey(declaration), tTry);
                 }
                 checkVariableLikeDeclaration(declaration);
                 const typeNode = getEffectiveTypeAnnotationNode(declaration);

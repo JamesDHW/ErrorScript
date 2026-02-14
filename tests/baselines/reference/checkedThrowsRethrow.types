@@ -1,0 +1,42 @@
+//// [tests/cases/compiler/checkedThrowsRethrow.ts] ////
+
+=== checkedThrowsRethrow.ts ===
+function boom3() {
+>boom3 : () => void
+>      : ^^^^^^^^^^
+
+    throw new Error("x");
+>new Error("x") : Error
+>               : ^^^^^
+>Error : ErrorConstructor
+>      : ^^^^^^^^^^^^^^^^
+>"x" : "x"
+>    : ^^^
+}
+
+function c() {
+>c : () => void
+>  : ^^^^^^^^^^
+
+    try {
+        boom3();
+>boom3() : void
+>        : ^^^^
+>boom3 : () => void
+>      : ^^^^^^^^^^
+
+    } catch (e) {
+>e : Error
+>  : ^^^^^
+
+        throw e;
+>e : Error
+>  : ^^^^^
+    }
+}
+c();
+>c() : void
+>    : ^^^^
+>c : () => void
+>  : ^^^^^^^^^^
+

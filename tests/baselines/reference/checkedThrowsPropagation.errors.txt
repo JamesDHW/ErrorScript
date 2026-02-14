@@ -1,0 +1,14 @@
+checkedThrowsPropagation.ts(7,1): error TS18063: Unhandled thrown type: 123.
+
+
+==== checkedThrowsPropagation.ts (1 errors) ====
+    function inner() {
+        throw 123;
+    }
+    function outer() {
+        inner();
+    }
+    outer();
+    ~~~~~~~
+!!! error TS18063: Unhandled thrown type: 123.
+    

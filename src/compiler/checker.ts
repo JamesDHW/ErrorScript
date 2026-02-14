@@ -1540,6 +1540,10 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
     var noImplicitAny = getStrictOptionValue(compilerOptions, "noImplicitAny");
     var noImplicitThis = getStrictOptionValue(compilerOptions, "noImplicitThis");
     var useUnknownInCatchVariables = getStrictOptionValue(compilerOptions, "useUnknownInCatchVariables");
+    var checkedThrows = !!compilerOptions.checkedThrows;
+    type ThrownTypeCacheEntry = { kind: "computing" } | { kind: "done"; type: Type };
+    var thrownTypeCache = checkedThrows ? new Map<FunctionLikeDeclaration, ThrownTypeCacheEntry>() : undefined;
+    var catchVariableThrownTypeMap = checkedThrows ? new Map<VariableDeclaration, Type>() : undefined;
     var exactOptionalPropertyTypes = compilerOptions.exactOptionalPropertyTypes;
     var noUncheckedSideEffectImports = compilerOptions.noUncheckedSideEffectImports !== false;
     var stableTypeOrdering = !!compilerOptions.stableTypeOrdering;
@@ -11875,6 +11879,15 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
             if (declaredType) {
                 // If the catch clause is explicitly annotated with any or unknown, accept it, otherwise error.
                 return isTypeAny(declaredType) || declaredType === unknownType ? declaredType : errorType;
+            }
+            if (checkedThrows && catchVariableThrownTypeMap) {
+                const rootDecl = declaration.kind === SyntaxKind.VariableDeclaration
+                    ? declaration as VariableDeclaration
+                    : findAncestor(declaration, (n): n is VariableDeclaration => n.kind === SyntaxKind.VariableDeclaration);
+                if (rootDecl) {
+                    const tTry = catchVariableThrownTypeMap.get(rootDecl);
+                    if (tTry !== undefined) return tTry;
+                }
             }
             // If the catch clause is not explicitly annotated, treat it as though it were explicitly
             // annotated with unknown or any, depending on useUnknownInCatchVariables.
@@ -31197,7 +31210,8 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                     isInTypeQuery(node) || isInAmbientOrTypeNode(node) || node.parent.kind === SyntaxKind.ExportSpecifier) ||
             node.parent.kind === SyntaxKind.NonNullExpression ||
             declaration.kind === SyntaxKind.VariableDeclaration && (declaration as VariableDeclaration).exclamationToken ||
-            declaration.flags & NodeFlags.Ambient;
+            declaration.flags & NodeFlags.Ambient ||
+            isCatchClauseVariableDeclarationOrBindingElement(declaration);
         const initialType = isAutomaticTypeInNonNull ? undefinedType :
             assumeInitialized ? (isParameter ? removeOptionalityFromDeclaredType(type, declaration as VariableLikeDeclaration) : type) :
             typeIsAutomatic ? undefinedType : getOptionalType(type);
@@ -37869,6 +37883,19 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 const jsAssignmentType = createAnonymousType(jsSymbol, jsSymbol.exports, emptyArray, emptyArray, emptyArray);
                 jsAssignmentType.objectFlags |= ObjectFlags.JSLiteral;
                 return getIntersectionType([returnType, jsAssignmentType]);
+            }
+        }
+
+        if (checkedThrows) {
+            const decl = signature.declaration;
+            if (decl && isFunctionLike(decl)) {
+                const funcDecl = decl as FunctionLikeDeclaration;
+                if (getFunctionBodyForThrownType(funcDecl)) {
+                    const thrown = thrownTypeOfFunctionLike(funcDecl);
+                    if (thrown !== neverType && !isHandledByTry(node) && !isHandledByPropagation(node)) {
+                        error(node, Diagnostics.Unhandled_thrown_type_Colon_0, typeToString(thrown));
+                    }
+                }
             }
         }
 
@@ -46678,6 +46705,166 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         checkSourceElement(node.statement);
     }
 
+    function getFunctionBodyForThrownType(node: FunctionLikeDeclaration): Block | undefined {
+        const body = node.body;
+        return body && body.kind === SyntaxKind.Block ? body as Block : undefined;
+    }
+
+    function thrownTypeOfStatement(stmt: Statement): Type {
+        switch (stmt.kind) {
+            case SyntaxKind.ThrowStatement: {
+                const throwStmt = stmt as ThrowStatement;
+                if (throwStmt.expression) {
+                    return getTypeOfNode(throwStmt.expression);
+                }
+                const catchClause = findAncestor(throwStmt, isCatchClause);
+                if (catchClause) {
+                    return thrownTypeOfStatement(catchClause.parent.tryBlock);
+                }
+                return unknownType;
+            }
+            case SyntaxKind.Block: {
+                const block = stmt as Block;
+                const types: Type[] = [];
+                for (const s of block.statements) {
+                    const t = thrownTypeOfStatement(s);
+                    if (t !== neverType) types.push(t);
+                }
+                return types.length === 0 ? neverType : types.length === 1 ? types[0] : getUnionType(types);
+            }
+            case SyntaxKind.TryStatement: {
+                const tryStmt = stmt as TryStatement;
+                const tTry = thrownTypeOfStatement(tryStmt.tryBlock);
+                const tCatch = tryStmt.catchClause ? thrownTypeOfStatement(tryStmt.catchClause.block) : neverType;
+                const tFinally = tryStmt.finallyBlock ? thrownTypeOfStatement(tryStmt.finallyBlock) : neverType;
+                if (tryStmt.catchClause) {
+                    const types = [tCatch, tFinally].filter(t => t !== neverType);
+                    return types.length === 0 ? neverType : types.length === 1 ? types[0] : getUnionType(types);
+                }
+                const types = [tTry, tFinally].filter(t => t !== neverType);
+                return types.length === 0 ? neverType : types.length === 1 ? types[0] : getUnionType(types);
+            }
+            case SyntaxKind.IfStatement: {
+                const ifStmt = stmt as IfStatement;
+                const tThen = thrownTypeOfStatement(ifStmt.thenStatement);
+                const tElse = ifStmt.elseStatement ? thrownTypeOfStatement(ifStmt.elseStatement) : neverType;
+                const types = [tThen, tElse].filter(t => t !== neverType);
+                return types.length === 0 ? neverType : types.length === 1 ? types[0] : getUnionType(types);
+            }
+            case SyntaxKind.ExpressionStatement: {
+                const expr = (stmt as ExpressionStatement).expression;
+                if (expr.kind !== SyntaxKind.CallExpression && expr.kind !== SyntaxKind.NewExpression) {
+                    return neverType;
+                }
+                const calleeDecl = getCalleeDeclarationFromCall(expr as CallExpression | NewExpression);
+                if (!calleeDecl) return neverType;
+                return thrownTypeOfFunctionLike(calleeDecl);
+            }
+            default:
+                return neverType;
+        }
+    }
+
+    function collectCallSitesFromStatement(stmt: Statement, out: (CallExpression | NewExpression)[]): void {
+        switch (stmt.kind) {
+            case SyntaxKind.ExpressionStatement: {
+                const expr = (stmt as ExpressionStatement).expression;
+                if (expr.kind === SyntaxKind.CallExpression || expr.kind === SyntaxKind.NewExpression) {
+                    out.push(expr as CallExpression | NewExpression);
+                }
+                return;
+            }
+            case SyntaxKind.Block:
+                for (const s of (stmt as Block).statements) {
+                    if (!isFunctionLike(s)) collectCallSitesFromStatement(s, out);
+                }
+                return;
+            case SyntaxKind.TryStatement: {
+                const tryStmt = stmt as TryStatement;
+                collectCallSitesFromStatement(tryStmt.tryBlock, out);
+                if (tryStmt.catchClause) collectCallSitesFromStatement(tryStmt.catchClause.block, out);
+                if (tryStmt.finallyBlock) collectCallSitesFromStatement(tryStmt.finallyBlock, out);
+                return;
+            }
+            case SyntaxKind.IfStatement: {
+                const ifStmt = stmt as IfStatement;
+                collectCallSitesFromStatement(ifStmt.thenStatement, out);
+                if (ifStmt.elseStatement) collectCallSitesFromStatement(ifStmt.elseStatement, out);
+                return;
+            }
+            default:
+                return;
+        }
+    }
+
+    function getCalleeDeclarationFromCall(node: CallExpression | NewExpression): FunctionLikeDeclaration | undefined {
+        const signature = getResolvedSignature(node, /*candidatesOutArray*/ undefined);
+        if (!signature || signature === resolvingSignature) return undefined;
+        const decl = signature.declaration;
+        if (!decl || !isFunctionLike(decl)) return undefined;
+        const funcDecl = decl as FunctionLikeDeclaration;
+        if (!getFunctionBodyForThrownType(funcDecl)) return undefined;
+        return funcDecl;
+    }
+
+    function thrownTypeOfFunctionLike(node: FunctionLikeDeclaration): Type {
+        if (!checkedThrows || !thrownTypeCache) return neverType;
+        const cached = thrownTypeCache.get(node);
+        if (cached?.kind === "done") return cached.type;
+        if (cached?.kind === "computing") return unknownType;
+        const body = getFunctionBodyForThrownType(node);
+        if (!body) {
+            thrownTypeCache.set(node, { kind: "done", type: neverType });
+            return neverType;
+        }
+        thrownTypeCache.set(node, { kind: "computing" });
+        const types: Type[] = [];
+        const direct = thrownTypeOfStatement(body);
+        if (direct !== neverType) types.push(direct);
+        const callSites: (CallExpression | NewExpression)[] = [];
+        for (const stmt of body.statements) {
+            if (!isFunctionLike(stmt)) collectCallSitesFromStatement(stmt, callSites);
+        }
+        for (const call of callSites) {
+            if (isHandledByTry(call)) continue;
+            const calleeDecl = getCalleeDeclarationFromCall(call);
+            if (calleeDecl) {
+                const calleeThrown = thrownTypeOfFunctionLike(calleeDecl);
+                if (calleeThrown !== neverType && calleeThrown !== unknownType) types.push(calleeThrown);
+                else if (calleeThrown === unknownType) types.push(unknownType);
+            }
+        }
+        const result = types.length === 0 ? neverType : types.some(t => t === unknownType) ? unknownType : types.length === 1 ? types[0] : getUnionType(types);
+        thrownTypeCache.set(node, { kind: "done", type: result });
+        return result;
+    }
+
+    function isHandledByTry(node: Node): boolean {
+        const func = getContainingFunction(node);
+        let current: Node | undefined = node;
+        while (current && current !== func) {
+            if (current.kind === SyntaxKind.TryStatement) {
+                const tryStmt = current as TryStatement;
+                if (tryStmt.catchClause) {
+                    let n: Node | undefined = node;
+                    while (n && n !== tryStmt) {
+                        if (n === tryStmt.tryBlock) return true;
+                        n = n.parent;
+                    }
+                }
+            }
+            if (isFunctionLike(current)) return false;
+            current = current.parent;
+        }
+        return false;
+    }
+
+    function isHandledByPropagation(node: Node): boolean {
+        const func = getContainingFunction(node);
+        if (func === undefined || !isFunctionLike(func)) return false;
+        return thrownTypeOfFunctionLike(func as FunctionLikeDeclaration) !== neverType;
+    }
+
     function checkThrowStatement(node: ThrowStatement) {
         // Grammar checking
         if (!checkGrammarStatementInAmbientContext(node)) {
@@ -46701,6 +46888,10 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
             // Grammar checking
             if (catchClause.variableDeclaration) {
                 const declaration = catchClause.variableDeclaration;
+                if (checkedThrows && catchVariableThrownTypeMap && !getEffectiveTypeAnnotationNode(declaration)) {
+                    const tTry = thrownTypeOfStatement(node.tryBlock);
+                    catchVariableThrownTypeMap.set(declaration, tTry);
+                }
                 checkVariableLikeDeclaration(declaration);
                 const typeNode = getEffectiveTypeAnnotationNode(declaration);
                 if (typeNode) {

@@ -1,0 +1,17 @@
+checkedThrowsBasic.ts(4,1): error TS18063: Unhandled thrown type: Error.
+
+
+==== checkedThrowsBasic.ts (1 errors) ====
+    function boom2() {
+        throw new Error("x");
+    }
+    boom2();
+    ~~~~~~~
+!!! error TS18063: Unhandled thrown type: Error.
+    
+    try {
+        boom2();
+    } catch (e) {
+        e.message;
+    }
+    

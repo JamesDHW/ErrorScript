@@ -1,0 +1,27 @@
+//// [tests/cases/compiler/checkedThrowsPropagation.ts] ////
+
+=== checkedThrowsPropagation.ts ===
+function inner() {
+>inner : () => void
+>      : ^^^^^^^^^^
+
+    throw 123;
+>123 : 123
+>    : ^^^
+}
+function outer() {
+>outer : () => void
+>      : ^^^^^^^^^^
+
+    inner();
+>inner() : void
+>        : ^^^^
+>inner : () => void
+>      : ^^^^^^^^^^
+}
+outer();
+>outer() : void
+>        : ^^^^
+>outer : () => void
+>      : ^^^^^^^^^^
+

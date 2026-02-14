@@ -1,0 +1,41 @@
+//// [tests/cases/compiler/checkedThrowsBasic.ts] ////
+
+=== checkedThrowsBasic.ts ===
+function boom2() {
+>boom2 : () => void
+>      : ^^^^^^^^^^
+
+    throw new Error("x");
+>new Error("x") : Error
+>               : ^^^^^
+>Error : ErrorConstructor
+>      : ^^^^^^^^^^^^^^^^
+>"x" : "x"
+>    : ^^^
+}
+boom2();
+>boom2() : void
+>        : ^^^^
+>boom2 : () => void
+>      : ^^^^^^^^^^
+
+try {
+    boom2();
+>boom2() : void
+>        : ^^^^
+>boom2 : () => void
+>      : ^^^^^^^^^^
+
+} catch (e) {
+>e : Error
+>  : ^^^^^
+
+    e.message;
+>e.message : string
+>          : ^^^^^^
+>e : Error
+>  : ^^^^^
+>message : string
+>        : ^^^^^^
+}
+

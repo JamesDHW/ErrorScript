@@ -104,6 +104,7 @@ import {
     TransientSymbol,
     Type,
     TypeChecker,
+    TypeFlags,
     TypeFormatFlags,
     TypeParameter,
     typeToDisplayParts,
@@ -981,6 +982,18 @@ function getSymbolDisplayPartsDocumentationAndSymbolKindWorker(
 
     function addSignatureDisplayParts(signature: Signature, allSignatures: readonly Signature[], flags = TypeFormatFlags.None) {
         addRange(displayParts, signatureToDisplayParts(typeChecker, signature, enclosingDeclaration, flags | TypeFormatFlags.WriteTypeArgumentsOfSignature, maximumLength, verbosityLevel, typeWriterOut));
+        const inferredThrows = typeChecker.getInferredThrowsType(signature);
+        if (inferredThrows && (inferredThrows.flags & TypeFlags.Never) === 0) {
+            displayParts.push(spacePart());
+            displayParts.push(textPart("throws "));
+            addRange(displayParts, typeToDisplayParts(typeChecker, inferredThrows, enclosingDeclaration, TypeFormatFlags.None, maximumLength, verbosityLevel, typeWriterOut));
+        }
+        const inferredRejects = typeChecker.getInferredRejectsType(signature);
+        if (inferredRejects && (inferredRejects.flags & TypeFlags.Never) === 0) {
+            displayParts.push(spacePart());
+            displayParts.push(textPart("rejects "));
+            addRange(displayParts, typeToDisplayParts(typeChecker, inferredRejects, enclosingDeclaration, TypeFormatFlags.None, maximumLength, verbosityLevel, typeWriterOut));
+        }
         if (allSignatures.length > 1) {
             displayParts.push(spacePart());
             displayParts.push(punctuationPart(SyntaxKind.OpenParenToken));

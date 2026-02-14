@@ -1686,6 +1686,8 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         getPromisedTypeOfPromise,
         getAwaitedType: type => getAwaitedType(type),
         getReturnTypeOfSignature,
+        getInferredThrowsType,
+        getInferredRejectsType,
         isNullableType,
         getNullableType,
         getNonNullableType,
@@ -46942,7 +46944,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         return undefined;
     }
 
-    function getEffectiveThrows(signature: Signature, callNode: CallExpression | NewExpression): Type {
+    function getEffectiveThrows(signature: Signature, callNode?: CallExpression | NewExpression): Type {
         const declared = getDeclaredThrowsType(signature);
         if (declared !== undefined) return declared;
         const decl = signature.declaration;
@@ -46976,6 +46978,16 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
             return getRejectEffectOfAsyncFunction(funcDecl);
         }
         return getRejectEffectOfNonAsyncReturningPromise(funcDecl);
+    }
+
+    function getInferredThrowsType(signature: Signature): Type {
+        if (getDeclaredThrowsType(signature) !== undefined) return neverType;
+        return getEffectiveThrows(signature, undefined);
+    }
+
+    function getInferredRejectsType(signature: Signature): Type {
+        if (getDeclaredRejectsType(signature) !== undefined) return neverType;
+        return getEffectiveRejects(signature, undefined);
     }
 
     function getRejectEffectOfAsyncFunction(decl: FunctionLikeDeclaration): Type {

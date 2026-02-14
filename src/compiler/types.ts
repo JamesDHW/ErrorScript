@@ -5121,6 +5121,8 @@ export interface TypeChecker {
     /** @internal */
     isEmptyAnonymousObjectType(type: Type): boolean;
     getReturnTypeOfSignature(signature: Signature): Type;
+    /** @internal */ getInferredThrowsType(signature: Signature): Type;
+    /** @internal */ getInferredRejectsType(signature: Signature): Type;
     /**
      * Gets the type of a parameter at a given position in a signature.
      * Returns `any` if the index is not valid.

@@ -1,0 +1,191 @@
+//// [tests/cases/compiler/checkedThrowsAssertNever.ts] ////
+
+=== checkedThrowsAssertNever.ts ===
+function assertNever(x: never): never {
+>assertNever : (x: never) => never
+>            : ^ ^^     ^^^^^     
+>x : never
+>  : ^^^^^
+
+    throw new Error(`unreachable: ${x}`);
+>new Error(`unreachable: ${x}`) : Error
+>                               : ^^^^^
+>Error : ErrorConstructor
+>      : ^^^^^^^^^^^^^^^^
+>`unreachable: ${x}` : string
+>                    : ^^^^^^
+>x : never
+>  : ^^^^^
+}
+
+type A = { kind: "a"; value: number };
+>A : A
+>  : ^
+>kind : "a"
+>     : ^^^
+>value : number
+>      : ^^^^^^
+
+type B = { kind: "b"; value: string };
+>B : B
+>  : ^
+>kind : "b"
+>     : ^^^
+>value : string
+>      : ^^^^^^
+
+function exhaustiveSwitch(x: A | B): number {
+>exhaustiveSwitch : (x: A | B) => number
+>                 : ^ ^^     ^^^^^      
+>x : A | B
+>  : ^^^^^
+
+    switch (x.kind) {
+>x.kind : "a" | "b"
+>       : ^^^^^^^^^
+>x : A | B
+>  : ^^^^^
+>kind : "a" | "b"
+>     : ^^^^^^^^^
+
+        case "a": return x.value;
+>"a" : "a"
+>    : ^^^
+>x.value : number
+>        : ^^^^^^
+>x : A
+>  : ^
+>value : number
+>      : ^^^^^^
+
+        case "b": return x.value.length;
+>"b" : "b"
+>    : ^^^
+>x.value.length : number
+>               : ^^^^^^
+>x.value : string
+>        : ^^^^^^
+>x : B
+>  : ^
+>value : string
+>      : ^^^^^^
+>length : number
+>       : ^^^^^^
+
+        default: assertNever(x);
+>assertNever(x) : never
+>               : ^^^^^
+>assertNever : (x: never) => never
+>            : ^ ^^     ^^^^^     
+>x : never
+>  : ^^^^^
+    }
+}
+
+class ParseError extends Error { }
+>ParseError : ParseError
+>           : ^^^^^^^^^^
+>Error : Error
+>      : ^^^^^
+
+class ValidationError extends Error { }
+>ValidationError : ValidationError
+>                : ^^^^^^^^^^^^^^^
+>Error : Error
+>      : ^^^^^
+
+function catchThenAssertNever(input: string): number {
+>catchThenAssertNever : (input: string) => number
+>                     : ^     ^^      ^^^^^      
+>input : string
+>      : ^^^^^^
+
+    try {
+        if (!input) throw new ParseError("empty");
+>!input : boolean
+>       : ^^^^^^^
+>input : string
+>      : ^^^^^^
+>new ParseError("empty") : ParseError
+>                        : ^^^^^^^^^^
+>ParseError : typeof ParseError
+>           : ^^^^^^^^^^^^^^^^^
+>"empty" : "empty"
+>        : ^^^^^^^
+
+        const n = parseInt(input, 10);
+>n : number
+>  : ^^^^^^
+>parseInt(input, 10) : number
+>                    : ^^^^^^
+>parseInt : (string: string, radix?: number) => number
+>         : ^      ^^      ^^     ^^^      ^^^^^      
+>input : string
+>      : ^^^^^^
+>10 : 10
+>   : ^^
+
+        if (Number.isNaN(n)) throw new ValidationError("nan");
+>Number.isNaN(n) : boolean
+>                : ^^^^^^^
+>Number.isNaN : (number: unknown) => boolean
+>             : ^      ^^       ^^^^^       
+>Number : NumberConstructor
+>       : ^^^^^^^^^^^^^^^^^
+>isNaN : (number: unknown) => boolean
+>      : ^      ^^       ^^^^^       
+>n : number
+>  : ^^^^^^
+>new ValidationError("nan") : ValidationError
+>                           : ^^^^^^^^^^^^^^^
+>ValidationError : typeof ValidationError
+>                : ^^^^^^^^^^^^^^^^^^^^^^
+>"nan" : "nan"
+>      : ^^^^^
+
+        return n;
+>n : number
+>  : ^^^^^^
+
+    } catch (e) {
+>e : ParseError | ValidationError
+>  : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+        if (e instanceof ParseError) return 0;
+>e instanceof ParseError : boolean
+>                        : ^^^^^^^
+>e : ParseError | ValidationError
+>  : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>ParseError : typeof ParseError
+>           : ^^^^^^^^^^^^^^^^^
+>0 : 0
+>  : ^
+
+        if (e instanceof ValidationError) return 1;
+>e instanceof ValidationError : boolean
+>                             : ^^^^^^^
+>e : ValidationError
+>  : ^^^^^^^^^^^^^^^
+>ValidationError : typeof ValidationError
+>                : ^^^^^^^^^^^^^^^^^^^^^^
+>1 : 1
+>  : ^
+
+        assertNever(e);
+>assertNever(e) : never
+>               : ^^^^^
+>assertNever : (x: never) => never
+>            : ^ ^^     ^^^^^     
+>e : never
+>  : ^^^^^
+    }
+}
+
+catchThenAssertNever("123");
+>catchThenAssertNever("123") : number
+>                            : ^^^^^^
+>catchThenAssertNever : (input: string) => number
+>                     : ^     ^^      ^^^^^      
+>"123" : "123"
+>      : ^^^^^
+

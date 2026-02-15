@@ -1,0 +1,103 @@
+//// [tests/cases/compiler/checkedThrowsAssertNever.ts] ////
+
+=== checkedThrowsAssertNever.ts ===
+function assertNever(x: never): never {
+>assertNever : Symbol(assertNever, Decl(checkedThrowsAssertNever.ts, 0, 0))
+>x : Symbol(x, Decl(checkedThrowsAssertNever.ts, 0, 21))
+
+    throw new Error(`unreachable: ${x}`);
+>Error : Symbol(Error, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2022.error.d.ts, --, --))
+>x : Symbol(x, Decl(checkedThrowsAssertNever.ts, 0, 21))
+}
+
+type A = { kind: "a"; value: number };
+>A : Symbol(A, Decl(checkedThrowsAssertNever.ts, 2, 1))
+>kind : Symbol(kind, Decl(checkedThrowsAssertNever.ts, 4, 10))
+>value : Symbol(value, Decl(checkedThrowsAssertNever.ts, 4, 21))
+
+type B = { kind: "b"; value: string };
+>B : Symbol(B, Decl(checkedThrowsAssertNever.ts, 4, 38))
+>kind : Symbol(kind, Decl(checkedThrowsAssertNever.ts, 5, 10))
+>value : Symbol(value, Decl(checkedThrowsAssertNever.ts, 5, 21))
+
+function exhaustiveSwitch(x: A | B): number {
+>exhaustiveSwitch : Symbol(exhaustiveSwitch, Decl(checkedThrowsAssertNever.ts, 5, 38))
+>x : Symbol(x, Decl(checkedThrowsAssertNever.ts, 7, 26))
+>A : Symbol(A, Decl(checkedThrowsAssertNever.ts, 2, 1))
+>B : Symbol(B, Decl(checkedThrowsAssertNever.ts, 4, 38))
+
+    switch (x.kind) {
+>x.kind : Symbol(kind, Decl(checkedThrowsAssertNever.ts, 4, 10), Decl(checkedThrowsAssertNever.ts, 5, 10))
+>x : Symbol(x, Decl(checkedThrowsAssertNever.ts, 7, 26))
+>kind : Symbol(kind, Decl(checkedThrowsAssertNever.ts, 4, 10), Decl(checkedThrowsAssertNever.ts, 5, 10))
+
+        case "a": return x.value;
+>x.value : Symbol(value, Decl(checkedThrowsAssertNever.ts, 4, 21))
+>x : Symbol(x, Decl(checkedThrowsAssertNever.ts, 7, 26))
+>value : Symbol(value, Decl(checkedThrowsAssertNever.ts, 4, 21))
+
+        case "b": return x.value.length;
+>x.value.length : Symbol(String.length, Decl(lib.es5.d.ts, --, --))
+>x.value : Symbol(value, Decl(checkedThrowsAssertNever.ts, 5, 21))
+>x : Symbol(x, Decl(checkedThrowsAssertNever.ts, 7, 26))
+>value : Symbol(value, Decl(checkedThrowsAssertNever.ts, 5, 21))
+>length : Symbol(String.length, Decl(lib.es5.d.ts, --, --))
+
+        default: assertNever(x);
+>assertNever : Symbol(assertNever, Decl(checkedThrowsAssertNever.ts, 0, 0))
+>x : Symbol(x, Decl(checkedThrowsAssertNever.ts, 7, 26))
+    }
+}
+
+class ParseError extends Error { }
+>ParseError : Symbol(ParseError, Decl(checkedThrowsAssertNever.ts, 13, 1))
+>Error : Symbol(Error, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2022.error.d.ts, --, --))
+
+class ValidationError extends Error { }
+>ValidationError : Symbol(ValidationError, Decl(checkedThrowsAssertNever.ts, 15, 34))
+>Error : Symbol(Error, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2022.error.d.ts, --, --))
+
+function catchThenAssertNever(input: string): number {
+>catchThenAssertNever : Symbol(catchThenAssertNever, Decl(checkedThrowsAssertNever.ts, 16, 39))
+>input : Symbol(input, Decl(checkedThrowsAssertNever.ts, 18, 30))
+
+    try {
+        if (!input) throw new ParseError("empty");
+>input : Symbol(input, Decl(checkedThrowsAssertNever.ts, 18, 30))
+>ParseError : Symbol(ParseError, Decl(checkedThrowsAssertNever.ts, 13, 1))
+
+        const n = parseInt(input, 10);
+>n : Symbol(n, Decl(checkedThrowsAssertNever.ts, 21, 13))
+>parseInt : Symbol(parseInt, Decl(lib.es5.d.ts, --, --))
+>input : Symbol(input, Decl(checkedThrowsAssertNever.ts, 18, 30))
+
+        if (Number.isNaN(n)) throw new ValidationError("nan");
+>Number.isNaN : Symbol(NumberConstructor.isNaN, Decl(lib.es2015.core.d.ts, --, --))
+>Number : Symbol(Number, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2020.number.d.ts, --, --))
+>isNaN : Symbol(NumberConstructor.isNaN, Decl(lib.es2015.core.d.ts, --, --))
+>n : Symbol(n, Decl(checkedThrowsAssertNever.ts, 21, 13))
+>ValidationError : Symbol(ValidationError, Decl(checkedThrowsAssertNever.ts, 15, 34))
+
+        return n;
+>n : Symbol(n, Decl(checkedThrowsAssertNever.ts, 21, 13))
+
+    } catch (e) {
+>e : Symbol(e, Decl(checkedThrowsAssertNever.ts, 24, 13))
+
+        if (e instanceof ParseError) return 0;
+>e : Symbol(e, Decl(checkedThrowsAssertNever.ts, 24, 13))
+>ParseError : Symbol(ParseError, Decl(checkedThrowsAssertNever.ts, 13, 1))
+
+        if (e instanceof ValidationError) return 1;
+>e : Symbol(e, Decl(checkedThrowsAssertNever.ts, 24, 13))
+>ValidationError : Symbol(ValidationError, Decl(checkedThrowsAssertNever.ts, 15, 34))
+
+        assertNever(e);
+>assertNever : Symbol(assertNever, Decl(checkedThrowsAssertNever.ts, 0, 0))
+>e : Symbol(e, Decl(checkedThrowsAssertNever.ts, 24, 13))
+    }
+}
+
+catchThenAssertNever("123");
+>catchThenAssertNever : Symbol(catchThenAssertNever, Decl(checkedThrowsAssertNever.ts, 16, 39))
+

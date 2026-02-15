@@ -1,0 +1,148 @@
+//// [tests/cases/compiler/checkedThrowsCatchVariableFromInitializer.ts] ////
+
+=== checkedThrowsCatchVariableFromInitializer.ts ===
+class ParseError extends Error {
+>ParseError : ParseError
+>           : ^^^^^^^^^^
+>Error : Error
+>      : ^^^^^
+
+    constructor(message: string) { super(message); }
+>message : string
+>        : ^^^^^^
+>super(message) : void
+>               : ^^^^
+>super : ErrorConstructor
+>      : ^^^^^^^^^^^^^^^^
+>message : string
+>        : ^^^^^^
+}
+class ValidationError extends Error {
+>ValidationError : ValidationError
+>                : ^^^^^^^^^^^^^^^
+>Error : Error
+>      : ^^^^^
+
+    constructor(message: string) { super(message); }
+>message : string
+>        : ^^^^^^
+>super(message) : void
+>               : ^^^^
+>super : ErrorConstructor
+>      : ^^^^^^^^^^^^^^^^
+>message : string
+>        : ^^^^^^
+}
+
+function throwingCall(s: string): number {
+>throwingCall : (s: string) => number
+>             : ^ ^^      ^^^^^      
+>s : string
+>  : ^^^^^^
+
+    if (!s) throw new ParseError("empty");
+>!s : boolean
+>   : ^^^^^^^
+>s : string
+>  : ^^^^^^
+>new ParseError("empty") : ParseError
+>                        : ^^^^^^^^^^
+>ParseError : typeof ParseError
+>           : ^^^^^^^^^^^^^^^^^
+>"empty" : "empty"
+>        : ^^^^^^^
+
+    const n = parseInt(s, 10);
+>n : number
+>  : ^^^^^^
+>parseInt(s, 10) : number
+>                : ^^^^^^
+>parseInt : (string: string, radix?: number) => number
+>         : ^      ^^      ^^     ^^^      ^^^^^      
+>s : string
+>  : ^^^^^^
+>10 : 10
+>   : ^^
+
+    if (Number.isNaN(n)) throw new ValidationError("not a number");
+>Number.isNaN(n) : boolean
+>                : ^^^^^^^
+>Number.isNaN : (number: unknown) => boolean
+>             : ^      ^^       ^^^^^       
+>Number : NumberConstructor
+>       : ^^^^^^^^^^^^^^^^^
+>isNaN : (number: unknown) => boolean
+>      : ^      ^^       ^^^^^       
+>n : number
+>  : ^^^^^^
+>new ValidationError("not a number") : ValidationError
+>                                    : ^^^^^^^^^^^^^^^
+>ValidationError : typeof ValidationError
+>                : ^^^^^^^^^^^^^^^^^^^^^^
+>"not a number" : "not a number"
+>               : ^^^^^^^^^^^^^^
+
+    return n;
+>n : number
+>  : ^^^^^^
+}
+
+function catchVariableFromInitializer(input: string): number {
+>catchVariableFromInitializer : (input: string) => number
+>                             : ^     ^^      ^^^^^      
+>input : string
+>      : ^^^^^^
+
+    try {
+        const x = throwingCall(input);
+>x : number
+>  : ^^^^^^
+>throwingCall(input) : number
+>                    : ^^^^^^
+>throwingCall : (s: string) => number
+>             : ^ ^^      ^^^^^      
+>input : string
+>      : ^^^^^^
+
+        return x;
+>x : number
+>  : ^^^^^^
+
+    } catch (e) {
+>e : ParseError | ValidationError
+>  : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+        if (e instanceof ParseError) return 0;
+>e instanceof ParseError : boolean
+>                        : ^^^^^^^
+>e : ParseError | ValidationError
+>  : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>ParseError : typeof ParseError
+>           : ^^^^^^^^^^^^^^^^^
+>0 : 0
+>  : ^
+
+        if (e instanceof ValidationError) return 1;
+>e instanceof ValidationError : boolean
+>                             : ^^^^^^^
+>e : ValidationError
+>  : ^^^^^^^^^^^^^^^
+>ValidationError : typeof ValidationError
+>                : ^^^^^^^^^^^^^^^^^^^^^^
+>1 : 1
+>  : ^
+
+        throw e;
+>e : never
+>  : ^^^^^
+    }
+}
+
+catchVariableFromInitializer("123");
+>catchVariableFromInitializer("123") : number
+>                                    : ^^^^^^
+>catchVariableFromInitializer : (input: string) => number
+>                             : ^     ^^      ^^^^^      
+>"123" : "123"
+>      : ^^^^^
+

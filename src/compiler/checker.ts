@@ -37926,7 +37926,10 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         if (checkedThrows) {
             const effectiveThrows = getEffectiveThrows(signature, node);
             const returnType = getReturnTypeOfSignature(signature);
-            if (effectiveThrows !== neverType && !isHandledByTry(node) && !isHandledByPropagation(node) && !isThenableType(returnType)) {
+            const isAssertNeverLike = returnType === neverType
+                && node.arguments?.length
+                && getTypeOfNode(node.arguments[0]) === neverType;
+            if (effectiveThrows !== neverType && !isHandledByTry(node) && !isHandledByPropagation(node) && !isThenableType(returnType) && !isAssertNeverLike) {
                 error(node, Diagnostics.Unhandled_thrown_type_Colon_0, typeToString(effectiveThrows));
             }
             const rejectEffect = getRejectEffectOfExpression(node);
@@ -46802,6 +46805,21 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         return body && body.kind === SyntaxKind.Block ? body as Block : undefined;
     }
 
+    function thrownTypeOfExpression(expr: Expression): Type {
+        if (expr.kind !== SyntaxKind.CallExpression && expr.kind !== SyntaxKind.NewExpression) {
+            return neverType;
+        }
+        const call = expr as CallExpression | NewExpression;
+        const signature = getResolvedSignature(call, /*candidatesOutArray*/ undefined);
+        if (!signature || signature === resolvingSignature) return neverType;
+        const returnType = getReturnTypeOfSignature(signature);
+        const isAssertNeverLike = returnType === neverType
+            && call.arguments?.length
+            && getTypeOfNode(call.arguments[0]) === neverType;
+        if (isAssertNeverLike) return neverType;
+        return getEffectiveThrows(signature, call);
+    }
+
     function thrownTypeOfStatement(stmt: Statement): Type {
         switch (stmt.kind) {
             case SyntaxKind.ThrowStatement: {
@@ -46848,13 +46866,18 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 if (expr.kind === SyntaxKind.AwaitExpression) {
                     return getRejectEffectOfExpression((expr as AwaitExpression).expression);
                 }
-                if (expr.kind !== SyntaxKind.CallExpression && expr.kind !== SyntaxKind.NewExpression) {
-                    return neverType;
+                return thrownTypeOfExpression(expr);
+            }
+            case SyntaxKind.VariableStatement: {
+                const variableStmt = stmt as VariableStatement;
+                const types: Type[] = [];
+                for (const decl of variableStmt.declarationList.declarations) {
+                    if (decl.initializer) {
+                        const t = thrownTypeOfExpression(decl.initializer);
+                        if (t !== neverType) types.push(t);
+                    }
                 }
-                const call = expr as CallExpression | NewExpression;
-                const signature = getResolvedSignature(call, /*candidatesOutArray*/ undefined);
-                if (!signature || signature === resolvingSignature) return neverType;
-                return getEffectiveThrows(signature, call);
+                return types.length === 0 ? neverType : types.length === 1 ? types[0] : getUnionType(types);
             }
             default:
                 return neverType;
@@ -47112,6 +47135,14 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         }
         for (const call of callSites) {
             if (isHandledByTry(call)) continue;
+            const signature = getResolvedSignature(call, /*candidatesOutArray*/ undefined);
+            if (signature && signature !== resolvingSignature) {
+                const returnType = getReturnTypeOfSignature(signature);
+                const isAssertNeverLike = returnType === neverType
+                    && call.arguments?.length
+                    && getTypeOfNode(call.arguments[0]) === neverType;
+                if (isAssertNeverLike) continue;
+            }
             const calleeDecl = getCalleeDeclarationFromCall(call);
             if (calleeDecl) {
                 const calleeThrown = thrownTypeOfFunctionLike(calleeDecl);

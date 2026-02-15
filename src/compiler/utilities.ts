@@ -1216,12 +1216,16 @@ export function createCommentDirectivesMap(sourceFile: SourceFile, commentDirect
 
     const usedLines = new Map<string, boolean>();
 
-    return { getUnusedExpectations, markUsed };
+    return { getUnusedExpectations, getDirectiveForLine, markUsed };
 
     function getUnusedExpectations() {
         return arrayFrom(directivesByLine.entries())
             .filter(([line, directive]) => directive.type === CommentDirectiveType.ExpectError && !usedLines.get(line))
             .map(([_, directive]) => directive);
+    }
+
+    function getDirectiveForLine(line: number) {
+        return directivesByLine.get(`${line}`);
     }
 
     function markUsed(line: number) {

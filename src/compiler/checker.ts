@@ -46879,7 +46879,12 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
             case SyntaxKind.ExpressionStatement: {
                 const expr = (stmt as ExpressionStatement).expression;
                 if (expr.kind === SyntaxKind.AwaitExpression) {
-                    return getRejectEffectOfExpression((expr as AwaitExpression).expression);
+                    const inner = (expr as AwaitExpression).expression;
+                    const reject = getRejectEffectOfExpression(inner);
+                    const syncThrows = thrownTypeOfExpression(inner);
+                    if (reject === neverType && syncThrows === neverType) return neverType;
+                    if (reject !== neverType && syncThrows !== neverType) return getUnionType([reject, syncThrows]);
+                    return reject !== neverType ? reject : syncThrows;
                 }
                 return thrownTypeOfExpression(expr);
             }
@@ -46890,9 +46895,30 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                     if (decl.initializer) {
                         const t = thrownTypeOfExpression(decl.initializer);
                         if (t !== neverType) types.push(t);
+                        if (decl.initializer.kind === SyntaxKind.AwaitExpression) {
+                            const inner = (decl.initializer as AwaitExpression).expression;
+                            const reject = getRejectEffectOfExpression(inner);
+                            if (reject !== neverType) types.push(reject);
+                            const syncThrows = thrownTypeOfExpression(inner);
+                            if (syncThrows !== neverType) types.push(syncThrows);
+                        }
                     }
                 }
                 return types.length === 0 ? neverType : types.length === 1 ? types[0] : getUnionType(types);
+            }
+            case SyntaxKind.ReturnStatement: {
+                const returnStmt = stmt as ReturnStatement;
+                const expr = returnStmt.expression;
+                if (expr?.kind === SyntaxKind.AwaitExpression) {
+                    const inner = (expr as AwaitExpression).expression;
+                    const reject = getRejectEffectOfExpression(inner);
+                    const syncThrows = thrownTypeOfExpression(inner);
+                    if (reject === neverType && syncThrows === neverType) return neverType;
+                    if (reject !== neverType && syncThrows !== neverType) return getUnionType([reject, syncThrows]);
+                    return reject !== neverType ? reject : syncThrows;
+                }
+                if (expr) return thrownTypeOfExpression(expr);
+                return neverType;
             }
             default:
                 return neverType;

@@ -1,0 +1,124 @@
+//// [tests/cases/compiler/checkedThrowsCombinators.ts] ////
+
+=== checkedThrowsCombinators.ts ===
+async function a() {
+>a : () => Promise<void>
+>  : ^^^^^^^^^^^^^^^^^^^
+
+    throw "a";
+>"a" : "a"
+>    : ^^^
+}
+async function b() {
+>b : () => Promise<void>
+>  : ^^^^^^^^^^^^^^^^^^^
+
+    throw 123;
+>123 : 123
+>    : ^^^
+}
+
+async function raceRequiresHandling() {
+>raceRequiresHandling : () => Promise<void>
+>                     : ^^^^^^^^^^^^^^^^^^^
+
+    await Promise.race([a(), b()]);
+>await Promise.race([a(), b()]) : void
+>                               : ^^^^
+>Promise.race([a(), b()]) : Promise<void>
+>                         : ^^^^^^^^^^^^^
+>Promise.race : { <T>(values: Iterable<T | PromiseLike<T>>): Promise<Awaited<T>>; <T extends readonly unknown[] | []>(values: T): Promise<Awaited<T[number]>>; }
+>             : ^^^ ^^      ^^                            ^^^                   ^^^ ^^^^^^^^^                       ^^      ^^ ^^^                           ^^^
+>Promise : PromiseConstructor
+>        : ^^^^^^^^^^^^^^^^^^
+>race : { <T>(values: Iterable<T | PromiseLike<T>>): Promise<Awaited<T>>; <T extends readonly unknown[] | []>(values: T): Promise<Awaited<T[number]>>; }
+>     : ^^^ ^^      ^^                            ^^^                   ^^^ ^^^^^^^^^                       ^^      ^^ ^^^                           ^^^
+>[a(), b()] : [Promise<void>, Promise<void>]
+>           : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>a() : Promise<void>
+>    : ^^^^^^^^^^^^^
+>a : () => Promise<void>
+>  : ^^^^^^^^^^^^^^^^^^^
+>b() : Promise<void>
+>    : ^^^^^^^^^^^^^
+>b : () => Promise<void>
+>  : ^^^^^^^^^^^^^^^^^^^
+}
+
+async function anyRequiresHandling() {
+>anyRequiresHandling : () => Promise<void>
+>                    : ^^^^^^^^^^^^^^^^^^^
+
+    await Promise.any([a(), b()]);
+>await Promise.any([a(), b()]) : void
+>                              : ^^^^
+>Promise.any([a(), b()]) : Promise<void>
+>                        : ^^^^^^^^^^^^^
+>Promise.any : { <T extends readonly unknown[] | []>(values: T): Promise<Awaited<T[number]>>; <T>(values: Iterable<T | PromiseLike<T>>): Promise<Awaited<T>>; }
+>            : ^^^ ^^^^^^^^^                       ^^      ^^ ^^^                           ^^^ ^^      ^^                            ^^^                   ^^^
+>Promise : PromiseConstructor
+>        : ^^^^^^^^^^^^^^^^^^
+>any : { <T extends readonly unknown[] | []>(values: T): Promise<Awaited<T[number]>>; <T>(values: Iterable<T | PromiseLike<T>>): Promise<Awaited<T>>; }
+>    : ^^^ ^^^^^^^^^                       ^^      ^^ ^^^                           ^^^ ^^      ^^                            ^^^                   ^^^
+>[a(), b()] : [Promise<void>, Promise<void>]
+>           : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>a() : Promise<void>
+>    : ^^^^^^^^^^^^^
+>a : () => Promise<void>
+>  : ^^^^^^^^^^^^^^^^^^^
+>b() : Promise<void>
+>    : ^^^^^^^^^^^^^
+>b : () => Promise<void>
+>  : ^^^^^^^^^^^^^^^^^^^
+}
+
+async function allSettledNoHandlingRequired() {
+>allSettledNoHandlingRequired : () => Promise<void>
+>                             : ^^^^^^^^^^^^^^^^^^^
+
+    await Promise.allSettled([a(), b()]);
+>await Promise.allSettled([a(), b()]) : [PromiseSettledResult<void>, PromiseSettledResult<void>]
+>                                     : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>Promise.allSettled([a(), b()]) : Promise<[PromiseSettledResult<void>, PromiseSettledResult<void>]>
+>                               : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>Promise.allSettled : { <T extends readonly unknown[] | []>(values: T): Promise<{ -readonly [P in keyof T]: PromiseSettledResult<Awaited<T[P]>>; }>; <T>(values: Iterable<T | PromiseLike<T>>): Promise<PromiseSettledResult<Awaited<T>>[]>; }
+>                   : ^^^ ^^^^^^^^^                       ^^      ^^ ^^^                                                                           ^^^ ^^      ^^                            ^^^                                           ^^^
+>Promise : PromiseConstructor
+>        : ^^^^^^^^^^^^^^^^^^
+>allSettled : { <T extends readonly unknown[] | []>(values: T): Promise<{ -readonly [P in keyof T]: PromiseSettledResult<Awaited<T[P]>>; }>; <T>(values: Iterable<T | PromiseLike<T>>): Promise<PromiseSettledResult<Awaited<T>>[]>; }
+>           : ^^^ ^^^^^^^^^                       ^^      ^^ ^^^                                                                           ^^^ ^^      ^^                            ^^^                                           ^^^
+>[a(), b()] : [Promise<void>, Promise<void>]
+>           : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>a() : Promise<void>
+>    : ^^^^^^^^^^^^^
+>a : () => Promise<void>
+>  : ^^^^^^^^^^^^^^^^^^^
+>b() : Promise<void>
+>    : ^^^^^^^^^^^^^
+>b : () => Promise<void>
+>  : ^^^^^^^^^^^^^^^^^^^
+}
+
+async function rejectRequiresHandling() {
+>rejectRequiresHandling : () => Promise<void>
+>                       : ^^^^^^^^^^^^^^^^^^^
+
+    await Promise.reject(new Error("reject"));
+>await Promise.reject(new Error("reject")) : never
+>                                          : ^^^^^
+>Promise.reject(new Error("reject")) : Promise<never>
+>                                    : ^^^^^^^^^^^^^^
+>Promise.reject : <T = never>(reason?: any) => Promise<T>
+>               : ^ ^^^^^^^^^^      ^^^   ^^^^^          
+>Promise : PromiseConstructor
+>        : ^^^^^^^^^^^^^^^^^^
+>reject : <T = never>(reason?: any) => Promise<T>
+>       : ^ ^^^^^^^^^^      ^^^   ^^^^^          
+>new Error("reject") : Error
+>                    : ^^^^^
+>Error : ErrorConstructor
+>      : ^^^^^^^^^^^^^^^^
+>"reject" : "reject"
+>         : ^^^^^^^^
+}
+

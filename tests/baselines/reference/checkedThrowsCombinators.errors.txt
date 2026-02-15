@@ -1,0 +1,35 @@
+checkedThrowsCombinators.ts(9,5): error TS18064: Unhandled promise rejection type: "a" | 123.
+checkedThrowsCombinators.ts(13,5): error TS18064: Unhandled promise rejection type: "a" | 123.
+checkedThrowsCombinators.ts(21,5): error TS18064: Unhandled promise rejection type: Error.
+
+
+==== checkedThrowsCombinators.ts (3 errors) ====
+    async function a() {
+        throw "a";
+    }
+    async function b() {
+        throw 123;
+    }
+    
+    async function raceRequiresHandling() {
+        await Promise.race([a(), b()]);
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!!! error TS18064: Unhandled promise rejection type: "a" | 123.
+    }
+    
+    async function anyRequiresHandling() {
+        await Promise.any([a(), b()]);
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!!! error TS18064: Unhandled promise rejection type: "a" | 123.
+    }
+    
+    async function allSettledNoHandlingRequired() {
+        await Promise.allSettled([a(), b()]);
+    }
+    
+    async function rejectRequiresHandling() {
+        await Promise.reject(new Error("reject"));
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!!! error TS18064: Unhandled promise rejection type: Error.
+    }
+    

@@ -11900,7 +11900,8 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                     let tTry = catchVariableThrownTypeMap.get(getCatchVariableMapKey(rootDecl));
                     if (tTry === undefined) {
                         const catchClause = rootDecl.parent && isCatchClause(rootDecl.parent) ? rootDecl.parent : findAncestor(rootDecl, isCatchClause);
-                        const tryStmt = catchClause?.parent?.kind === SyntaxKind.TryStatement ? catchClause.parent as TryStatement : undefined;
+                        const parent = catchClause?.parent;
+                        const tryStmt = parent?.kind === SyntaxKind.TryStatement ? parent : undefined;
                         if (tryStmt?.tryBlock) {
                             tTry = thrownTypeOfStatement(tryStmt.tryBlock);
                             catchVariableThrownTypeMap.set(getCatchVariableMapKey(rootDecl), tTry);
@@ -46982,12 +46983,12 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
 
     function getInferredThrowsType(signature: Signature): Type {
         if (getDeclaredThrowsType(signature) !== undefined) return neverType;
-        return getEffectiveThrows(signature, undefined);
+        return getEffectiveThrows(signature, /*callNode*/ undefined);
     }
 
     function getInferredRejectsType(signature: Signature): Type {
         if (getDeclaredRejectsType(signature) !== undefined) return neverType;
-        return getEffectiveRejects(signature, undefined);
+        return getEffectiveRejects(signature, /*callNode*/ undefined);
     }
 
     function getRejectEffectOfAsyncFunction(decl: FunctionLikeDeclaration): Type {
@@ -47042,23 +47043,38 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         const invoked = call.expression;
         if (invoked.kind === SyntaxKind.PropertyAccessExpression) {
             const pa = invoked as PropertyAccessExpression;
-            if (idText(pa.name) === "all" && isIdentifier(pa.expression) && idText(pa.expression) === "Promise") {
-                const firstArg = call.arguments?.[0];
-                if (firstArg && firstArg.kind === SyntaxKind.ArrayLiteralExpression) {
-                    const arr = firstArg as ArrayLiteralExpression;
-                    const types: Type[] = [];
-                    for (const el of arr.elements) {
-                        if (!isSpreadElement(el)) {
-                            const e = getRejectEffectOfExpression(el);
-                            if (e !== neverType) types.push(e);
-                        }
+            if (isIdentifier(pa.expression) && idText(pa.expression) === "Promise") {
+                const methodName = idText(pa.name);
+                if (methodName === "reject") {
+                    const reason = call.arguments?.[0];
+                    if (reason) {
+                        const effect = getTypeOfNode(reason);
+                        rejectEffectCache.set(expr, effect);
+                        return effect;
                     }
-                    const effect = types.length === 0 ? neverType : types.some(t => t === unknownType) ? unknownType : types.length === 1 ? types[0] : getUnionType(types);
-                    rejectEffectCache.set(expr, effect);
-                    return effect;
                 }
-                rejectEffectCache.set(expr, unknownType);
-                return unknownType;
+                if (methodName === "allSettled") {
+                    rejectEffectCache.set(expr, neverType);
+                    return neverType;
+                }
+                if (methodName === "all" || methodName === "race" || methodName === "any") {
+                    const firstArg = call.arguments?.[0];
+                    if (firstArg && firstArg.kind === SyntaxKind.ArrayLiteralExpression) {
+                        const arr = firstArg as ArrayLiteralExpression;
+                        const types: Type[] = [];
+                        for (const el of arr.elements) {
+                            if (!isSpreadElement(el)) {
+                                const e = getRejectEffectOfExpression(el);
+                                if (e !== neverType) types.push(e);
+                            }
+                        }
+                        const effect = types.length === 0 ? neverType : types.some(t => t === unknownType) ? unknownType : types.length === 1 ? types[0] : getUnionType(types);
+                        rejectEffectCache.set(expr, effect);
+                        return effect;
+                    }
+                    rejectEffectCache.set(expr, unknownType);
+                    return unknownType;
+                }
             }
         }
         const signature = getResolvedSignature(call, /*candidatesOutArray*/ undefined);

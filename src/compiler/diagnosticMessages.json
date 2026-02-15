@@ -8570,5 +8570,13 @@
     "Declared rejects type '{0}' does not include inferred rejection type '{1}'.": {
         "category": "Error",
         "code": 18069
+    },
+    "Inferred thrown type is unknown (possible recursion or analysis limit); declared type cannot be verified.": {
+        "category": "Error",
+        "code": 18070
+    },
+    "Inferred rejection type is unknown (possible recursion or analysis limit); declared type cannot be verified.": {
+        "category": "Error",
+        "code": 18071
     }
 }

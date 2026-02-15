@@ -44464,6 +44464,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         checkSourceElement(body);
         checkAllCodePathsInNonVoidFunctionReturnOrThrow(node, getReturnTypeFromAnnotation(node));
 
+        // Effect validation: error only if inferred T is not assignable to declared E (soundness-only; E may be wider than T).
         if (checkedThrows && nodeIsPresent(body) && node.kind !== SyntaxKind.MethodSignature) {
             const declWithEffects = node as SignatureDeclarationBase;
             if (declWithEffects.throwsType || declWithEffects.rejectsType) {
@@ -44474,7 +44475,12 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                         if (declared !== undefined) {
                             const inferred = thrownTypeOfFunctionLike(node as FunctionLikeDeclaration);
                             if (!isTypeAssignableTo(inferred, declared)) {
-                                error(declWithEffects.throwsType, Diagnostics.Declared_throws_type_0_does_not_include_inferred_thrown_type_1, typeToString(declared), typeToString(inferred));
+                                if (inferred === unknownType) {
+                                    error(declWithEffects.throwsType, Diagnostics.Inferred_thrown_type_is_unknown_possible_recursion_or_analysis_limit_declared_type_cannot_be_verified);
+                                }
+                                else {
+                                    error(declWithEffects.throwsType, Diagnostics.Declared_throws_type_0_does_not_include_inferred_thrown_type_1, typeToString(declared), typeToString(inferred));
+                                }
                             }
                         }
                     }
@@ -44486,7 +44492,12 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                                 ? getRejectEffectOfAsyncFunction(funcDecl)
                                 : getRejectEffectOfNonAsyncReturningPromise(funcDecl);
                             if (!isTypeAssignableTo(inferred, declared)) {
-                                error(declWithEffects.rejectsType, Diagnostics.Declared_rejects_type_0_does_not_include_inferred_rejection_type_1, typeToString(declared), typeToString(inferred));
+                                if (inferred === unknownType) {
+                                    error(declWithEffects.rejectsType, Diagnostics.Inferred_rejection_type_is_unknown_possible_recursion_or_analysis_limit_declared_type_cannot_be_verified);
+                                }
+                                else {
+                                    error(declWithEffects.rejectsType, Diagnostics.Declared_rejects_type_0_does_not_include_inferred_rejection_type_1, typeToString(declared), typeToString(inferred));
+                                }
                             }
                         }
                     }
@@ -46820,6 +46831,10 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         return getEffectiveThrows(signature, call);
     }
 
+    /**
+     * Returns the thrown type contributed by a single statement (throw expressions, rethrows, try/catch/finally, branches).
+     * Used as a building block for inferred thrown type (Einf). Reachability: we over-approximate by unioning all branches.
+     */
     function thrownTypeOfStatement(stmt: Statement): Type {
         switch (stmt.kind) {
             case SyntaxKind.ThrowStatement: {
@@ -47115,6 +47130,12 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         return effect;
     }
 
+    /**
+     * Inferred thrown type (Einf): the union of all reachable throw expressions, effective thrown types of reachable
+     * call expressions, rethrows (try-block thrown type), and finally contributions. For async functions the same
+     * idea yields the inferred rejection type. Reachability: currently we over-approximate by unioning all branches
+     * (no control-flow reachability). Returns unknownType when re-entered during recursion (validation then fails).
+     */
     function thrownTypeOfFunctionLike(node: FunctionLikeDeclaration): Type {
         if (!checkedThrows || !thrownTypeCache) return neverType;
         const cached = thrownTypeCache.get(node);

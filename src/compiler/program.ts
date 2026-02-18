@@ -17,8 +17,8 @@ import {
     combinePaths,
     commandLineOptionOfCustomType,
     CommentDirective,
-    CommentDirectiveType,
     CommentDirectivesMap,
+    CommentDirectiveType,
     compareDataObjects,
     comparePaths,
     compareValues,
@@ -981,7 +981,7 @@ function getEmitSyntaxForUsageLocationWorker(file: Pick<SourceFile, "fileName" |
     const fileEmitMode = getEmitModuleFormatOfFileWorker(file, compilerOptions);
     return fileEmitMode === ModuleKind.CommonJS ? ModuleKind.CommonJS :
         emitModuleKindIsNonNodeESM(fileEmitMode) || fileEmitMode === ModuleKind.Preserve ? ModuleKind.ESNext :
-            undefined;
+        undefined;
 }
 
 /** @internal */
@@ -1356,8 +1356,8 @@ export function getImpliedNodeFormatForFileWorker(
         || pathContainsNodeModules(fileName);
     return fileExtensionIsOneOf(fileName, [Extension.Dmts, Extension.Mts, Extension.Mjs]) ? ModuleKind.ESNext :
         fileExtensionIsOneOf(fileName, [Extension.Dcts, Extension.Cts, Extension.Cjs]) ? ModuleKind.CommonJS :
-            shouldLookupFromPackageJson && fileExtensionIsOneOf(fileName, [Extension.Dts, Extension.Ts, Extension.Tsx, Extension.Js, Extension.Jsx]) ? lookupFromPackageJson() :
-                undefined; // other extensions, like `json` or `tsbuildinfo`, are set as `undefined` here but they should never be fed through the transformer pipeline
+        shouldLookupFromPackageJson && fileExtensionIsOneOf(fileName, [Extension.Dts, Extension.Ts, Extension.Tsx, Extension.Js, Extension.Jsx]) ? lookupFromPackageJson() :
+        undefined; // other extensions, like `json` or `tsbuildinfo`, are set as `undefined` here but they should never be fed through the transformer pipeline
 
     function lookupFromPackageJson(): Partial<CreateSourceFileOptions> {
         const state = getTemporaryModuleResolutionState(packageJsonInfoCache, host, options);
@@ -2276,8 +2276,8 @@ export function createProgram(_rootNamesOrOptions: readonly string[] | CreatePro
                                     Diagnostics.Reusing_resolution_of_module_0_from_1_of_old_program_it_was_successfully_resolved_to_2_with_Package_ID_3 :
                                     Diagnostics.Reusing_resolution_of_module_0_from_1_of_old_program_it_was_successfully_resolved_to_2 :
                                 oldResolved.packageId ?
-                                    Diagnostics.Reusing_resolution_of_type_reference_directive_0_from_1_of_old_program_it_was_successfully_resolved_to_2_with_Package_ID_3 :
-                                    Diagnostics.Reusing_resolution_of_type_reference_directive_0_from_1_of_old_program_it_was_successfully_resolved_to_2,
+                                Diagnostics.Reusing_resolution_of_type_reference_directive_0_from_1_of_old_program_it_was_successfully_resolved_to_2_with_Package_ID_3 :
+                                Diagnostics.Reusing_resolution_of_type_reference_directive_0_from_1_of_old_program_it_was_successfully_resolved_to_2,
                             name,
                             containingSourceFile ? getNormalizedAbsolutePath(containingSourceFile.originalFileName, currentDirectory) : containingFile,
                             oldResolved.resolvedFileName,

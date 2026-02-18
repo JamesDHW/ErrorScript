@@ -2688,7 +2688,7 @@ export type ObjectBindingOrAssignmentElement =
     | PropertyAssignment // AssignmentProperty
     | ShorthandPropertyAssignment // AssignmentProperty
     | SpreadAssignment // AssignmentRestProperty
-    ;
+;
 
 /** @internal @knipignore */
 export type ObjectAssignmentElement = Exclude<ObjectBindingOrAssignmentElement, BindingElement>;
@@ -2703,7 +2703,7 @@ export type ArrayBindingOrAssignmentElement =
     | Identifier // DestructuringAssignmentTarget
     | PropertyAccessExpression // DestructuringAssignmentTarget
     | ElementAccessExpression // DestructuringAssignmentTarget
-    ;
+;
 
 /** @internal */
 export type ArrayAssignmentElement = Exclude<ArrayBindingOrAssignmentElement, BindingElement>;
@@ -2712,7 +2712,7 @@ export type BindingOrAssignmentElementRestIndicator =
     | DotDotDotToken // from BindingElement
     | SpreadElement // AssignmentRestElement
     | SpreadAssignment // AssignmentRestProperty
-    ;
+;
 
 export type BindingOrAssignmentElementTarget =
     | BindingOrAssignmentPattern
@@ -2727,12 +2727,12 @@ export type AssignmentElementTarget = Exclude<BindingOrAssignmentElementTarget, 
 export type ObjectBindingOrAssignmentPattern =
     | ObjectBindingPattern
     | ObjectLiteralExpression // ObjectAssignmentPattern
-    ;
+;
 
 export type ArrayBindingOrAssignmentPattern =
     | ArrayBindingPattern
     | ArrayLiteralExpression // ArrayAssignmentPattern
-    ;
+;
 
 export type AssignmentPattern = ObjectLiteralExpression | ArrayLiteralExpression;
 
@@ -3738,10 +3738,10 @@ export type ImportPhaseModifierSyntaxKind = SyntaxKind.TypeKeyword | SyntaxKind.
 export type AssertionKey = ImportAttributeName;
 
 /** @deprecated */
-export interface AssertEntry extends ImportAttribute { }
+export interface AssertEntry extends ImportAttribute {}
 
 /** @deprecated */
-export interface AssertClause extends ImportAttributes { }
+export interface AssertClause extends ImportAttributes {}
 
 export type ImportAttributeName = Identifier | StringLiteral;
 
@@ -3847,7 +3847,7 @@ export type TypeOnlyExportDeclaration =
     | ExportSpecifier & ({ readonly isTypeOnly: true; } | { readonly parent: NamedExports & { readonly parent: ExportDeclaration & { readonly isTypeOnly: true; }; }; })
     | ExportDeclaration & { readonly isTypeOnly: true; readonly moduleSpecifier: Expression; } // export * from "mod"
     | NamespaceExport & { readonly parent: ExportDeclaration & { readonly isTypeOnly: true; readonly moduleSpecifier: Expression; }; } // export * as ns from "mod"
-    ;
+;
 
 export type TypeOnlyAliasDeclaration = TypeOnlyImportDeclaration | TypeOnlyExportDeclaration;
 
@@ -4483,7 +4483,7 @@ export interface PragmaContext extends ReadonlyPragmaContext {
 }
 
 /** @internal */
-export interface SourceFile extends ReadonlyPragmaContext { }
+export interface SourceFile extends ReadonlyPragmaContext {}
 
 /** @internal */
 export interface CommentDirective {
@@ -4590,7 +4590,7 @@ export type WriteFileCallback = (
     data?: WriteFileCallbackData,
 ) => void;
 
-export class OperationCanceledException { }
+export class OperationCanceledException {}
 
 export interface CancellationToken {
     isCancellationRequested(): boolean;
@@ -8492,7 +8492,7 @@ export type LanugageFeatures =
     //       compiler/utilitiesPublic.ts, and the contents of each lib/esnext.*.d.ts file.
     | "UsingAndAwaitUsing" // `using x = y`, `await using x = y`
     | "ClassAndClassElementDecorators" // `@dec class C {}`, `class C { @dec m() {} }`
-    ;
+;
 
 /**
  * Indicates the minimum `ScriptTarget` (inclusive) after which a specific language feature is no longer transpiled.
@@ -10241,10 +10241,10 @@ export interface PragmaArgumentSpecification<TName extends string> {
 /** @internal */
 export interface PragmaDefinition<T1 extends string = string, T2 extends string = string, T3 extends string = string, T4 extends string = string> {
     args?:
-    | readonly [PragmaArgumentSpecification<T1>]
-    | readonly [PragmaArgumentSpecification<T1>, PragmaArgumentSpecification<T2>]
-    | readonly [PragmaArgumentSpecification<T1>, PragmaArgumentSpecification<T2>, PragmaArgumentSpecification<T3>]
-    | readonly [PragmaArgumentSpecification<T1>, PragmaArgumentSpecification<T2>, PragmaArgumentSpecification<T3>, PragmaArgumentSpecification<T4>];
+        | readonly [PragmaArgumentSpecification<T1>]
+        | readonly [PragmaArgumentSpecification<T1>, PragmaArgumentSpecification<T2>]
+        | readonly [PragmaArgumentSpecification<T1>, PragmaArgumentSpecification<T2>, PragmaArgumentSpecification<T3>]
+        | readonly [PragmaArgumentSpecification<T1>, PragmaArgumentSpecification<T2>, PragmaArgumentSpecification<T3>, PragmaArgumentSpecification<T4>];
     // If not present, defaults to PragmaKindFlags.Default
     kind?: PragmaKindFlags;
 }

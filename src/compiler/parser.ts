@@ -4131,7 +4131,7 @@ namespace Parser {
         return false;
     }
 
-    function parseEffectClause(): { throwsType?: TypeNode; rejectsType?: TypeNode } {
+    function parseEffectClause(): { throwsType?: TypeNode; rejectsType?: TypeNode; } {
         let throwsType: TypeNode | undefined;
         let rejectsType: TypeNode | undefined;
         if (token() === SyntaxKind.ThrowsKeyword) {

@@ -30,16 +30,14 @@ registerCodeFix({
         const { sourceFile, span } = context;
         const statement = getStatementAtPosition(sourceFile, span.start);
         if (!statement) return undefined;
-        const changes = textChanges.ChangeTracker.with(context, t =>
-            wrapInTryCatch(t, sourceFile, statement)
-        );
+        const changes = textChanges.ChangeTracker.with(context, t => wrapInTryCatch(t, sourceFile, statement));
         return [
             createCodeFixAction(
                 fixName,
                 changes,
                 Diagnostics.Wrap_in_try_Slashcatch,
                 fixId,
-                Diagnostics.Wrap_all_unhandled_in_try_Slashcatch
+                Diagnostics.Wrap_all_unhandled_in_try_Slashcatch,
             ),
         ];
     },
@@ -55,7 +53,7 @@ registerCodeFix({
 
 function getStatementAtPosition(
     sourceFile: SourceFile,
-    start: number
+    start: number,
 ): Statement | undefined {
     const token = getTokenAtPosition(sourceFile, start);
     const node = findAncestor(token, isStatement);
@@ -65,17 +63,17 @@ function getStatementAtPosition(
 function wrapInTryCatch(
     changes: textChanges.ChangeTracker,
     sourceFile: SourceFile,
-    statement: Statement
+    statement: Statement,
 ): void {
     const tryBlock = factory.createBlock([statement]);
     const catchClause = factory.createCatchClause(
         "e",
-        factory.createBlock([])
+        factory.createBlock([]),
     );
     const tryStatement = factory.createTryStatement(
         tryBlock,
         catchClause,
-        /*finallyBlock*/ undefined
+        /*finallyBlock*/ undefined,
     );
     changes.replaceNode(sourceFile, statement, tryStatement);
 }

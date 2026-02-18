@@ -1698,8 +1698,8 @@ export function createScanner(
                 if (
                     flags & EscapeSequenceScanningFlags.AnyUnicodeMode
                     || flags & EscapeSequenceScanningFlags.RegularExpression
-                    && !(flags & EscapeSequenceScanningFlags.AnnexB)
-                    && isIdentifierPart(ch, languageVersion)
+                        && !(flags & EscapeSequenceScanningFlags.AnnexB)
+                        && isIdentifierPart(ch, languageVersion)
                 ) {
                     error(Diagnostics.This_character_cannot_be_escaped_in_a_regular_expression, pos - 2, 2);
                 }
@@ -1883,8 +1883,8 @@ export function createScanner(
             const numericValue = tokenFlags & TokenFlags.BinarySpecifier
                 ? parseInt(tokenValue.slice(2), 2) // skip "0b"
                 : tokenFlags & TokenFlags.OctalSpecifier
-                    ? parseInt(tokenValue.slice(2), 8) // skip "0o"
-                    : +tokenValue;
+                ? parseInt(tokenValue.slice(2), 8) // skip "0o"
+                : +tokenValue;
             tokenValue = "" + numericValue;
             return SyntaxKind.NumericLiteral;
         }
@@ -2989,9 +2989,9 @@ export function createScanner(
                     pos--;
                     return scanEscapeSequence(
                         EscapeSequenceScanningFlags.RegularExpression
-                        | (annexB ? EscapeSequenceScanningFlags.AnnexB : 0)
-                        | (anyUnicodeMode ? EscapeSequenceScanningFlags.AnyUnicodeMode : 0)
-                        | (atomEscape ? EscapeSequenceScanningFlags.AtomEscape : 0),
+                            | (annexB ? EscapeSequenceScanningFlags.AnnexB : 0)
+                            | (anyUnicodeMode ? EscapeSequenceScanningFlags.AnyUnicodeMode : 0)
+                            | (atomEscape ? EscapeSequenceScanningFlags.AtomEscape : 0),
                     );
             }
         }

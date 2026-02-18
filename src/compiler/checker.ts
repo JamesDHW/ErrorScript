@@ -1543,7 +1543,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
     var noImplicitThis = getStrictOptionValue(compilerOptions, "noImplicitThis");
     var useUnknownInCatchVariables = getStrictOptionValue(compilerOptions, "useUnknownInCatchVariables");
     var checkedThrows = !!compilerOptions.checkedThrows;
-    type ThrownTypeCacheEntry = { kind: "computing" } | { kind: "done"; type: Type };
+    type ThrownTypeCacheEntry = { kind: "computing"; } | { kind: "done"; type: Type; };
     var thrownTypeCache = checkedThrows ? new Map<FunctionLikeDeclaration, ThrownTypeCacheEntry>() : undefined;
     var catchVariableThrownTypeMap = checkedThrows ? new Map<string, Type>() : undefined;
     function getCatchVariableMapKey(decl: VariableDeclaration): string {
@@ -1551,7 +1551,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         return `${file.fileName}:${decl.pos}`;
     }
     var rejectEffectCache = checkedThrows ? new Map<Node, Type>() : undefined;
-    type RejectEffectAsyncCacheEntry = { kind: "computing" } | { kind: "done"; type: Type };
+    type RejectEffectAsyncCacheEntry = { kind: "computing"; } | { kind: "done"; type: Type; };
     var rejectEffectAsyncCache = checkedThrows ? new Map<FunctionLikeDeclaration, RejectEffectAsyncCacheEntry>() : undefined;
     const throwMap = getNativeThrowMap();
     var exactOptionalPropertyTypes = compilerOptions.exactOptionalPropertyTypes;
@@ -11901,7 +11901,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 const rootDecl = declaration.kind === SyntaxKind.VariableDeclaration
                     ? declaration as VariableDeclaration
                     : findAncestor(declaration, (n): n is VariableDeclaration => n.kind === SyntaxKind.VariableDeclaration);
-                    if (rootDecl) {
+                if (rootDecl) {
                     let tTry = catchVariableThrownTypeMap.get(getCatchVariableMapKey(rootDecl));
                     if (tTry === undefined) {
                         const catchClause = rootDecl.parent && isCatchClause(rootDecl.parent) ? rootDecl.parent : findAncestor(rootDecl, isCatchClause);
@@ -44535,7 +44535,6 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                     getReturnTypeOfSignature(getSignatureFromDeclaration(node));
                 }
             }
-
         }
     }
 
@@ -46989,7 +46988,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         }
         if (signature.declaredThrowsType !== undefined) return signature.declaredThrowsType;
         const decl = signature.declaration;
-        const declBase = decl as SignatureDeclaration & { throwsType?: TypeNode };
+        const declBase = decl as SignatureDeclaration & { throwsType?: TypeNode; };
         if (decl && declBase.throwsType) {
             const t = getTypeFromTypeNode(declBase.throwsType);
             signature.declaredThrowsType = t;
@@ -47005,7 +47004,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         }
         if (signature.declaredRejectsType !== undefined) return signature.declaredRejectsType;
         const decl = signature.declaration;
-        const declBase = decl as SignatureDeclaration & { rejectsType?: TypeNode };
+        const declBase = decl as SignatureDeclaration & { rejectsType?: TypeNode; };
         if (decl && declBase.rejectsType) {
             const t = getTypeFromTypeNode(declBase.rejectsType);
             signature.declaredRejectsType = t;

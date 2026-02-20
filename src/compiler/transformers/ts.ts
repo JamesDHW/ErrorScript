@@ -1143,15 +1143,15 @@ export function transformTypeScript(context: TransformationContext): Transformer
         if (typeSerializer) {
             let properties: ObjectLiteralElementLike[] | undefined;
             if (shouldAddTypeMetadata(node)) {
-                const typeProperty = factory.createPropertyAssignment("type", factory.createArrowFunction(/*modifiers*/ undefined, /*typeParameters*/ undefined, [], /*type*/ undefined, factory.createToken(SyntaxKind.EqualsGreaterThanToken), typeSerializer.serializeTypeOfNode({ currentLexicalScope, currentNameScope: container }, node, container)));
+                const typeProperty = factory.createPropertyAssignment("type", factory.createArrowFunction(/*modifiers*/ undefined, /*typeParameters*/ undefined, [], /*type*/ undefined, factory.createToken(SyntaxKind.EqualsGreaterThanToken), typeSerializer.serializeTypeOfNode({ currentLexicalScope, currentNameScope: container }, node, container), /*throwsType*/ undefined, /*rejectsType*/ undefined));
                 properties = append(properties, typeProperty);
             }
             if (shouldAddParamTypesMetadata(node)) {
-                const paramTypeProperty = factory.createPropertyAssignment("paramTypes", factory.createArrowFunction(/*modifiers*/ undefined, /*typeParameters*/ undefined, [], /*type*/ undefined, factory.createToken(SyntaxKind.EqualsGreaterThanToken), typeSerializer.serializeParameterTypesOfNode({ currentLexicalScope, currentNameScope: container }, node, container)));
+                const paramTypeProperty = factory.createPropertyAssignment("paramTypes", factory.createArrowFunction(/*modifiers*/ undefined, /*typeParameters*/ undefined, [], /*type*/ undefined, factory.createToken(SyntaxKind.EqualsGreaterThanToken), typeSerializer.serializeParameterTypesOfNode({ currentLexicalScope, currentNameScope: container }, node, container), /*throwsType*/ undefined, /*rejectsType*/ undefined));
                 properties = append(properties, paramTypeProperty);
             }
             if (shouldAddReturnTypeMetadata(node)) {
-                const returnTypeProperty = factory.createPropertyAssignment("returnType", factory.createArrowFunction(/*modifiers*/ undefined, /*typeParameters*/ undefined, [], /*type*/ undefined, factory.createToken(SyntaxKind.EqualsGreaterThanToken), typeSerializer.serializeReturnTypeOfNode({ currentLexicalScope, currentNameScope: container }, node)));
+                const returnTypeProperty = factory.createPropertyAssignment("returnType", factory.createArrowFunction(/*modifiers*/ undefined, /*typeParameters*/ undefined, [], /*type*/ undefined, factory.createToken(SyntaxKind.EqualsGreaterThanToken), typeSerializer.serializeReturnTypeOfNode({ currentLexicalScope, currentNameScope: container }, node), /*throwsType*/ undefined, /*rejectsType*/ undefined));
                 properties = append(properties, returnTypeProperty);
             }
             if (properties) {
@@ -1490,6 +1490,8 @@ export function transformTypeScript(context: TransformationContext): Transformer
             visitParameterList(node.parameters, visitor, context),
             /*type*/ undefined,
             visitFunctionBody(node.body, visitor, context),
+            node.throwsType,
+            node.rejectsType,
         );
     }
 
@@ -1525,6 +1527,8 @@ export function transformTypeScript(context: TransformationContext): Transformer
             visitParameterList(node.parameters, visitor, context),
             /*type*/ undefined,
             visitFunctionBody(node.body, visitor, context) || factory.createBlock([]),
+            node.throwsType,
+            node.rejectsType,
         );
     }
 
@@ -1565,6 +1569,8 @@ export function transformTypeScript(context: TransformationContext): Transformer
             visitParameterList(node.parameters, visitor, context),
             /*type*/ undefined,
             visitFunctionBody(node.body, visitor, context) || factory.createBlock([]),
+            node.throwsType,
+            node.rejectsType,
         );
         if (isExportOfNamespace(node)) {
             const statements: Statement[] = [updated];
@@ -1587,6 +1593,8 @@ export function transformTypeScript(context: TransformationContext): Transformer
             visitParameterList(node.parameters, visitor, context),
             /*type*/ undefined,
             visitFunctionBody(node.body, visitor, context) || factory.createBlock([]),
+            node.throwsType,
+            node.rejectsType,
         );
         return updated;
     }
@@ -1600,6 +1608,8 @@ export function transformTypeScript(context: TransformationContext): Transformer
             /*type*/ undefined,
             node.equalsGreaterThanToken,
             visitFunctionBody(node.body, visitor, context),
+            node.throwsType,
+            node.rejectsType,
         );
         return updated;
     }
@@ -1864,6 +1874,8 @@ export function transformTypeScript(context: TransformationContext): Transformer
                     [factory.createParameterDeclaration(/*modifiers*/ undefined, /*dotDotDotToken*/ undefined, parameterName)],
                     /*type*/ undefined,
                     transformEnumBody(node, containerName),
+                    /*throwsType*/ undefined,
+                    /*rejectsType*/ undefined,
                 ),
                 /*typeArguments*/ undefined,
                 [moduleArg],
@@ -2145,6 +2157,8 @@ export function transformTypeScript(context: TransformationContext): Transformer
                     [factory.createParameterDeclaration(/*modifiers*/ undefined, /*dotDotDotToken*/ undefined, parameterName)],
                     /*type*/ undefined,
                     transformModuleBody(node, containerName),
+                    /*throwsType*/ undefined,
+                    /*rejectsType*/ undefined,
                 ),
                 /*typeArguments*/ undefined,
                 [moduleArg],

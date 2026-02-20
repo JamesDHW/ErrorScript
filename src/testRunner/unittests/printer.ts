@@ -277,6 +277,8 @@ describe("unittests:: PrinterAPI", () => {
                             [],
                             /*type*/ ts.factory.createKeywordTypeNode(ts.SyntaxKind.VoidKeyword),
                             /*body*/ undefined,
+                            /*throwsType*/ undefined,
+                            /*rejectsType*/ undefined,
                         ),
                         ts.factory.createPropertyDeclaration(
                             /*modifiers*/ undefined,
@@ -304,6 +306,8 @@ describe("unittests:: PrinterAPI", () => {
                                 ts.factory.createIdentifier("args"),
                             )],
                             ts.factory.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword),
+                            /*throwsType*/ undefined,
+                            /*rejectsType*/ undefined,
                         ),
                         ts.factory.createFunctionTypeNode(
                             [ts.factory.createTypeParameterDeclaration(/*modifiers*/ undefined, "T")],
@@ -313,6 +317,8 @@ describe("unittests:: PrinterAPI", () => {
                                 ts.factory.createIdentifier("args"),
                             )],
                             ts.factory.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword),
+                            /*throwsType*/ undefined,
+                            /*rejectsType*/ undefined,
                         ),
                         ts.factory.createFunctionTypeNode(
                             /*typeParameters*/ undefined,
@@ -322,6 +328,8 @@ describe("unittests:: PrinterAPI", () => {
                                 ts.factory.createIdentifier("args"),
                             )],
                             ts.factory.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword),
+                            /*throwsType*/ undefined,
+                            /*rejectsType*/ undefined,
                         ),
                         ts.factory.createFunctionTypeNode(
                             /*typeParameters*/ undefined,
@@ -332,6 +340,8 @@ describe("unittests:: PrinterAPI", () => {
                                 ts.factory.createToken(ts.SyntaxKind.QuestionToken),
                             )],
                             ts.factory.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword),
+                            /*throwsType*/ undefined,
+                            /*rejectsType*/ undefined,
                         ),
                         ts.factory.createFunctionTypeNode(
                             /*typeParameters*/ undefined,
@@ -343,6 +353,8 @@ describe("unittests:: PrinterAPI", () => {
                                 ts.factory.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword),
                             )],
                             ts.factory.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword),
+                            /*throwsType*/ undefined,
+                            /*rejectsType*/ undefined,
                         ),
                         ts.factory.createFunctionTypeNode(
                             /*typeParameters*/ undefined,
@@ -352,6 +364,8 @@ describe("unittests:: PrinterAPI", () => {
                                 ts.factory.createObjectBindingPattern([]),
                             )],
                             ts.factory.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword),
+                            /*throwsType*/ undefined,
+                            /*rejectsType*/ undefined,
                         ),
                     ]),
                     ts.EmitFlags.SingleLine,

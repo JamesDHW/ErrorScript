@@ -1110,6 +1110,8 @@ export function transformDeclarations(context: TransformationContext): Transform
                         updateParamsList(input, input.parameters),
                         ensureType(input),
                         /*body*/ undefined,
+                        visitNode(input.throwsType, visitDeclarationSubtree, isTypeNode),
+                        visitNode(input.rejectsType, visitDeclarationSubtree, isTypeNode),
                     );
                     return cleanup(sig);
                 }
@@ -1124,6 +1126,8 @@ export function transformDeclarations(context: TransformationContext): Transform
                         updateAccessorParamsList(input, hasEffectiveModifier(input, ModifierFlags.Private)),
                         ensureType(input),
                         /*body*/ undefined,
+                        input.throwsType,
+                        input.rejectsType,
                     ));
                 }
                 case SyntaxKind.SetAccessor: {
@@ -1173,6 +1177,8 @@ export function transformDeclarations(context: TransformationContext): Transform
                         ensureTypeParams(input, input.typeParameters),
                         updateParamsList(input, input.parameters),
                         ensureType(input),
+                        input.throwsType,
+                        input.rejectsType,
                     ));
                 }
                 case SyntaxKind.CallSignature: {
@@ -1182,6 +1188,8 @@ export function transformDeclarations(context: TransformationContext): Transform
                             ensureTypeParams(input, input.typeParameters),
                             updateParamsList(input, input.parameters),
                             ensureType(input),
+                            input.throwsType,
+                            input.rejectsType,
                         ),
                     );
                 }
@@ -1229,6 +1237,8 @@ export function transformDeclarations(context: TransformationContext): Transform
                         visitNodes(input.typeParameters, visitDeclarationSubtree, isTypeParameterDeclaration),
                         updateParamsList(input, input.parameters),
                         Debug.checkDefined(visitNode(input.type, visitDeclarationSubtree, isTypeNode)),
+                        visitNode(input.throwsType, visitDeclarationSubtree, isTypeNode),
+                        visitNode(input.rejectsType, visitDeclarationSubtree, isTypeNode),
                     ));
                 }
                 case SyntaxKind.ConstructorType: {
@@ -1446,6 +1456,8 @@ export function transformDeclarations(context: TransformationContext): Transform
                     updateParamsList(input, input.parameters),
                     ensureType(input),
                     /*body*/ undefined,
+                    input.throwsType,
+                    input.rejectsType,
                 ));
                 if (clean && resolver.isExpandoFunctionDeclaration(input) && shouldEmitFunctionProperties(input)) {
                     const props = resolver.getPropertiesOfContainerFunction(input);
@@ -1505,6 +1517,8 @@ export function transformDeclarations(context: TransformationContext): Transform
                         clean.parameters,
                         clean.type,
                         /*body*/ undefined,
+                        clean.throwsType,
+                        clean.rejectsType,
                     );
 
                     const namespaceDeclaration = factory.updateModuleDeclaration(

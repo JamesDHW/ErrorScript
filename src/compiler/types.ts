@@ -1847,8 +1847,8 @@ export interface SignatureDeclarationBase extends NamedDeclaration, JSDocContain
     readonly typeParameters?: NodeArray<TypeParameterDeclaration> | undefined;
     readonly parameters: NodeArray<ParameterDeclaration>;
     readonly type?: TypeNode | undefined;
-    readonly throwsType?: TypeNode | undefined;
-    readonly rejectsType?: TypeNode | undefined;
+    readonly throwsType: TypeNode | undefined;
+    readonly rejectsType: TypeNode | undefined;
     /** @internal */ typeArguments?: NodeArray<TypeNode>; // Used for quick info, replaces typeParameters for instantiated signatures
 }
 
@@ -2688,7 +2688,7 @@ export type ObjectBindingOrAssignmentElement =
     | PropertyAssignment // AssignmentProperty
     | ShorthandPropertyAssignment // AssignmentProperty
     | SpreadAssignment // AssignmentRestProperty
-;
+    ;
 
 /** @internal @knipignore */
 export type ObjectAssignmentElement = Exclude<ObjectBindingOrAssignmentElement, BindingElement>;
@@ -2703,7 +2703,7 @@ export type ArrayBindingOrAssignmentElement =
     | Identifier // DestructuringAssignmentTarget
     | PropertyAccessExpression // DestructuringAssignmentTarget
     | ElementAccessExpression // DestructuringAssignmentTarget
-;
+    ;
 
 /** @internal */
 export type ArrayAssignmentElement = Exclude<ArrayBindingOrAssignmentElement, BindingElement>;
@@ -2712,7 +2712,7 @@ export type BindingOrAssignmentElementRestIndicator =
     | DotDotDotToken // from BindingElement
     | SpreadElement // AssignmentRestElement
     | SpreadAssignment // AssignmentRestProperty
-;
+    ;
 
 export type BindingOrAssignmentElementTarget =
     | BindingOrAssignmentPattern
@@ -2727,12 +2727,12 @@ export type AssignmentElementTarget = Exclude<BindingOrAssignmentElementTarget, 
 export type ObjectBindingOrAssignmentPattern =
     | ObjectBindingPattern
     | ObjectLiteralExpression // ObjectAssignmentPattern
-;
+    ;
 
 export type ArrayBindingOrAssignmentPattern =
     | ArrayBindingPattern
     | ArrayLiteralExpression // ArrayAssignmentPattern
-;
+    ;
 
 export type AssignmentPattern = ObjectLiteralExpression | ArrayLiteralExpression;
 
@@ -3738,10 +3738,10 @@ export type ImportPhaseModifierSyntaxKind = SyntaxKind.TypeKeyword | SyntaxKind.
 export type AssertionKey = ImportAttributeName;
 
 /** @deprecated */
-export interface AssertEntry extends ImportAttribute {}
+export interface AssertEntry extends ImportAttribute { }
 
 /** @deprecated */
-export interface AssertClause extends ImportAttributes {}
+export interface AssertClause extends ImportAttributes { }
 
 export type ImportAttributeName = Identifier | StringLiteral;
 
@@ -3847,7 +3847,7 @@ export type TypeOnlyExportDeclaration =
     | ExportSpecifier & ({ readonly isTypeOnly: true; } | { readonly parent: NamedExports & { readonly parent: ExportDeclaration & { readonly isTypeOnly: true; }; }; })
     | ExportDeclaration & { readonly isTypeOnly: true; readonly moduleSpecifier: Expression; } // export * from "mod"
     | NamespaceExport & { readonly parent: ExportDeclaration & { readonly isTypeOnly: true; readonly moduleSpecifier: Expression; }; } // export * as ns from "mod"
-;
+    ;
 
 export type TypeOnlyAliasDeclaration = TypeOnlyImportDeclaration | TypeOnlyExportDeclaration;
 
@@ -4483,7 +4483,7 @@ export interface PragmaContext extends ReadonlyPragmaContext {
 }
 
 /** @internal */
-export interface SourceFile extends ReadonlyPragmaContext {}
+export interface SourceFile extends ReadonlyPragmaContext { }
 
 /** @internal */
 export interface CommentDirective {
@@ -4590,7 +4590,7 @@ export type WriteFileCallback = (
     data?: WriteFileCallbackData,
 ) => void;
 
-export class OperationCanceledException {}
+export class OperationCanceledException { }
 
 export interface CancellationToken {
     isCancellationRequested(): boolean;
@@ -8492,7 +8492,7 @@ export type LanugageFeatures =
     //       compiler/utilitiesPublic.ts, and the contents of each lib/esnext.*.d.ts file.
     | "UsingAndAwaitUsing" // `using x = y`, `await using x = y`
     | "ClassAndClassElementDecorators" // `@dec class C {}`, `class C { @dec m() {} }`
-;
+    ;
 
 /**
  * Indicates the minimum `ScriptTarget` (inclusive) after which a specific language feature is no longer transpiled.
@@ -8864,18 +8864,18 @@ export interface NodeFactory {
     updatePropertySignature(node: PropertySignature, modifiers: readonly Modifier[] | undefined, name: PropertyName, questionToken: QuestionToken | undefined, type: TypeNode | undefined): PropertySignature;
     createPropertyDeclaration(modifiers: readonly ModifierLike[] | undefined, name: string | PropertyName, questionOrExclamationToken: QuestionToken | ExclamationToken | undefined, type: TypeNode | undefined, initializer: Expression | undefined): PropertyDeclaration;
     updatePropertyDeclaration(node: PropertyDeclaration, modifiers: readonly ModifierLike[] | undefined, name: string | PropertyName, questionOrExclamationToken: QuestionToken | ExclamationToken | undefined, type: TypeNode | undefined, initializer: Expression | undefined): PropertyDeclaration;
-    createMethodSignature(modifiers: readonly Modifier[] | undefined, name: string | PropertyName, questionToken: QuestionToken | undefined, typeParameters: readonly TypeParameterDeclaration[] | undefined, parameters: readonly ParameterDeclaration[], type: TypeNode | undefined, throwsType?: TypeNode, rejectsType?: TypeNode): MethodSignature;
-    updateMethodSignature(node: MethodSignature, modifiers: readonly Modifier[] | undefined, name: PropertyName, questionToken: QuestionToken | undefined, typeParameters: NodeArray<TypeParameterDeclaration> | undefined, parameters: NodeArray<ParameterDeclaration>, type: TypeNode | undefined, throwsType?: TypeNode, rejectsType?: TypeNode): MethodSignature;
-    createMethodDeclaration(modifiers: readonly ModifierLike[] | undefined, asteriskToken: AsteriskToken | undefined, name: string | PropertyName, questionToken: QuestionToken | undefined, typeParameters: readonly TypeParameterDeclaration[] | undefined, parameters: readonly ParameterDeclaration[], type: TypeNode | undefined, body: Block | undefined, throwsType?: TypeNode, rejectsType?: TypeNode): MethodDeclaration;
-    updateMethodDeclaration(node: MethodDeclaration, modifiers: readonly ModifierLike[] | undefined, asteriskToken: AsteriskToken | undefined, name: PropertyName, questionToken: QuestionToken | undefined, typeParameters: readonly TypeParameterDeclaration[] | undefined, parameters: readonly ParameterDeclaration[], type: TypeNode | undefined, body: Block | undefined, throwsType?: TypeNode, rejectsType?: TypeNode): MethodDeclaration;
+    createMethodSignature(modifiers: readonly Modifier[] | undefined, name: string | PropertyName, questionToken: QuestionToken | undefined, typeParameters: readonly TypeParameterDeclaration[] | undefined, parameters: readonly ParameterDeclaration[], type: TypeNode | undefined, throwsType: TypeNode | undefined, rejectsType: TypeNode | undefined): MethodSignature;
+    updateMethodSignature(node: MethodSignature, modifiers: readonly Modifier[] | undefined, name: PropertyName, questionToken: QuestionToken | undefined, typeParameters: NodeArray<TypeParameterDeclaration> | undefined, parameters: NodeArray<ParameterDeclaration>, type: TypeNode | undefined, throwsType: TypeNode | undefined, rejectsType: TypeNode | undefined): MethodSignature;
+    createMethodDeclaration(modifiers: readonly ModifierLike[] | undefined, asteriskToken: AsteriskToken | undefined, name: string | PropertyName, questionToken: QuestionToken | undefined, typeParameters: readonly TypeParameterDeclaration[] | undefined, parameters: readonly ParameterDeclaration[], type: TypeNode | undefined, body: Block | undefined, throwsType: TypeNode | undefined, rejectsType: TypeNode | undefined): MethodDeclaration;
+    updateMethodDeclaration(node: MethodDeclaration, modifiers: readonly ModifierLike[] | undefined, asteriskToken: AsteriskToken | undefined, name: PropertyName, questionToken: QuestionToken | undefined, typeParameters: readonly TypeParameterDeclaration[] | undefined, parameters: readonly ParameterDeclaration[], type: TypeNode | undefined, body: Block | undefined, throwsType: TypeNode | undefined, rejectsType: TypeNode | undefined): MethodDeclaration;
     createConstructorDeclaration(modifiers: readonly ModifierLike[] | undefined, parameters: readonly ParameterDeclaration[], body: Block | undefined): ConstructorDeclaration;
     updateConstructorDeclaration(node: ConstructorDeclaration, modifiers: readonly ModifierLike[] | undefined, parameters: readonly ParameterDeclaration[], body: Block | undefined): ConstructorDeclaration;
-    createGetAccessorDeclaration(modifiers: readonly ModifierLike[] | undefined, name: string | PropertyName, parameters: readonly ParameterDeclaration[], type: TypeNode | undefined, body: Block | undefined, throwsType?: TypeNode, rejectsType?: TypeNode): GetAccessorDeclaration;
-    updateGetAccessorDeclaration(node: GetAccessorDeclaration, modifiers: readonly ModifierLike[] | undefined, name: PropertyName, parameters: readonly ParameterDeclaration[], type: TypeNode | undefined, body: Block | undefined, throwsType?: TypeNode, rejectsType?: TypeNode): GetAccessorDeclaration;
+    createGetAccessorDeclaration(modifiers: readonly ModifierLike[] | undefined, name: string | PropertyName, parameters: readonly ParameterDeclaration[], type: TypeNode | undefined, body: Block | undefined, throwsType: TypeNode | undefined, rejectsType: TypeNode | undefined): GetAccessorDeclaration;
+    updateGetAccessorDeclaration(node: GetAccessorDeclaration, modifiers: readonly ModifierLike[] | undefined, name: PropertyName, parameters: readonly ParameterDeclaration[], type: TypeNode | undefined, body: Block | undefined, throwsType: TypeNode | undefined, rejectsType: TypeNode | undefined): GetAccessorDeclaration;
     createSetAccessorDeclaration(modifiers: readonly ModifierLike[] | undefined, name: string | PropertyName, parameters: readonly ParameterDeclaration[], body: Block | undefined): SetAccessorDeclaration;
     updateSetAccessorDeclaration(node: SetAccessorDeclaration, modifiers: readonly ModifierLike[] | undefined, name: PropertyName, parameters: readonly ParameterDeclaration[], body: Block | undefined): SetAccessorDeclaration;
-    createCallSignature(typeParameters: readonly TypeParameterDeclaration[] | undefined, parameters: readonly ParameterDeclaration[], type: TypeNode | undefined, throwsType?: TypeNode, rejectsType?: TypeNode): CallSignatureDeclaration;
-    updateCallSignature(node: CallSignatureDeclaration, typeParameters: NodeArray<TypeParameterDeclaration> | undefined, parameters: NodeArray<ParameterDeclaration>, type: TypeNode | undefined, throwsType?: TypeNode, rejectsType?: TypeNode): CallSignatureDeclaration;
+    createCallSignature(typeParameters: readonly TypeParameterDeclaration[] | undefined, parameters: readonly ParameterDeclaration[], type: TypeNode | undefined, throwsType: TypeNode | undefined, rejectsType: TypeNode | undefined): CallSignatureDeclaration;
+    updateCallSignature(node: CallSignatureDeclaration, typeParameters: NodeArray<TypeParameterDeclaration> | undefined, parameters: NodeArray<ParameterDeclaration>, type: TypeNode | undefined, throwsType: TypeNode | undefined, rejectsType: TypeNode | undefined): CallSignatureDeclaration;
     createConstructSignature(typeParameters: readonly TypeParameterDeclaration[] | undefined, parameters: readonly ParameterDeclaration[], type: TypeNode | undefined): ConstructSignatureDeclaration;
     updateConstructSignature(node: ConstructSignatureDeclaration, typeParameters: NodeArray<TypeParameterDeclaration> | undefined, parameters: NodeArray<ParameterDeclaration>, type: TypeNode | undefined): ConstructSignatureDeclaration;
     createIndexSignature(modifiers: readonly ModifierLike[] | undefined, parameters: readonly ParameterDeclaration[], type: TypeNode): IndexSignatureDeclaration;
@@ -8895,8 +8895,8 @@ export interface NodeFactory {
     updateTypePredicateNode(node: TypePredicateNode, assertsModifier: AssertsKeyword | undefined, parameterName: Identifier | ThisTypeNode, type: TypeNode | undefined): TypePredicateNode;
     createTypeReferenceNode(typeName: string | EntityName, typeArguments?: readonly TypeNode[]): TypeReferenceNode;
     updateTypeReferenceNode(node: TypeReferenceNode, typeName: EntityName, typeArguments: NodeArray<TypeNode> | undefined): TypeReferenceNode;
-    createFunctionTypeNode(typeParameters: readonly TypeParameterDeclaration[] | undefined, parameters: readonly ParameterDeclaration[], type: TypeNode, throwsType?: TypeNode, rejectsType?: TypeNode): FunctionTypeNode;
-    updateFunctionTypeNode(node: FunctionTypeNode, typeParameters: NodeArray<TypeParameterDeclaration> | undefined, parameters: NodeArray<ParameterDeclaration>, type: TypeNode, throwsType?: TypeNode, rejectsType?: TypeNode): FunctionTypeNode;
+    createFunctionTypeNode(typeParameters: readonly TypeParameterDeclaration[] | undefined, parameters: readonly ParameterDeclaration[], type: TypeNode, throwsType: TypeNode | undefined, rejectsType: TypeNode | undefined): FunctionTypeNode;
+    updateFunctionTypeNode(node: FunctionTypeNode, typeParameters: NodeArray<TypeParameterDeclaration> | undefined, parameters: NodeArray<ParameterDeclaration>, type: TypeNode, throwsType: TypeNode | undefined, rejectsType: TypeNode | undefined): FunctionTypeNode;
     createConstructorTypeNode(modifiers: readonly Modifier[] | undefined, typeParameters: readonly TypeParameterDeclaration[] | undefined, parameters: readonly ParameterDeclaration[], type: TypeNode): ConstructorTypeNode;
     updateConstructorTypeNode(node: ConstructorTypeNode, modifiers: readonly Modifier[] | undefined, typeParameters: NodeArray<TypeParameterDeclaration> | undefined, parameters: NodeArray<ParameterDeclaration>, type: TypeNode): ConstructorTypeNode;
     createTypeQueryNode(exprName: EntityName, typeArguments?: readonly TypeNode[]): TypeQueryNode;
@@ -8976,10 +8976,10 @@ export interface NodeFactory {
     updateTypeAssertion(node: TypeAssertion, type: TypeNode, expression: Expression): TypeAssertion;
     createParenthesizedExpression(expression: Expression): ParenthesizedExpression;
     updateParenthesizedExpression(node: ParenthesizedExpression, expression: Expression): ParenthesizedExpression;
-    createFunctionExpression(modifiers: readonly Modifier[] | undefined, asteriskToken: AsteriskToken | undefined, name: string | Identifier | undefined, typeParameters: readonly TypeParameterDeclaration[] | undefined, parameters: readonly ParameterDeclaration[] | undefined, type: TypeNode | undefined, body: Block, throwsType?: TypeNode, rejectsType?: TypeNode): FunctionExpression;
-    updateFunctionExpression(node: FunctionExpression, modifiers: readonly Modifier[] | undefined, asteriskToken: AsteriskToken | undefined, name: Identifier | undefined, typeParameters: readonly TypeParameterDeclaration[] | undefined, parameters: readonly ParameterDeclaration[], type: TypeNode | undefined, body: Block, throwsType?: TypeNode, rejectsType?: TypeNode): FunctionExpression;
-    createArrowFunction(modifiers: readonly Modifier[] | undefined, typeParameters: readonly TypeParameterDeclaration[] | undefined, parameters: readonly ParameterDeclaration[], type: TypeNode | undefined, equalsGreaterThanToken: EqualsGreaterThanToken | undefined, body: ConciseBody, throwsType?: TypeNode, rejectsType?: TypeNode): ArrowFunction;
-    updateArrowFunction(node: ArrowFunction, modifiers: readonly Modifier[] | undefined, typeParameters: readonly TypeParameterDeclaration[] | undefined, parameters: readonly ParameterDeclaration[], type: TypeNode | undefined, equalsGreaterThanToken: EqualsGreaterThanToken, body: ConciseBody, throwsType?: TypeNode, rejectsType?: TypeNode): ArrowFunction;
+    createFunctionExpression(modifiers: readonly Modifier[] | undefined, asteriskToken: AsteriskToken | undefined, name: string | Identifier | undefined, typeParameters: readonly TypeParameterDeclaration[] | undefined, parameters: readonly ParameterDeclaration[] | undefined, type: TypeNode | undefined, body: Block, throwsType: TypeNode | undefined, rejectsType: TypeNode | undefined): FunctionExpression;
+    updateFunctionExpression(node: FunctionExpression, modifiers: readonly Modifier[] | undefined, asteriskToken: AsteriskToken | undefined, name: Identifier | undefined, typeParameters: readonly TypeParameterDeclaration[] | undefined, parameters: readonly ParameterDeclaration[], type: TypeNode | undefined, body: Block, throwsType: TypeNode | undefined, rejectsType: TypeNode | undefined): FunctionExpression;
+    createArrowFunction(modifiers: readonly Modifier[] | undefined, typeParameters: readonly TypeParameterDeclaration[] | undefined, parameters: readonly ParameterDeclaration[], type: TypeNode | undefined, equalsGreaterThanToken: EqualsGreaterThanToken | undefined, body: ConciseBody, throwsType: TypeNode | undefined, rejectsType: TypeNode | undefined): ArrowFunction;
+    updateArrowFunction(node: ArrowFunction, modifiers: readonly Modifier[] | undefined, typeParameters: readonly TypeParameterDeclaration[] | undefined, parameters: readonly ParameterDeclaration[], type: TypeNode | undefined, equalsGreaterThanToken: EqualsGreaterThanToken, body: ConciseBody, throwsType: TypeNode | undefined, rejectsType: TypeNode | undefined): ArrowFunction;
     createDeleteExpression(expression: Expression): DeleteExpression;
     updateDeleteExpression(node: DeleteExpression, expression: Expression): DeleteExpression;
     createTypeOfExpression(expression: Expression): TypeOfExpression;
@@ -9082,8 +9082,8 @@ export interface NodeFactory {
     updateVariableDeclaration(node: VariableDeclaration, name: BindingName, exclamationToken: ExclamationToken | undefined, type: TypeNode | undefined, initializer: Expression | undefined): VariableDeclaration;
     createVariableDeclarationList(declarations: readonly VariableDeclaration[], flags?: NodeFlags): VariableDeclarationList;
     updateVariableDeclarationList(node: VariableDeclarationList, declarations: readonly VariableDeclaration[]): VariableDeclarationList;
-    createFunctionDeclaration(modifiers: readonly ModifierLike[] | undefined, asteriskToken: AsteriskToken | undefined, name: string | Identifier | undefined, typeParameters: readonly TypeParameterDeclaration[] | undefined, parameters: readonly ParameterDeclaration[], type: TypeNode | undefined, body: Block | undefined, throwsType?: TypeNode, rejectsType?: TypeNode): FunctionDeclaration;
-    updateFunctionDeclaration(node: FunctionDeclaration, modifiers: readonly ModifierLike[] | undefined, asteriskToken: AsteriskToken | undefined, name: Identifier | undefined, typeParameters: readonly TypeParameterDeclaration[] | undefined, parameters: readonly ParameterDeclaration[], type: TypeNode | undefined, body: Block | undefined): FunctionDeclaration;
+    createFunctionDeclaration(modifiers: readonly ModifierLike[] | undefined, asteriskToken: AsteriskToken | undefined, name: string | Identifier | undefined, typeParameters: readonly TypeParameterDeclaration[] | undefined, parameters: readonly ParameterDeclaration[], type: TypeNode | undefined, body: Block | undefined, throwsType: TypeNode | undefined, rejectsType: TypeNode | undefined): FunctionDeclaration;
+    updateFunctionDeclaration(node: FunctionDeclaration, modifiers: readonly ModifierLike[] | undefined, asteriskToken: AsteriskToken | undefined, name: Identifier | undefined, typeParameters: readonly TypeParameterDeclaration[] | undefined, parameters: readonly ParameterDeclaration[], type: TypeNode | undefined, body: Block | undefined, throwsType: TypeNode | undefined, rejectsType: TypeNode | undefined): FunctionDeclaration;
     createClassDeclaration(modifiers: readonly ModifierLike[] | undefined, name: string | Identifier | undefined, typeParameters: readonly TypeParameterDeclaration[] | undefined, heritageClauses: readonly HeritageClause[] | undefined, members: readonly ClassElement[]): ClassDeclaration;
     updateClassDeclaration(node: ClassDeclaration, modifiers: readonly ModifierLike[] | undefined, name: Identifier | undefined, typeParameters: readonly TypeParameterDeclaration[] | undefined, heritageClauses: readonly HeritageClause[] | undefined, members: readonly ClassElement[]): ClassDeclaration;
     createInterfaceDeclaration(modifiers: readonly ModifierLike[] | undefined, name: string | Identifier, typeParameters: readonly TypeParameterDeclaration[] | undefined, heritageClauses: readonly HeritageClause[] | undefined, members: readonly TypeElement[]): InterfaceDeclaration;
@@ -10241,10 +10241,10 @@ export interface PragmaArgumentSpecification<TName extends string> {
 /** @internal */
 export interface PragmaDefinition<T1 extends string = string, T2 extends string = string, T3 extends string = string, T4 extends string = string> {
     args?:
-        | readonly [PragmaArgumentSpecification<T1>]
-        | readonly [PragmaArgumentSpecification<T1>, PragmaArgumentSpecification<T2>]
-        | readonly [PragmaArgumentSpecification<T1>, PragmaArgumentSpecification<T2>, PragmaArgumentSpecification<T3>]
-        | readonly [PragmaArgumentSpecification<T1>, PragmaArgumentSpecification<T2>, PragmaArgumentSpecification<T3>, PragmaArgumentSpecification<T4>];
+    | readonly [PragmaArgumentSpecification<T1>]
+    | readonly [PragmaArgumentSpecification<T1>, PragmaArgumentSpecification<T2>]
+    | readonly [PragmaArgumentSpecification<T1>, PragmaArgumentSpecification<T2>, PragmaArgumentSpecification<T3>]
+    | readonly [PragmaArgumentSpecification<T1>, PragmaArgumentSpecification<T2>, PragmaArgumentSpecification<T3>, PragmaArgumentSpecification<T4>];
     // If not present, defaults to PragmaKindFlags.Default
     kind?: PragmaKindFlags;
 }

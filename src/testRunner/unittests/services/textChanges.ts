@@ -93,6 +93,8 @@ namespace M
                 /*parameters*/ ts.emptyArray,
                 /*type*/ ts.factory.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword),
                 /*body */ ts.factory.createBlock(statements),
+                /*throwsType*/ undefined,
+                /*rejectsType*/ undefined,
             );
 
             changeTracker.insertNodeBefore(sourceFile, /*before*/ findChild("M2", sourceFile), newFunction);

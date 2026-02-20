@@ -379,6 +379,8 @@ function createExpressionForAccessorDeclaration(factory: NodeFactory, properties
                                 getAccessor.parameters,
                                 /*type*/ undefined,
                                 getAccessor.body!, // TODO: GH#18217
+                                /*throwsType*/ undefined,
+                                /*rejectsType*/ undefined,
                             ),
                             getAccessor,
                         ),
@@ -394,6 +396,8 @@ function createExpressionForAccessorDeclaration(factory: NodeFactory, properties
                                 setAccessor.parameters,
                                 /*type*/ undefined,
                                 setAccessor.body!, // TODO: GH#18217
+                                /*throwsType*/ undefined,
+                                /*rejectsType*/ undefined,
                             ),
                             setAccessor,
                         ),
@@ -449,6 +453,8 @@ function createExpressionForMethodDeclaration(factory: NodeFactory, method: Meth
                             method.parameters,
                             /*type*/ undefined,
                             method.body!, // TODO: GH#18217
+                            /*throwsType*/ undefined,
+                            /*rejectsType*/ undefined,
                         ),
                         /*location*/ method,
                     ),
@@ -1638,6 +1644,8 @@ export function createAccessorPropertyGetRedirector(factory: NodeFactory, node: 
                 ),
             ),
         ]),
+        /*throwsType*/ undefined,
+        /*rejectsType*/ undefined,
     );
 }
 

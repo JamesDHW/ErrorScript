@@ -5252,7 +5252,7 @@ namespace Parser {
         const parameters = createNodeArray<ParameterDeclaration>([parameter], parameter.pos, parameter.end);
         const equalsGreaterThanToken = parseExpectedToken(SyntaxKind.EqualsGreaterThanToken);
         const body = parseArrowFunctionExpressionBody(/*isAsync*/ !!asyncModifier, allowReturnTypeInArrowFunction);
-        const node = factory.createArrowFunction(asyncModifier, /*typeParameters*/ undefined, parameters, /*type*/ undefined, equalsGreaterThanToken, body);
+        const node = factory.createArrowFunction(asyncModifier, /*typeParameters*/ undefined, parameters, /*type*/ undefined, equalsGreaterThanToken, body, /*throwsType*/ undefined, /*rejectsType*/ undefined);
         return withJSDoc(finishNode(node, pos), hasJSDoc);
     }
 

@@ -637,6 +637,8 @@ function functionExpressionToDeclaration(name: string | undefined, additionalMod
         getSynthesizedDeepClones(fn.parameters),
         getSynthesizedDeepClone(fn.type),
         factory.converters.convertToFunctionBlock(replaceImportUseSites(fn.body!, useSitesToUnqualify)),
+        getSynthesizedDeepClone(fn.throwsType),
+        getSynthesizedDeepClone(fn.rejectsType),
     );
 }
 

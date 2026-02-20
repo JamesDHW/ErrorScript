@@ -448,6 +448,8 @@ export function transformES2017(context: TransformationContext): (x: SourceFile 
             functionFlags & FunctionFlags.Async ?
                 transformAsyncFunctionBody(node, parameters) :
                 transformMethodBody(node),
+            node.throwsType,
+            node.rejectsType,
         );
         lexicalArgumentsBinding = savedLexicalArgumentsBinding;
         return updated;
@@ -463,6 +465,8 @@ export function transformES2017(context: TransformationContext): (x: SourceFile 
             visitParameterList(node.parameters, visitor, context),
             /*type*/ undefined,
             transformMethodBody(node),
+            node.throwsType,
+            node.rejectsType,
         );
         lexicalArgumentsBinding = savedLexicalArgumentsBinding;
         return updated;
@@ -508,6 +512,8 @@ export function transformES2017(context: TransformationContext): (x: SourceFile 
             functionFlags & FunctionFlags.Async ?
                 transformAsyncFunctionBody(node, parameters) :
                 visitFunctionBody(node.body, visitor, context),
+            node.throwsType,
+            node.rejectsType,
         );
         lexicalArgumentsBinding = savedLexicalArgumentsBinding;
         return updated;
@@ -539,6 +545,8 @@ export function transformES2017(context: TransformationContext): (x: SourceFile 
             functionFlags & FunctionFlags.Async ?
                 transformAsyncFunctionBody(node, parameters) :
                 visitFunctionBody(node.body, visitor, context),
+            node.throwsType,
+            node.rejectsType,
         );
         lexicalArgumentsBinding = savedLexicalArgumentsBinding;
         return updated;
@@ -567,6 +575,8 @@ export function transformES2017(context: TransformationContext): (x: SourceFile 
             functionFlags & FunctionFlags.Async ?
                 transformAsyncFunctionBody(node, parameters) :
                 visitFunctionBody(node.body, visitor, context),
+            node.throwsType,
+            node.rejectsType,
         );
     }
 
@@ -1082,6 +1092,8 @@ export function createSuperAccessVariableStatement(factory: NodeFactory, resolve
                     ),
                     EmitFlags.NoSubstitution,
                 ),
+                /*throwsType*/ undefined,
+                /*rejectsType*/ undefined,
             ),
         ));
         if (hasBinding) {
@@ -1116,6 +1128,8 @@ export function createSuperAccessVariableStatement(factory: NodeFactory, resolve
                             ),
                             factory.createIdentifier("v"),
                         ),
+                        /*throwsType*/ undefined,
+                        /*rejectsType*/ undefined,
                     ),
                 ),
             );

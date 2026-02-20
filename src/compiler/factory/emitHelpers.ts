@@ -282,6 +282,8 @@ export function createEmitHelperFactory(context: TransformationContext): EmitHel
                 /*type*/ undefined,
                 /*equalsGreaterThanToken*/ undefined,
                 accessor,
+                /*throwsType*/ undefined,
+                /*rejectsType*/ undefined,
             ),
         );
     }
@@ -318,6 +320,8 @@ export function createEmitHelperFactory(context: TransformationContext): EmitHel
                         ),
                     ),
                 ]),
+                /*throwsType*/ undefined,
+                /*rejectsType*/ undefined,
             ),
         );
     }
@@ -344,6 +348,8 @@ export function createEmitHelperFactory(context: TransformationContext): EmitHel
                     SyntaxKind.InKeyword,
                     factory.createIdentifier("obj"),
                 ),
+                /*throwsType*/ undefined,
+                /*rejectsType*/ undefined,
             ),
         );
     }
@@ -511,6 +517,8 @@ export function createEmitHelperFactory(context: TransformationContext): EmitHel
             parameters ?? [],
             /*type*/ undefined,
             body,
+            /*throwsType*/ undefined,
+            /*rejectsType*/ undefined,
         );
 
         // Mark this node as originally an async function

@@ -1051,6 +1051,8 @@ export function transformES2015(context: TransformationContext): (x: SourceFile 
             extendsClauseElement ? [factory.createParameterDeclaration(/*modifiers*/ undefined, /*dotDotDotToken*/ undefined, createSyntheticSuper())] : [],
             /*type*/ undefined,
             transformClassBody(node, extendsClauseElement),
+            /*throwsType*/ undefined,
+            /*rejectsType*/ undefined,
         );
 
         // To preserve the behavior of the old emitter, we explicitly indent
@@ -1158,6 +1160,8 @@ export function transformES2015(context: TransformationContext): (x: SourceFile 
             transformConstructorParameters(constructor, hasSynthesizedSuper),
             /*type*/ undefined,
             transformConstructorBody(constructor, node, extendsClauseElement, hasSynthesizedSuper),
+            /*throwsType*/ undefined,
+            /*rejectsType*/ undefined,
         );
 
         setTextRange(constructorFunction, constructor || node);
@@ -2429,6 +2433,8 @@ export function transformES2015(context: TransformationContext): (x: SourceFile 
             visitParameterList(node.parameters, visitor, context),
             /*type*/ undefined,
             transformFunctionBody(node),
+            /*throwsType*/ undefined,
+            /*rejectsType*/ undefined,
         );
         setTextRange(func, node);
         setOriginalNode(func, node);
@@ -2470,6 +2476,8 @@ export function transformES2015(context: TransformationContext): (x: SourceFile 
             parameters,
             /*type*/ undefined,
             body,
+            node.throwsType,
+            node.rejectsType,
         );
     }
 
@@ -2499,6 +2507,8 @@ export function transformES2015(context: TransformationContext): (x: SourceFile 
             parameters,
             /*type*/ undefined,
             body,
+            node.throwsType,
+            node.rejectsType,
         );
     }
 
@@ -2533,6 +2543,8 @@ export function transformES2015(context: TransformationContext): (x: SourceFile 
                     parameters,
                     /*type*/ undefined,
                     body,
+                    /*throwsType*/ undefined,
+                    /*rejectsType*/ undefined,
                 ),
                 location,
             ),
@@ -3755,6 +3767,8 @@ export function transformES2015(context: TransformationContext): (x: SourceFile 
                                     visitor,
                                     isBlock,
                                 )),
+                                /*throwsType*/ undefined,
+                                /*rejectsType*/ undefined,
                             ),
                             emitFlags,
                         ),
@@ -3896,6 +3910,8 @@ export function transformES2015(context: TransformationContext): (x: SourceFile 
                                     currentState.loopParameters,
                                     /*type*/ undefined,
                                     loopBody,
+                                    /*throwsType*/ undefined,
+                                    /*rejectsType*/ undefined,
                                 ),
                                 emitFlags,
                             ),
@@ -4261,7 +4277,7 @@ export function transformES2015(context: TransformationContext): (x: SourceFile 
         const parameters = visitParameterList(node.parameters, visitor, context);
         const body = transformFunctionBody(node);
         if (node.kind === SyntaxKind.GetAccessor) {
-            updated = factory.updateGetAccessorDeclaration(node, node.modifiers, node.name, parameters, node.type, body);
+            updated = factory.updateGetAccessorDeclaration(node, node.modifiers, node.name, parameters, node.type, body, node.throwsType, node.rejectsType);
         }
         else {
             updated = factory.updateSetAccessorDeclaration(node, node.modifiers, node.name, parameters, body);
@@ -4509,6 +4525,8 @@ export function transformES2015(context: TransformationContext): (x: SourceFile 
                                     func.body,
                                     statements,
                                 ),
+                                func.throwsType,
+                                func.rejectsType,
                             ),
                         ),
                         /*typeArguments*/ undefined,

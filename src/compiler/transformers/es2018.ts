@@ -1012,6 +1012,8 @@ export function transformES2018(context: TransformationContext): (x: SourceFile 
             visitParameterList(node.parameters, parameterVisitor, context),
             /*type*/ undefined,
             transformFunctionBody(node),
+            node.throwsType,
+            node.rejectsType,
         );
         enclosingFunctionFlags = savedEnclosingFunctionFlags;
         parametersWithPrecedingObjectRestOrSpread = savedParametersWithPrecedingObjectRestOrSpread;
@@ -1058,6 +1060,8 @@ export function transformES2018(context: TransformationContext): (x: SourceFile 
             enclosingFunctionFlags & FunctionFlags.Async && enclosingFunctionFlags & FunctionFlags.Generator ?
                 transformAsyncGeneratorFunctionBody(node) :
                 transformFunctionBody(node),
+            node.throwsType,
+            node.rejectsType,
         );
         enclosingFunctionFlags = savedEnclosingFunctionFlags;
         parametersWithPrecedingObjectRestOrSpread = savedParametersWithPrecedingObjectRestOrSpread;
@@ -1086,6 +1090,8 @@ export function transformES2018(context: TransformationContext): (x: SourceFile 
             enclosingFunctionFlags & FunctionFlags.Async && enclosingFunctionFlags & FunctionFlags.Generator ?
                 transformAsyncGeneratorFunctionBody(node) :
                 transformFunctionBody(node),
+            node.throwsType,
+            node.rejectsType,
         );
         enclosingFunctionFlags = savedEnclosingFunctionFlags;
         parametersWithPrecedingObjectRestOrSpread = savedParametersWithPrecedingObjectRestOrSpread;
@@ -1105,6 +1111,8 @@ export function transformES2018(context: TransformationContext): (x: SourceFile 
             /*type*/ undefined,
             node.equalsGreaterThanToken,
             transformFunctionBody(node),
+            node.throwsType,
+            node.rejectsType,
         );
         enclosingFunctionFlags = savedEnclosingFunctionFlags;
         parametersWithPrecedingObjectRestOrSpread = savedParametersWithPrecedingObjectRestOrSpread;
@@ -1133,6 +1141,8 @@ export function transformES2018(context: TransformationContext): (x: SourceFile 
             enclosingFunctionFlags & FunctionFlags.Async && enclosingFunctionFlags & FunctionFlags.Generator ?
                 transformAsyncGeneratorFunctionBody(node) :
                 transformFunctionBody(node),
+            node.throwsType,
+            node.rejectsType,
         );
         enclosingFunctionFlags = savedEnclosingFunctionFlags;
         parametersWithPrecedingObjectRestOrSpread = savedParametersWithPrecedingObjectRestOrSpread;
@@ -1184,6 +1194,8 @@ export function transformES2018(context: TransformationContext): (x: SourceFile 
                     innerParameters ?? [],
                     /*type*/ undefined,
                     asyncBody,
+                    /*throwsType*/ undefined,
+                    /*rejectsType*/ undefined,
                 ),
                 !!(hierarchyFacts & HierarchyFacts.HasLexicalThis),
             ),

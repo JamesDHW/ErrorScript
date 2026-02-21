@@ -4138,7 +4138,6 @@ namespace Parser {
             nextToken();
             throwsType = parseType();
             if (token() === SyntaxKind.RejectsKeyword) {
-                parseErrorAtCurrentToken(Diagnostics.A_signature_cannot_have_both_throws_and_rejects_clauses);
                 nextToken();
                 rejectsType = parseType();
             }
@@ -4147,7 +4146,6 @@ namespace Parser {
             nextToken();
             rejectsType = parseType();
             if (token() === SyntaxKind.ThrowsKeyword) {
-                parseErrorAtCurrentToken(Diagnostics.A_signature_cannot_have_both_throws_and_rejects_clauses);
                 nextToken();
                 throwsType = parseType();
             }

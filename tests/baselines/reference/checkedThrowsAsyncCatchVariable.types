@@ -26,14 +26,14 @@ class ValidationError extends Error { }
 >      : ^^^^^
 
 declare function fetchJson(url: string): Promise<string> rejects NetworkError;
->fetchJson : (url: string) => Promise<string>
->          : ^   ^^      ^^^^^               
+>fetchJson : (url: string) => Promise<string> rejects NetworkError
+>          : ^   ^^      ^^^^^               ^^^^^^^^^^^^^^^^^^^^^
 >url : string
 >    : ^^^^^^
 
 declare function readFromDisk(path: string): string throws StorageError;
->readFromDisk : (path: string) => string
->             : ^    ^^      ^^^^^      
+>readFromDisk : (path: string) => string throws StorageError
+>             : ^    ^^      ^^^^^      ^^^^^^^^^^^^^^^^^^^^
 >path : string
 >     : ^^^^^^
 
@@ -103,8 +103,8 @@ async function loadConfig(remote: boolean) {
 >                               : ^^^^^^
 >fetchJson("https://cfg") : Promise<string>
 >                         : ^^^^^^^^^^^^^^^
->fetchJson : (url: string) => Promise<string>
->          : ^   ^^      ^^^^^               
+>fetchJson : (url: string) => Promise<string> rejects NetworkError
+>          : ^   ^^      ^^^^^               ^^^^^^^^^^^^^^^^^^^^^
 >"https://cfg" : "https://cfg"
 >              : ^^^^^^^^^^^^^
 
@@ -121,8 +121,8 @@ async function loadConfig(remote: boolean) {
 >      : ^^^^^^
 >readFromDisk("config.json") : string
 >                            : ^^^^^^
->readFromDisk : (path: string) => string
->             : ^    ^^      ^^^^^      
+>readFromDisk : (path: string) => string throws StorageError
+>             : ^    ^^      ^^^^^      ^^^^^^^^^^^^^^^^^^^^
 >"config.json" : "config.json"
 >              : ^^^^^^^^^^^^^
 

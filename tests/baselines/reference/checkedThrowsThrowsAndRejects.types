@@ -1,0 +1,754 @@
+//// [tests/cases/compiler/checkedThrowsThrowsAndRejects.ts] ////
+
+=== checkedThrowsThrowsAndRejects.ts ===
+/* Sync = throws only; async = rejects only; non-async Promise-returning = both throws and rejects. */
+
+class CallTimeError extends Error { readonly kind = "CallTimeError"; }
+>CallTimeError : CallTimeError
+>              : ^^^^^^^^^^^^^
+>Error : Error
+>      : ^^^^^
+>kind : "CallTimeError"
+>     : ^^^^^^^^^^^^^^^
+>"CallTimeError" : "CallTimeError"
+>                : ^^^^^^^^^^^^^^^
+
+class RejectTimeError extends Error { readonly kind = "RejectTimeError"; }
+>RejectTimeError : RejectTimeError
+>                : ^^^^^^^^^^^^^^^
+>Error : Error
+>      : ^^^^^
+>kind : "RejectTimeError"
+>     : ^^^^^^^^^^^^^^^^^
+>"RejectTimeError" : "RejectTimeError"
+>                  : ^^^^^^^^^^^^^^^^^
+
+class BothErrorA extends Error { readonly kind = "BothErrorA"; }
+>BothErrorA : BothErrorA
+>           : ^^^^^^^^^^
+>Error : Error
+>      : ^^^^^
+>kind : "BothErrorA"
+>     : ^^^^^^^^^^^^
+>"BothErrorA" : "BothErrorA"
+>             : ^^^^^^^^^^^^
+
+class BothErrorB extends Error { readonly kind = "BothErrorB"; }
+>BothErrorB : BothErrorB
+>           : ^^^^^^^^^^
+>Error : Error
+>      : ^^^^^
+>kind : "BothErrorB"
+>     : ^^^^^^^^^^^^
+>"BothErrorB" : "BothErrorB"
+>             : ^^^^^^^^^^^^
+
+function syncThrowsA() {
+>syncThrowsA : () => void
+>            : ^^^^^^^^^^
+
+    throw new CallTimeError("sync throw");
+>new CallTimeError("sync throw") : CallTimeError
+>                                : ^^^^^^^^^^^^^
+>CallTimeError : typeof CallTimeError
+>              : ^^^^^^^^^^^^^^^^^^^^
+>"sync throw" : "sync throw"
+>             : ^^^^^^^^^^^^
+}
+
+syncThrowsA();
+>syncThrowsA() : void
+>              : ^^^^
+>syncThrowsA : () => void
+>            : ^^^^^^^^^^
+
+try {
+    syncThrowsA();
+>syncThrowsA() : void
+>              : ^^^^
+>syncThrowsA : () => void
+>            : ^^^^^^^^^^
+
+} catch (e) {
+>e : CallTimeError
+>  : ^^^^^^^^^^^^^
+
+    if (e instanceof CallTimeError) { }
+>e instanceof CallTimeError : boolean
+>                           : ^^^^^^^
+>e : CallTimeError
+>  : ^^^^^^^^^^^^^
+>CallTimeError : typeof CallTimeError
+>              : ^^^^^^^^^^^^^^^^^^^^
+}
+
+async function asyncRejectsEarly() {
+>asyncRejectsEarly : () => Promise<void>
+>                  : ^^^^^^^^^^^^^^^^^^^
+
+    throw new RejectTimeError("async throw becomes rejection");
+>new RejectTimeError("async throw becomes rejection") : RejectTimeError
+>                                                     : ^^^^^^^^^^^^^^^
+>RejectTimeError : typeof RejectTimeError
+>                : ^^^^^^^^^^^^^^^^^^^^^^
+>"async throw becomes rejection" : "async throw becomes rejection"
+>                                : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+}
+
+asyncRejectsEarly();
+>asyncRejectsEarly() : Promise<void>
+>                    : ^^^^^^^^^^^^^
+>asyncRejectsEarly : () => Promise<void>
+>                  : ^^^^^^^^^^^^^^^^^^^
+
+void asyncRejectsEarly();
+>void asyncRejectsEarly() : undefined
+>                         : ^^^^^^^^^
+>asyncRejectsEarly() : Promise<void>
+>                    : ^^^^^^^^^^^^^
+>asyncRejectsEarly : () => Promise<void>
+>                  : ^^^^^^^^^^^^^^^^^^^
+
+asyncRejectsEarly().catch(() => { });
+>asyncRejectsEarly().catch(() => { }) : Promise<void>
+>                                     : ^^^^^^^^^^^^^
+>asyncRejectsEarly().catch : <TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | null | undefined) => Promise<void | TResult>
+>                          : ^       ^^^^^^^^^^          ^^^^^      ^^   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>asyncRejectsEarly() : Promise<void>
+>                    : ^^^^^^^^^^^^^
+>asyncRejectsEarly : () => Promise<void>
+>                  : ^^^^^^^^^^^^^^^^^^^
+>catch : <TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | null | undefined) => Promise<void | TResult>
+>      : ^       ^^^^^^^^^^          ^^^^^      ^^   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>() => { } : () => void
+>          : ^^^^^^^^^^
+
+async function handlesAsyncReject() {
+>handlesAsyncReject : () => Promise<void>
+>                   : ^^^^^^^^^^^^^^^^^^^
+
+    try {
+        await asyncRejectsEarly();
+>await asyncRejectsEarly() : void
+>                          : ^^^^
+>asyncRejectsEarly() : Promise<void>
+>                    : ^^^^^^^^^^^^^
+>asyncRejectsEarly : () => Promise<void>
+>                  : ^^^^^^^^^^^^^^^^^^^
+
+    } catch (e) {
+>e : RejectTimeError
+>  : ^^^^^^^^^^^^^^^
+
+        if (e instanceof RejectTimeError) { }
+>e instanceof RejectTimeError : boolean
+>                             : ^^^^^^^
+>e : RejectTimeError
+>  : ^^^^^^^^^^^^^^^
+>RejectTimeError : typeof RejectTimeError
+>                : ^^^^^^^^^^^^^^^^^^^^^^
+    }
+}
+void handlesAsyncReject();
+>void handlesAsyncReject() : undefined
+>                          : ^^^^^^^^^
+>handlesAsyncReject() : Promise<void>
+>                     : ^^^^^^^^^^^^^
+>handlesAsyncReject : () => Promise<void>
+>                   : ^^^^^^^^^^^^^^^^^^^
+
+function promiseFnBoth() {
+>promiseFnBoth : () => Promise<never>
+>              : ^^^^^^^^^^^^^^^^^^^^
+
+    if (Math.random() > 0.5) {
+>Math.random() > 0.5 : boolean
+>                    : ^^^^^^^
+>Math.random() : number
+>              : ^^^^^^
+>Math.random : () => number
+>            : ^^^^^^      
+>Math : Math
+>     : ^^^^
+>random : () => number
+>       : ^^^^^^      
+>0.5 : 0.5
+>    : ^^^
+
+        throw new CallTimeError("thrown before returning promise");
+>new CallTimeError("thrown before returning promise") : CallTimeError
+>                                                     : ^^^^^^^^^^^^^
+>CallTimeError : typeof CallTimeError
+>              : ^^^^^^^^^^^^^^^^^^^^
+>"thrown before returning promise" : "thrown before returning promise"
+>                                  : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    }
+    return Promise.reject(new RejectTimeError("rejected after returning promise"));
+>Promise.reject(new RejectTimeError("rejected after returning promise")) : Promise<never>
+>                                                                        : ^^^^^^^^^^^^^^
+>Promise.reject : <T = never>(reason?: any) => Promise<T>
+>               : ^ ^^^^^^^^^^      ^^^   ^^^^^          
+>Promise : PromiseConstructor
+>        : ^^^^^^^^^^^^^^^^^^
+>reject : <T = never>(reason?: any) => Promise<T>
+>       : ^ ^^^^^^^^^^      ^^^   ^^^^^          
+>new RejectTimeError("rejected after returning promise") : RejectTimeError
+>                                                        : ^^^^^^^^^^^^^^^
+>RejectTimeError : typeof RejectTimeError
+>                : ^^^^^^^^^^^^^^^^^^^^^^
+>"rejected after returning promise" : "rejected after returning promise"
+>                                   : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+}
+
+promiseFnBoth();
+>promiseFnBoth() : Promise<never>
+>                : ^^^^^^^^^^^^^^
+>promiseFnBoth : () => Promise<never>
+>              : ^^^^^^^^^^^^^^^^^^^^
+
+void promiseFnBoth();
+>void promiseFnBoth() : undefined
+>                     : ^^^^^^^^^
+>promiseFnBoth() : Promise<never>
+>                : ^^^^^^^^^^^^^^
+>promiseFnBoth : () => Promise<never>
+>              : ^^^^^^^^^^^^^^^^^^^^
+
+promiseFnBoth().catch(() => { });
+>promiseFnBoth().catch(() => { }) : Promise<void>
+>                                 : ^^^^^^^^^^^^^
+>promiseFnBoth().catch : <TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | null | undefined) => Promise<TResult>
+>                      : ^       ^^^^^^^^^^          ^^^^^      ^^   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>promiseFnBoth() : Promise<never>
+>                : ^^^^^^^^^^^^^^
+>promiseFnBoth : () => Promise<never>
+>              : ^^^^^^^^^^^^^^^^^^^^
+>catch : <TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | null | undefined) => Promise<TResult>
+>      : ^       ^^^^^^^^^^          ^^^^^      ^^   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>() => { } : () => void
+>          : ^^^^^^^^^^
+
+try {
+    promiseFnBoth();
+>promiseFnBoth() : Promise<never>
+>                : ^^^^^^^^^^^^^^
+>promiseFnBoth : () => Promise<never>
+>              : ^^^^^^^^^^^^^^^^^^^^
+
+} catch (e) {
+>e : CallTimeError
+>  : ^^^^^^^^^^^^^
+
+    if (e instanceof CallTimeError) { }
+>e instanceof CallTimeError : boolean
+>                           : ^^^^^^^
+>e : CallTimeError
+>  : ^^^^^^^^^^^^^
+>CallTimeError : typeof CallTimeError
+>              : ^^^^^^^^^^^^^^^^^^^^
+}
+
+try {
+    promiseFnBoth().catch(() => { });
+>promiseFnBoth().catch(() => { }) : Promise<void>
+>                                 : ^^^^^^^^^^^^^
+>promiseFnBoth().catch : <TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | null | undefined) => Promise<TResult>
+>                      : ^       ^^^^^^^^^^          ^^^^^      ^^   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>promiseFnBoth() : Promise<never>
+>                : ^^^^^^^^^^^^^^
+>promiseFnBoth : () => Promise<never>
+>              : ^^^^^^^^^^^^^^^^^^^^
+>catch : <TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | null | undefined) => Promise<TResult>
+>      : ^       ^^^^^^^^^^          ^^^^^      ^^   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>() => { } : () => void
+>          : ^^^^^^^^^^
+
+} catch (e) {
+>e : CallTimeError
+>  : ^^^^^^^^^^^^^
+
+    if (e instanceof CallTimeError) { }
+>e instanceof CallTimeError : boolean
+>                           : ^^^^^^^
+>e : CallTimeError
+>  : ^^^^^^^^^^^^^
+>CallTimeError : typeof CallTimeError
+>              : ^^^^^^^^^^^^^^^^^^^^
+}
+
+try {
+    void promiseFnBoth();
+>void promiseFnBoth() : undefined
+>                     : ^^^^^^^^^
+>promiseFnBoth() : Promise<never>
+>                : ^^^^^^^^^^^^^^
+>promiseFnBoth : () => Promise<never>
+>              : ^^^^^^^^^^^^^^^^^^^^
+
+} catch (e) {
+>e : CallTimeError
+>  : ^^^^^^^^^^^^^
+
+    if (e instanceof CallTimeError) { }
+>e instanceof CallTimeError : boolean
+>                           : ^^^^^^^
+>e : CallTimeError
+>  : ^^^^^^^^^^^^^
+>CallTimeError : typeof CallTimeError
+>              : ^^^^^^^^^^^^^^^^^^^^
+}
+
+async function awaitHandlesBothChannels() {
+>awaitHandlesBothChannels : () => Promise<void>
+>                         : ^^^^^^^^^^^^^^^^^^^
+
+    try {
+        await promiseFnBoth();
+>await promiseFnBoth() : never
+>                      : ^^^^^
+>promiseFnBoth() : Promise<never>
+>                : ^^^^^^^^^^^^^^
+>promiseFnBoth : () => Promise<never>
+>              : ^^^^^^^^^^^^^^^^^^^^
+
+    } catch (e) {
+>e : CallTimeError | RejectTimeError
+>  : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+        if (e instanceof CallTimeError) { }
+>e instanceof CallTimeError : boolean
+>                           : ^^^^^^^
+>e : CallTimeError | RejectTimeError
+>  : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>CallTimeError : typeof CallTimeError
+>              : ^^^^^^^^^^^^^^^^^^^^
+
+        if (e instanceof RejectTimeError) { }
+>e instanceof RejectTimeError : boolean
+>                             : ^^^^^^^
+>e : CallTimeError | RejectTimeError
+>  : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>RejectTimeError : typeof RejectTimeError
+>                : ^^^^^^^^^^^^^^^^^^^^^^
+    }
+}
+void awaitHandlesBothChannels();
+>void awaitHandlesBothChannels() : undefined
+>                                : ^^^^^^^^^
+>awaitHandlesBothChannels() : Promise<void>
+>                           : ^^^^^^^^^^^^^
+>awaitHandlesBothChannels : () => Promise<void>
+>                         : ^^^^^^^^^^^^^^^^^^^
+
+async function awaitWithoutHandling() {
+>awaitWithoutHandling : () => Promise<void>
+>                     : ^^^^^^^^^^^^^^^^^^^
+
+    await promiseFnBoth();
+>await promiseFnBoth() : never
+>                      : ^^^^^
+>promiseFnBoth() : Promise<never>
+>                : ^^^^^^^^^^^^^^
+>promiseFnBoth : () => Promise<never>
+>              : ^^^^^^^^^^^^^^^^^^^^
+}
+void awaitWithoutHandling();
+>void awaitWithoutHandling() : undefined
+>                            : ^^^^^^^^^
+>awaitWithoutHandling() : Promise<void>
+>                       : ^^^^^^^^^^^^^
+>awaitWithoutHandling : () => Promise<void>
+>                     : ^^^^^^^^^^^^^^^^^^^
+
+function wrapperReturnsPromise() {
+>wrapperReturnsPromise : () => Promise<never>
+>                      : ^^^^^^^^^^^^^^^^^^^^
+
+    return promiseFnBoth();
+>promiseFnBoth() : Promise<never>
+>                : ^^^^^^^^^^^^^^
+>promiseFnBoth : () => Promise<never>
+>              : ^^^^^^^^^^^^^^^^^^^^
+}
+
+wrapperReturnsPromise();
+>wrapperReturnsPromise() : Promise<never>
+>                        : ^^^^^^^^^^^^^^
+>wrapperReturnsPromise : () => Promise<never>
+>                      : ^^^^^^^^^^^^^^^^^^^^
+
+async function asyncWrapper() {
+>asyncWrapper : () => Promise<never>
+>             : ^^^^^^^^^^^^^^^^^^^^
+
+    return await promiseFnBoth();
+>await promiseFnBoth() : never
+>                      : ^^^^^
+>promiseFnBoth() : Promise<never>
+>                : ^^^^^^^^^^^^^^
+>promiseFnBoth : () => Promise<never>
+>              : ^^^^^^^^^^^^^^^^^^^^
+}
+
+asyncWrapper();
+>asyncWrapper() : Promise<never>
+>               : ^^^^^^^^^^^^^^
+>asyncWrapper : () => Promise<never>
+>             : ^^^^^^^^^^^^^^^^^^^^
+
+async function handleAsyncWrapper() {
+>handleAsyncWrapper : () => Promise<void>
+>                   : ^^^^^^^^^^^^^^^^^^^
+
+    try {
+        await asyncWrapper();
+>await asyncWrapper() : never
+>                     : ^^^^^
+>asyncWrapper() : Promise<never>
+>               : ^^^^^^^^^^^^^^
+>asyncWrapper : () => Promise<never>
+>             : ^^^^^^^^^^^^^^^^^^^^
+
+    } catch (e) {
+>e : CallTimeError | RejectTimeError
+>  : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+        if (e instanceof CallTimeError) { }
+>e instanceof CallTimeError : boolean
+>                           : ^^^^^^^
+>e : CallTimeError | RejectTimeError
+>  : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>CallTimeError : typeof CallTimeError
+>              : ^^^^^^^^^^^^^^^^^^^^
+
+        if (e instanceof RejectTimeError) { }
+>e instanceof RejectTimeError : boolean
+>                             : ^^^^^^^
+>e : CallTimeError | RejectTimeError
+>  : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>RejectTimeError : typeof RejectTimeError
+>                : ^^^^^^^^^^^^^^^^^^^^^^
+    }
+}
+void handleAsyncWrapper();
+>void handleAsyncWrapper() : undefined
+>                          : ^^^^^^^^^
+>handleAsyncWrapper() : Promise<void>
+>                     : ^^^^^^^^^^^^^
+>handleAsyncWrapper : () => Promise<void>
+>                   : ^^^^^^^^^^^^^^^^^^^
+
+declare function declaredBoth(): Promise<number> throws BothErrorA rejects BothErrorB;
+>declaredBoth : () => Promise<number> throws BothErrorA rejects BothErrorB
+>             : ^^^^^^               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+declaredBoth();
+>declaredBoth() : Promise<number>
+>               : ^^^^^^^^^^^^^^^
+>declaredBoth : () => Promise<number> throws BothErrorA rejects BothErrorB
+>             : ^^^^^^               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+declaredBoth().catch(() => { });
+>declaredBoth().catch(() => { }) : Promise<number | void>
+>                                : ^^^^^^^^^^^^^^^^^^^^^^
+>declaredBoth().catch : <TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | null | undefined) => Promise<number | TResult>
+>                     : ^       ^^^^^^^^^^          ^^^^^      ^^   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>declaredBoth() : Promise<number>
+>               : ^^^^^^^^^^^^^^^
+>declaredBoth : () => Promise<number> throws BothErrorA rejects BothErrorB
+>             : ^^^^^^               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>catch : <TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | null | undefined) => Promise<number | TResult>
+>      : ^       ^^^^^^^^^^          ^^^^^      ^^   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>() => { } : () => void
+>          : ^^^^^^^^^^
+
+void declaredBoth();
+>void declaredBoth() : undefined
+>                    : ^^^^^^^^^
+>declaredBoth() : Promise<number>
+>               : ^^^^^^^^^^^^^^^
+>declaredBoth : () => Promise<number> throws BothErrorA rejects BothErrorB
+>             : ^^^^^^               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+try {
+    declaredBoth();
+>declaredBoth() : Promise<number>
+>               : ^^^^^^^^^^^^^^^
+>declaredBoth : () => Promise<number> throws BothErrorA rejects BothErrorB
+>             : ^^^^^^               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+} catch (e) {
+>e : BothErrorA
+>  : ^^^^^^^^^^
+
+    if (e instanceof BothErrorA) { }
+>e instanceof BothErrorA : boolean
+>                        : ^^^^^^^
+>e : BothErrorA
+>  : ^^^^^^^^^^
+>BothErrorA : typeof BothErrorA
+>           : ^^^^^^^^^^^^^^^^^
+}
+
+async function handleDeclaredBoth() {
+>handleDeclaredBoth : () => Promise<void>
+>                   : ^^^^^^^^^^^^^^^^^^^
+
+    try {
+        await declaredBoth();
+>await declaredBoth() : number
+>                     : ^^^^^^
+>declaredBoth() : Promise<number>
+>               : ^^^^^^^^^^^^^^^
+>declaredBoth : () => Promise<number> throws BothErrorA rejects BothErrorB
+>             : ^^^^^^               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    } catch (e) {
+>e : BothErrorA | BothErrorB
+>  : ^^^^^^^^^^^^^^^^^^^^^^^
+
+        if (e instanceof BothErrorA) { }
+>e instanceof BothErrorA : boolean
+>                        : ^^^^^^^
+>e : BothErrorA | BothErrorB
+>  : ^^^^^^^^^^^^^^^^^^^^^^^
+>BothErrorA : typeof BothErrorA
+>           : ^^^^^^^^^^^^^^^^^
+
+        if (e instanceof BothErrorB) { }
+>e instanceof BothErrorB : boolean
+>                        : ^^^^^^^
+>e : BothErrorA | BothErrorB
+>  : ^^^^^^^^^^^^^^^^^^^^^^^
+>BothErrorB : typeof BothErrorB
+>           : ^^^^^^^^^^^^^^^^^
+    }
+}
+void handleDeclaredBoth();
+>void handleDeclaredBoth() : undefined
+>                          : ^^^^^^^^^
+>handleDeclaredBoth() : Promise<void>
+>                     : ^^^^^^^^^^^^^
+>handleDeclaredBoth : () => Promise<void>
+>                   : ^^^^^^^^^^^^^^^^^^^
+
+async function illegalAsyncThrows(): Promise<void> throws Error {
+>illegalAsyncThrows : () => Promise<void> throws Error
+>                   : ^^^^^^             ^^^^^^^^^^^^^
+
+    return;
+}
+
+function illegalSyncRejects(): number rejects Error {
+>illegalSyncRejects : () => number rejects Error
+>                   : ^^^^^^      ^^^^^^^^^^^^^^
+
+    return 1;
+>1 : 1
+>  : ^
+}
+
+function mkBoth1() {
+>mkBoth1 : () => Promise<never>
+>        : ^^^^^^^^^^^^^^^^^^^^
+
+    if (Math.random() > 0.5) throw new CallTimeError("A");
+>Math.random() > 0.5 : boolean
+>                    : ^^^^^^^
+>Math.random() : number
+>              : ^^^^^^
+>Math.random : () => number
+>            : ^^^^^^      
+>Math : Math
+>     : ^^^^
+>random : () => number
+>       : ^^^^^^      
+>0.5 : 0.5
+>    : ^^^
+>new CallTimeError("A") : CallTimeError
+>                       : ^^^^^^^^^^^^^
+>CallTimeError : typeof CallTimeError
+>              : ^^^^^^^^^^^^^^^^^^^^
+>"A" : "A"
+>    : ^^^
+
+    return Promise.reject(new RejectTimeError("A"));
+>Promise.reject(new RejectTimeError("A")) : Promise<never>
+>                                         : ^^^^^^^^^^^^^^
+>Promise.reject : <T = never>(reason?: any) => Promise<T>
+>               : ^ ^^^^^^^^^^      ^^^   ^^^^^          
+>Promise : PromiseConstructor
+>        : ^^^^^^^^^^^^^^^^^^
+>reject : <T = never>(reason?: any) => Promise<T>
+>       : ^ ^^^^^^^^^^      ^^^   ^^^^^          
+>new RejectTimeError("A") : RejectTimeError
+>                         : ^^^^^^^^^^^^^^^
+>RejectTimeError : typeof RejectTimeError
+>                : ^^^^^^^^^^^^^^^^^^^^^^
+>"A" : "A"
+>    : ^^^
+}
+function mkBoth2() {
+>mkBoth2 : () => Promise<never>
+>        : ^^^^^^^^^^^^^^^^^^^^
+
+    if (Math.random() > 0.5) throw new CallTimeError("B");
+>Math.random() > 0.5 : boolean
+>                    : ^^^^^^^
+>Math.random() : number
+>              : ^^^^^^
+>Math.random : () => number
+>            : ^^^^^^      
+>Math : Math
+>     : ^^^^
+>random : () => number
+>       : ^^^^^^      
+>0.5 : 0.5
+>    : ^^^
+>new CallTimeError("B") : CallTimeError
+>                       : ^^^^^^^^^^^^^
+>CallTimeError : typeof CallTimeError
+>              : ^^^^^^^^^^^^^^^^^^^^
+>"B" : "B"
+>    : ^^^
+
+    return Promise.reject(new RejectTimeError("B"));
+>Promise.reject(new RejectTimeError("B")) : Promise<never>
+>                                         : ^^^^^^^^^^^^^^
+>Promise.reject : <T = never>(reason?: any) => Promise<T>
+>               : ^ ^^^^^^^^^^      ^^^   ^^^^^          
+>Promise : PromiseConstructor
+>        : ^^^^^^^^^^^^^^^^^^
+>reject : <T = never>(reason?: any) => Promise<T>
+>       : ^ ^^^^^^^^^^      ^^^   ^^^^^          
+>new RejectTimeError("B") : RejectTimeError
+>                         : ^^^^^^^^^^^^^^^
+>RejectTimeError : typeof RejectTimeError
+>                : ^^^^^^^^^^^^^^^^^^^^^^
+>"B" : "B"
+>    : ^^^
+}
+
+async function allWithBoth() {
+>allWithBoth : () => Promise<void>
+>            : ^^^^^^^^^^^^^^^^^^^
+
+    await Promise.all([mkBoth1(), mkBoth2()]);
+>await Promise.all([mkBoth1(), mkBoth2()]) : [never, never]
+>                                          : ^^^^^^^^^^^^^^
+>Promise.all([mkBoth1(), mkBoth2()]) : Promise<[never, never]>
+>                                    : ^^^^^^^^^^^^^^^^^^^^^^^
+>Promise.all : { <T>(values: Iterable<T | PromiseLike<T>>): Promise<Awaited<T>[]>; <T extends readonly unknown[] | []>(values: T): Promise<{ -readonly [P in keyof T]: Awaited<T[P]>; }>; }
+>            : ^^^ ^^      ^^                            ^^^                     ^^^ ^^^^^^^^^                       ^^      ^^ ^^^                                                     ^^^
+>Promise : PromiseConstructor
+>        : ^^^^^^^^^^^^^^^^^^
+>all : { <T>(values: Iterable<T | PromiseLike<T>>): Promise<Awaited<T>[]>; <T extends readonly unknown[] | []>(values: T): Promise<{ -readonly [P in keyof T]: Awaited<T[P]>; }>; }
+>    : ^^^ ^^      ^^                            ^^^                     ^^^ ^^^^^^^^^                       ^^      ^^ ^^^                                                     ^^^
+>[mkBoth1(), mkBoth2()] : [Promise<never>, Promise<never>]
+>                       : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>mkBoth1() : Promise<never>
+>          : ^^^^^^^^^^^^^^
+>mkBoth1 : () => Promise<never>
+>        : ^^^^^^^^^^^^^^^^^^^^
+>mkBoth2() : Promise<never>
+>          : ^^^^^^^^^^^^^^
+>mkBoth2 : () => Promise<never>
+>        : ^^^^^^^^^^^^^^^^^^^^
+}
+void allWithBoth();
+>void allWithBoth() : undefined
+>                   : ^^^^^^^^^
+>allWithBoth() : Promise<void>
+>              : ^^^^^^^^^^^^^
+>allWithBoth : () => Promise<void>
+>            : ^^^^^^^^^^^^^^^^^^^
+
+async function allWithBothHandled() {
+>allWithBothHandled : () => Promise<void>
+>                   : ^^^^^^^^^^^^^^^^^^^
+
+    try {
+        await Promise.all([mkBoth1(), mkBoth2()]);
+>await Promise.all([mkBoth1(), mkBoth2()]) : [never, never]
+>                                          : ^^^^^^^^^^^^^^
+>Promise.all([mkBoth1(), mkBoth2()]) : Promise<[never, never]>
+>                                    : ^^^^^^^^^^^^^^^^^^^^^^^
+>Promise.all : { <T>(values: Iterable<T | PromiseLike<T>>): Promise<Awaited<T>[]>; <T extends readonly unknown[] | []>(values: T): Promise<{ -readonly [P in keyof T]: Awaited<T[P]>; }>; }
+>            : ^^^ ^^      ^^                            ^^^                     ^^^ ^^^^^^^^^                       ^^      ^^ ^^^                                                     ^^^
+>Promise : PromiseConstructor
+>        : ^^^^^^^^^^^^^^^^^^
+>all : { <T>(values: Iterable<T | PromiseLike<T>>): Promise<Awaited<T>[]>; <T extends readonly unknown[] | []>(values: T): Promise<{ -readonly [P in keyof T]: Awaited<T[P]>; }>; }
+>    : ^^^ ^^      ^^                            ^^^                     ^^^ ^^^^^^^^^                       ^^      ^^ ^^^                                                     ^^^
+>[mkBoth1(), mkBoth2()] : [Promise<never>, Promise<never>]
+>                       : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>mkBoth1() : Promise<never>
+>          : ^^^^^^^^^^^^^^
+>mkBoth1 : () => Promise<never>
+>        : ^^^^^^^^^^^^^^^^^^^^
+>mkBoth2() : Promise<never>
+>          : ^^^^^^^^^^^^^^
+>mkBoth2 : () => Promise<never>
+>        : ^^^^^^^^^^^^^^^^^^^^
+
+    } catch (e) {
+>e : CallTimeError | RejectTimeError
+>  : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+        if (e instanceof CallTimeError) { }
+>e instanceof CallTimeError : boolean
+>                           : ^^^^^^^
+>e : CallTimeError | RejectTimeError
+>  : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>CallTimeError : typeof CallTimeError
+>              : ^^^^^^^^^^^^^^^^^^^^
+
+        if (e instanceof RejectTimeError) { }
+>e instanceof RejectTimeError : boolean
+>                             : ^^^^^^^
+>e : CallTimeError | RejectTimeError
+>  : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>RejectTimeError : typeof RejectTimeError
+>                : ^^^^^^^^^^^^^^^^^^^^^^
+    }
+}
+void allWithBothHandled();
+>void allWithBothHandled() : undefined
+>                          : ^^^^^^^^^
+>allWithBothHandled() : Promise<void>
+>                     : ^^^^^^^^^^^^^
+>allWithBothHandled : () => Promise<void>
+>                   : ^^^^^^^^^^^^^^^^^^^
+
+function demoCatchTypingForBoth() {
+>demoCatchTypingForBoth : () => void
+>                       : ^^^^^^^^^^
+
+    try {
+        promiseFnBoth().catch(() => { });
+>promiseFnBoth().catch(() => { }) : Promise<void>
+>                                 : ^^^^^^^^^^^^^
+>promiseFnBoth().catch : <TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | null | undefined) => Promise<TResult>
+>                      : ^       ^^^^^^^^^^          ^^^^^      ^^   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>promiseFnBoth() : Promise<never>
+>                : ^^^^^^^^^^^^^^
+>promiseFnBoth : () => Promise<never>
+>              : ^^^^^^^^^^^^^^^^^^^^
+>catch : <TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | null | undefined) => Promise<TResult>
+>      : ^       ^^^^^^^^^^          ^^^^^      ^^   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>() => { } : () => void
+>          : ^^^^^^^^^^
+
+    } catch (e) {
+>e : CallTimeError
+>  : ^^^^^^^^^^^^^
+
+        if (e instanceof CallTimeError) { }
+>e instanceof CallTimeError : boolean
+>                           : ^^^^^^^
+>e : CallTimeError
+>  : ^^^^^^^^^^^^^
+>CallTimeError : typeof CallTimeError
+>              : ^^^^^^^^^^^^^^^^^^^^
+    }
+}
+

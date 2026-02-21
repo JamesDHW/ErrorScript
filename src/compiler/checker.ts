@@ -37936,7 +37936,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
             const isAssertNeverLike = returnType === neverType
                 && node.arguments?.length
                 && getTypeOfNode(node.arguments[0]) === neverType;
-            if (effectiveThrows !== neverType && !isHandledByTry(node) && !isHandledByPropagation(node) && !isThenableType(returnType) && !isAssertNeverLike) {
+            if (effectiveThrows !== neverType && !isHandledByTry(node) && !isHandledByPropagation(node) && !isAssertNeverLike) {
                 error(node, Diagnostics.Unhandled_thrown_type_Colon_0, typeToString(effectiveThrows));
             }
             const rejectEffect = getRejectEffectOfExpression(node);
@@ -40041,6 +40041,10 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
             addErrorOrSuggestion(/*isError*/ false, createDiagnosticForNode(node, Diagnostics.await_has_no_effect_on_the_type_of_this_expression));
         }
         if (checkedThrows) {
+            const throwsFromOperand = thrownTypeOfExpression(node.expression);
+            if (throwsFromOperand !== neverType && !isHandledByTry(node)) {
+                error(node, Diagnostics.Unhandled_thrown_type_Colon_0, typeToString(throwsFromOperand));
+            }
             const rejectEffect = getRejectEffectOfExpression(node.expression);
             if (rejectEffect !== neverType && !isHandledByTry(node)) {
                 error(node, Diagnostics.Unhandled_promise_rejection_type_Colon_0, typeToString(rejectEffect));
@@ -42292,8 +42296,8 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                             }
                         }
                         if (declWithEffects.throwsType) {
-                            if (isThenableType(returnType)) {
-                                error(declWithEffects.throwsType, Diagnostics.throws_clause_is_not_allowed_on_a_Promise_like_return_type);
+                            if ((getFunctionFlags(node) & FunctionFlags.Async) !== 0) {
+                                error(declWithEffects.throwsType, Diagnostics.throws_clause_is_not_allowed_on_async_functions);
                             }
                         }
                     }
@@ -46823,18 +46827,90 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
     }
 
     function thrownTypeOfExpression(expr: Expression): Type {
-        if (expr.kind !== SyntaxKind.CallExpression && expr.kind !== SyntaxKind.NewExpression) {
-            return neverType;
+        expr = skipParentheses(expr);
+        switch (expr.kind) {
+            case SyntaxKind.CallExpression: {
+                const call = expr as CallExpression;
+                const signature = getResolvedSignature(call, /*candidatesOutArray*/ undefined);
+                const direct = !signature || signature === resolvingSignature ? neverType : (() => {
+                    const returnType = getReturnTypeOfSignature(signature);
+                    const isAssertNeverLike = returnType === neverType
+                        && call.arguments?.length
+                        && getTypeOfNode(call.arguments[0]) === neverType;
+                    return isAssertNeverLike ? neverType : getEffectiveThrows(signature, call);
+                })();
+                const fromCallee = thrownTypeOfExpression(call.expression);
+                const types: Type[] = [];
+                if (direct !== neverType) types.push(direct);
+                if (fromCallee !== neverType) types.push(fromCallee);
+                if (call.arguments) {
+                    for (const arg of call.arguments) {
+                        const t = arg.kind === SyntaxKind.SpreadElement
+                            ? thrownTypeOfExpression((arg as SpreadElement).expression)
+                            : thrownTypeOfExpression(arg);
+                        if (t !== neverType) types.push(t);
+                    }
+                }
+                if (types.length === 0) return neverType;
+                if (types.length === 1) return types[0];
+                return getUnionType(types);
+            }
+            case SyntaxKind.NewExpression: {
+                const newExpr = expr as NewExpression;
+                const signature = getResolvedSignature(newExpr, /*candidatesOutArray*/ undefined);
+                const direct = !signature || signature === resolvingSignature ? neverType : (() => {
+                    const returnType = getReturnTypeOfSignature(signature);
+                    const isAssertNeverLike = returnType === neverType
+                        && newExpr.arguments?.length
+                        && getTypeOfNode(newExpr.arguments[0]) === neverType;
+                    return isAssertNeverLike ? neverType : getEffectiveThrows(signature, newExpr);
+                })();
+                const fromCallee = thrownTypeOfExpression(newExpr.expression);
+                const newTypes: Type[] = [];
+                if (direct !== neverType) newTypes.push(direct);
+                if (fromCallee !== neverType) newTypes.push(fromCallee);
+                if (newExpr.arguments) {
+                    for (const arg of newExpr.arguments) {
+                        const t = arg.kind === SyntaxKind.SpreadElement
+                            ? thrownTypeOfExpression((arg as SpreadElement).expression)
+                            : thrownTypeOfExpression(arg);
+                        if (t !== neverType) newTypes.push(t);
+                    }
+                }
+                if (newTypes.length === 0) return neverType;
+                if (newTypes.length === 1) return newTypes[0];
+                return getUnionType(newTypes);
+            }
+            case SyntaxKind.PropertyAccessExpression:
+                return thrownTypeOfExpression((expr as PropertyAccessExpression).expression);
+            case SyntaxKind.ElementAccessExpression: {
+                const ea = expr as ElementAccessExpression;
+                const fromObj = thrownTypeOfExpression(ea.expression);
+                const fromArg = ea.argumentExpression ? thrownTypeOfExpression(ea.argumentExpression) : neverType;
+                if (fromObj === neverType && fromArg === neverType) return neverType;
+                if (fromObj !== neverType && fromArg !== neverType) return getUnionType([fromObj, fromArg]);
+                return fromObj !== neverType ? fromObj : fromArg;
+            }
+            case SyntaxKind.ParenthesizedExpression:
+                return thrownTypeOfExpression((expr as ParenthesizedExpression).expression);
+            case SyntaxKind.VoidExpression:
+                return thrownTypeOfExpression((expr as VoidExpression).expression);
+            case SyntaxKind.ArrayLiteralExpression: {
+                const arr = expr as ArrayLiteralExpression;
+                const arrTypes: Type[] = [];
+                for (const el of arr.elements) {
+                    const t = el.kind === SyntaxKind.SpreadElement
+                        ? thrownTypeOfExpression((el as SpreadElement).expression)
+                        : thrownTypeOfExpression(el);
+                    if (t !== neverType) arrTypes.push(t);
+                }
+                if (arrTypes.length === 0) return neverType;
+                if (arrTypes.length === 1) return arrTypes[0];
+                return getUnionType(arrTypes);
+            }
+            default:
+                return neverType;
         }
-        const call = expr as CallExpression | NewExpression;
-        const signature = getResolvedSignature(call, /*candidatesOutArray*/ undefined);
-        if (!signature || signature === resolvingSignature) return neverType;
-        const returnType = getReturnTypeOfSignature(signature);
-        const isAssertNeverLike = returnType === neverType
-            && call.arguments?.length
-            && getTypeOfNode(call.arguments[0]) === neverType;
-        if (isAssertNeverLike) return neverType;
-        return getEffectiveThrows(signature, call);
     }
 
     /**
@@ -47016,9 +47092,12 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
     }
 
     function getEffectiveThrows(signature: Signature, callNode?: CallExpression | NewExpression): Type {
+        const decl = signature.declaration;
+        if (decl && isFunctionLike(decl) && (getFunctionFlags(decl) & FunctionFlags.Async) !== 0) {
+            return neverType;
+        }
         const declared = getDeclaredThrowsType(signature);
         if (declared !== undefined) return declared;
-        const decl = signature.declaration;
         if (!decl || !isFunctionLike(decl)) return neverType;
         const funcDecl = decl as FunctionLikeDeclaration;
         if (getFunctionBodyForThrownType(funcDecl)) {

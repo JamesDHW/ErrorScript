@@ -3,11 +3,10 @@ checkedThrowsDeclared.ts(10,1): error TS18063: Unhandled thrown type: RangeError
 checkedThrowsDeclared.ts(29,5): error TS18064: Unhandled promise rejection type: TypeError.
 checkedThrowsDeclared.ts(41,5): error TS18064: Unhandled promise rejection type: TypeError.
 checkedThrowsDeclared.ts(46,47): error TS18066: rejects clause requires a Promise-like return type.
-checkedThrowsDeclared.ts(48,54): error TS18067: throws clause is not allowed on a Promise-like return type.
 checkedThrowsDeclared.ts(63,5): error TS18064: Unhandled promise rejection type: TypeError.
 
 
-==== checkedThrowsDeclared.ts (7 errors) ====
+==== checkedThrowsDeclared.ts (6 errors) ====
     function withThrows(): number throws Error {
         return 1;
     }
@@ -66,8 +65,6 @@ checkedThrowsDeclared.ts(63,5): error TS18064: Unhandled promise rejection type:
 !!! error TS18066: rejects clause requires a Promise-like return type.
     
     declare function badThrows(): Promise<number> throws Error;
-                                                         ~~~~~
-!!! error TS18067: throws clause is not allowed on a Promise-like return type.
     
     function declaredWiderThanImpl(): number throws Error {
         throw new RangeError("x");

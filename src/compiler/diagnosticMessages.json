@@ -8559,7 +8559,7 @@
         "category": "Error",
         "code": 18066
     },
-    "throws clause is not allowed on a Promise-like return type.": {
+    "throws clause is not allowed on async functions.": {
         "category": "Error",
         "code": 18067
     },

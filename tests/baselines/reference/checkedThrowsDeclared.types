@@ -2,8 +2,8 @@
 
 === checkedThrowsDeclared.ts ===
 function withThrows(): number throws Error {
->withThrows : () => number
->           : ^^^^^^      
+>withThrows : () => number throws Error
+>           : ^^^^^^      ^^^^^^^^^^^^^
 
     return 1;
 >1 : 1
@@ -11,31 +11,31 @@ function withThrows(): number throws Error {
 }
 
 declare function declaredThrows(): number throws RangeError;
->declaredThrows : () => number
->               : ^^^^^^      
+>declaredThrows : () => number throws RangeError
+>               : ^^^^^^      ^^^^^^^^^^^^^^^^^^
 
 withThrows();
 >withThrows() : number
 >             : ^^^^^^
->withThrows : () => number
->           : ^^^^^^      
+>withThrows : () => number throws Error
+>           : ^^^^^^      ^^^^^^^^^^^^^
 
 declare function f(): number throws RangeError;
->f : () => number
->  : ^^^^^^      
+>f : () => number throws RangeError
+>  : ^^^^^^      ^^^^^^^^^^^^^^^^^^
 
 f();
 >f() : number
 >    : ^^^^^^
->f : () => number
->  : ^^^^^^      
+>f : () => number throws RangeError
+>  : ^^^^^^      ^^^^^^^^^^^^^^^^^^
 
 try {
     f();
 >f() : number
 >    : ^^^^^^
->f : () => number
->  : ^^^^^^      
+>f : () => number throws RangeError
+>  : ^^^^^^      ^^^^^^^^^^^^^^^^^^
 
 } catch (e) {
 >e : RangeError
@@ -47,8 +47,8 @@ try {
 }
 
 function implThrowsStricter(): number throws Error {
->implThrowsStricter : () => number
->                   : ^^^^^^      
+>implThrowsStricter : () => number throws Error
+>                   : ^^^^^^      ^^^^^^^^^^^^^
 
     throw new TypeError("x");
 >new TypeError("x") : TypeError
@@ -60,8 +60,8 @@ function implThrowsStricter(): number throws Error {
 }
 
 function implThrowsNarrower(): number throws RangeError {
->implThrowsNarrower : () => number
->                   : ^^^^^^      
+>implThrowsNarrower : () => number throws RangeError
+>                   : ^^^^^^      ^^^^^^^^^^^^^^^^^^
 
     throw new TypeError("x");
 >new TypeError("x") : TypeError
@@ -73,8 +73,8 @@ function implThrowsNarrower(): number throws RangeError {
 }
 
 declare function g(): Promise<number> rejects TypeError;
->g : () => Promise<number>
->  : ^^^^^^               
+>g : () => Promise<number> rejects TypeError
+>  : ^^^^^^               ^^^^^^^^^^^^^^^^^^
 
 async function unhandledReject() {
 >unhandledReject : () => Promise<void>
@@ -85,8 +85,8 @@ async function unhandledReject() {
 >          : ^^^^^^
 >g() : Promise<number>
 >    : ^^^^^^^^^^^^^^^
->g : () => Promise<number>
->  : ^^^^^^               
+>g : () => Promise<number> rejects TypeError
+>  : ^^^^^^               ^^^^^^^^^^^^^^^^^^
 }
 
 async function tryHandlesReject() {
@@ -99,8 +99,8 @@ async function tryHandlesReject() {
 >          : ^^^^^^
 >g() : Promise<number>
 >    : ^^^^^^^^^^^^^^^
->g : () => Promise<number>
->  : ^^^^^^               
+>g : () => Promise<number> rejects TypeError
+>  : ^^^^^^               ^^^^^^^^^^^^^^^^^^
 
     } catch (e) {
 >e : TypeError
@@ -119,16 +119,16 @@ function fireAndForgetDeclared() {
     g();
 >g() : Promise<number>
 >    : ^^^^^^^^^^^^^^^
->g : () => Promise<number>
->  : ^^^^^^               
+>g : () => Promise<number> rejects TypeError
+>  : ^^^^^^               ^^^^^^^^^^^^^^^^^^
 
     void g();
 >void g() : undefined
 >         : ^^^^^^^^^
 >g() : Promise<number>
 >    : ^^^^^^^^^^^^^^^
->g : () => Promise<number>
->  : ^^^^^^               
+>g : () => Promise<number> rejects TypeError
+>  : ^^^^^^               ^^^^^^^^^^^^^^^^^^
 
     g().catch(() => {});
 >g().catch(() => {}) : Promise<number | void>
@@ -137,8 +137,8 @@ function fireAndForgetDeclared() {
 >          : ^       ^^^^^^^^^^          ^^^^^      ^^   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 >g() : Promise<number>
 >    : ^^^^^^^^^^^^^^^
->g : () => Promise<number>
->  : ^^^^^^               
+>g : () => Promise<number> rejects TypeError
+>  : ^^^^^^               ^^^^^^^^^^^^^^^^^^
 >catch : <TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | null | undefined) => Promise<number | TResult>
 >      : ^       ^^^^^^^^^^          ^^^^^      ^^   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 >() => {} : () => void
@@ -146,16 +146,16 @@ function fireAndForgetDeclared() {
 }
 
 declare function badRejects(): number rejects Error;
->badRejects : () => number
->           : ^^^^^^      
+>badRejects : () => number rejects Error
+>           : ^^^^^^      ^^^^^^^^^^^^^^
 
 declare function badThrows(): Promise<number> throws Error;
->badThrows : () => Promise<number>
->          : ^^^^^^               
+>badThrows : () => Promise<number> throws Error
+>          : ^^^^^^               ^^^^^^^^^^^^^
 
 function declaredWiderThanImpl(): number throws Error {
->declaredWiderThanImpl : () => number
->                      : ^^^^^^      
+>declaredWiderThanImpl : () => number throws Error
+>                      : ^^^^^^      ^^^^^^^^^^^^^
 
     throw new RangeError("x");
 >new RangeError("x") : RangeError
@@ -167,14 +167,14 @@ function declaredWiderThanImpl(): number throws Error {
 }
 
 declare function overload(x: string): number throws Error;
->overload : { (x: string): number; (x: number): Promise<number>; }
->         : ^^^ ^^      ^^^      ^^^ ^^      ^^^               ^^^
+>overload : { (x: string): number throws Error; (x: number): Promise<number> rejects TypeError; }
+>         : ^^^ ^^      ^^^      ^^^^^^^^^^^^^^^^ ^^      ^^^               ^^^^^^^^^^^^^^^^^^^^^
 >x : string
 >  : ^^^^^^
 
 declare function overload(x: number): Promise<number> rejects TypeError;
->overload : { (x: string): number; (x: number): Promise<number>; }
->         : ^^^ ^^      ^^^      ^^^ ^^      ^^^               ^^^
+>overload : { (x: string): number throws Error; (x: number): Promise<number> rejects TypeError; }
+>         : ^^^ ^^      ^^^      ^^^^^^^^^^^^^^^^ ^^      ^^^               ^^^^^^^^^^^^^^^^^^^^^
 >x : number
 >  : ^^^^^^
 
@@ -182,8 +182,8 @@ try {
     overload("a");
 >overload("a") : number
 >              : ^^^^^^
->overload : { (x: string): number; (x: number): Promise<number>; }
->         : ^^^ ^^      ^^^      ^^^ ^^      ^^^               ^^^
+>overload : { (x: string): number throws Error; (x: number): Promise<number> rejects TypeError; }
+>         : ^^^ ^^      ^^^      ^^^^^^^^^^^^^^^^ ^^      ^^^               ^^^^^^^^^^^^^^^^^^^^^
 >"a" : "a"
 >    : ^^^
 
@@ -205,8 +205,8 @@ async function unhandledOverload() {
 >                  : ^^^^^^
 >overload(1) : Promise<number>
 >            : ^^^^^^^^^^^^^^^
->overload : { (x: string): number; (x: number): Promise<number>; }
->         : ^^^ ^^      ^^^      ^^^ ^^      ^^^               ^^^
+>overload : { (x: string): number throws Error; (x: number): Promise<number> rejects TypeError; }
+>         : ^^^ ^^      ^^^      ^^^^^^^^^^^^^^^^ ^^      ^^^               ^^^^^^^^^^^^^^^^^^^^^
 >1 : 1
 >  : ^
 }
@@ -220,8 +220,8 @@ type Fn = (x: string) => number throws Error;
 const fn: Fn = (x: string): number throws Error => {
 >fn : Fn
 >   : ^^
->(x: string): number throws Error => {    throw new Error(x);} : (x: string) => number
->                                                              : ^ ^^      ^^^^^      
+>(x: string): number throws Error => {    throw new Error(x);} : (x: string) => number throws Error
+>                                                              : ^ ^^      ^^^^^      ^^^^^^^^^^^^^
 >x : string
 >  : ^^^^^^
 
@@ -254,18 +254,18 @@ try {
 
 interface X {
     m(): number throws Error;
->m : () => number
->  : ^^^^^^      
+>m : () => number throws Error
+>  : ^^^^^^      ^^^^^^^^^^^^^
 }
 const o: X = {
 >o : X
 >  : ^
->{    m(): number throws Error {        throw new Error("");    },} : { m(): number; }
->                                                                   : ^^^^^^^      ^^^
+>{    m(): number throws Error {        throw new Error("");    },} : { m(): number throws Error; }
+>                                                                   : ^^^^^^^      ^^^^^^^^^^^^^^^^
 
     m(): number throws Error {
->m : () => number
->  : ^^^^^^      
+>m : () => number throws Error
+>  : ^^^^^^      ^^^^^^^^^^^^^
 
         throw new Error("");
 >new Error("") : Error
@@ -281,12 +281,12 @@ try {
     o.m();
 >o.m() : number
 >      : ^^^^^^
->o.m : () => number
->    : ^^^^^^      
+>o.m : () => number throws Error
+>    : ^^^^^^      ^^^^^^^^^^^^^
 >o : X
 >  : ^
->m : () => number
->  : ^^^^^^      
+>m : () => number throws Error
+>  : ^^^^^^      ^^^^^^^^^^^^^
 
 } catch (e) {
 >e : Error

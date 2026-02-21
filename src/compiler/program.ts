@@ -1966,6 +1966,9 @@ export function createProgram(_rootNamesOrOptions: readonly string[] | CreatePro
     performance.measure("Program", "beforeProgram", "afterProgram");
     tracing?.pop();
 
+    /** Diagnostic codes that the @expectException comment directive can suppress (unhandled throw/reject). */
+    const unhandledExceptionErrorCodes = new Set([Diagnostics.Unhandled_thrown_type_Colon_0.code, Diagnostics.Unhandled_promise_rejection_type_Colon_0.code]);
+
     return program;
 
     function getResolvedModule(file: SourceFile, moduleName: string, mode: ResolutionMode) {

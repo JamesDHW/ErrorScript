@@ -1151,7 +1151,7 @@ import {
 } from "./_namespaces/ts.js";
 import * as moduleSpecifiers from "./_namespaces/ts.moduleSpecifiers.js";
 import * as performance from "./_namespaces/ts.performance.js";
-import { getNativeThrowMap } from "./nativeThrowMap.js";
+import { NATIVE_THROW_MAP } from "./nativeThrowMap.js";
 
 const ambientModuleSymbolRegex = /^".+"$/;
 const anon = "(anonymous)" as __String & string;
@@ -1553,7 +1553,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
     var rejectEffectCache = checkedThrows ? new Map<Node, Type>() : undefined;
     type RejectEffectAsyncCacheEntry = { kind: "computing"; } | { kind: "done"; type: Type; };
     var rejectEffectAsyncCache = checkedThrows ? new Map<FunctionLikeDeclaration, RejectEffectAsyncCacheEntry>() : undefined;
-    const throwMap = getNativeThrowMap();
+
     var exactOptionalPropertyTypes = compilerOptions.exactOptionalPropertyTypes;
     var noUncheckedSideEffectImports = compilerOptions.noUncheckedSideEffectImports !== false;
     var stableTypeOrdering = !!compilerOptions.stableTypeOrdering;
@@ -31999,16 +31999,20 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
     function getPromiseRejectionReceiverForParameter(parameter: ParameterDeclaration): Expression | undefined {
         const func = parameter.parent;
         if (!isFunctionLike(func) || func.parameters.indexOf(parameter) !== 0) return undefined;
+
         let callNode: Node | undefined = func.parent;
         if (callNode?.kind === SyntaxKind.ParenthesizedExpression) callNode = callNode.parent;
         if (!callNode || callNode.kind !== SyntaxKind.CallExpression) return undefined;
+
         const call = callNode as CallExpression;
         const invoked = call.expression;
         if (invoked.kind !== SyntaxKind.PropertyAccessExpression) return undefined;
+
         const pa = invoked as PropertyAccessExpression;
         const methodName = idText(pa.name);
         const arg0 = call.arguments?.[0];
         const arg1 = call.arguments?.[1];
+        
         if (methodName === "catch" && arg0 && skipParentheses(arg0) === func) return pa.expression;
         if (methodName === "then" && arg1 && skipParentheses(arg1) === func) return pa.expression;
         return undefined;
@@ -42340,12 +42344,12 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                         const returnType = getReturnTypeOfSignature(signature);
                         if (declWithEffects.rejectsType) {
                             if (!isThenableType(returnType)) {
-                                error(declWithEffects.rejectsType, Diagnostics.rejects_clause_requires_a_Promise_like_return_type);
+                                error(declWithEffects.rejectsType, Diagnostics.Rejects_clause_requires_a_Promise_like_return_type);
                             }
                         }
                         if (declWithEffects.throwsType) {
                             if ((getFunctionFlags(node) & FunctionFlags.Async) !== 0) {
-                                error(declWithEffects.throwsType, Diagnostics.throws_clause_is_not_allowed_on_async_functions);
+                                error(declWithEffects.throwsType, Diagnostics.Throws_clause_is_not_allowed_on_async_functions);
                             }
                         }
                     }
@@ -47147,7 +47151,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         }
         const symbol = getSymbolOfDeclaration(decl);
         const key = getFullyQualifiedName(symbol, callNode);
-        const entry = throwMap[key];
+        const entry = NATIVE_THROW_MAP[key];
         if (entry?.throws) return getTypeFromThrowMapNames(entry.throws);
         return neverType;
     }
@@ -47162,7 +47166,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         if (!body) {
             const symbol = getSymbolOfDeclaration(decl);
             const key = getFullyQualifiedName(symbol, callNode);
-            const entry = throwMap[key];
+            const entry = NATIVE_THROW_MAP[key];
             if (entry?.rejects) return getTypeFromThrowMapNames(entry.rejects);
             return neverType;
         }

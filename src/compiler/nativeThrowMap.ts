@@ -4,7 +4,7 @@ export interface ThrowMapEntry {
 }
 export type ThrowMap = Record<string, ThrowMapEntry>;
 
-const nativeThrowMap: ThrowMap = {
+export const NATIVE_THROW_MAP: ThrowMap = {
     "JSON.parse": { throws: ["SyntaxError"] },
     "JSON.stringify": { throws: ["TypeError"] },
     "decodeURI": { throws: ["URIError"] },
@@ -17,7 +17,3 @@ const nativeThrowMap: ThrowMap = {
     "url.URLSearchParams": { throws: ["TypeError"] },
     "fetch": { rejects: ["TypeError"] },
 };
-
-export function getNativeThrowMap(): ThrowMap {
-    return nativeThrowMap;
-}

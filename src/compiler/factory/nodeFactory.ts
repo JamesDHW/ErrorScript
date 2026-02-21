@@ -1219,6 +1219,7 @@ export function createNodeFactory(flags: NodeFactoryFlags, baseFactory: BaseNode
 
     function finishUpdateBaseSignatureDeclaration<T extends SignatureDeclarationBase>(updated: Mutable<T>, original: T) {
         if (updated !== original) {
+            // copy children used for quick info
             updated.typeArguments = original.typeArguments;
             updated.throwsType = original.throwsType;
             updated.rejectsType = original.rejectsType;

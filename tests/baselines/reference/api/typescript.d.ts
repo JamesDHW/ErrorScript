@@ -41,8 +41,8 @@ declare namespace ts {
                     [K in keyof T]?: any;
                 },
             > = {
-                    [K in keyof T]: K extends keyof Substitutions ? Substitutions[K] : T[K];
-                };
+                [K in keyof T]: K extends keyof Substitutions ? Substitutions[K] : T[K];
+            };
             type ChangeStringIndexSignature<T, NewStringIndexSignatureType> = {
                 [K in keyof T]: string extends K ? NewStringIndexSignatureType : T[K];
             };
@@ -3443,9 +3443,9 @@ declare namespace ts {
                 number,
                 number,
             ]) => [
-                    number,
-                    number,
-                ];
+                number,
+                number,
+            ];
             logger: Logger;
             /**
              * If falsy, all events are suppressed.
@@ -5633,26 +5633,26 @@ declare namespace ts {
             };
         }
         | ImportSpecifier
-        & ({
-            readonly isTypeOnly: true;
-        } | {
-            readonly parent: NamedImports & {
-                readonly parent: ImportClause & {
-                    readonly isTypeOnly: true;
+            & ({
+                readonly isTypeOnly: true;
+            } | {
+                readonly parent: NamedImports & {
+                    readonly parent: ImportClause & {
+                        readonly isTypeOnly: true;
+                    };
                 };
-            };
-        });
+            });
     type TypeOnlyExportDeclaration =
         | ExportSpecifier
-        & ({
-            readonly isTypeOnly: true;
-        } | {
-            readonly parent: NamedExports & {
-                readonly parent: ExportDeclaration & {
-                    readonly isTypeOnly: true;
+            & ({
+                readonly isTypeOnly: true;
+            } | {
+                readonly parent: NamedExports & {
+                    readonly parent: ExportDeclaration & {
+                        readonly isTypeOnly: true;
+                    };
                 };
-            };
-        })
+            })
         | ExportDeclaration & {
             readonly isTypeOnly: true;
             readonly moduleSpecifier: Expression;

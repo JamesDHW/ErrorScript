@@ -326,8 +326,6 @@ import {
 } from "./_namespaces/ts.js";
 import * as performance from "./_namespaces/ts.performance.js";
 
-const THROWS_ERROR_CODES = new Set([18063, 18064]);
-
 export function findConfigFile(searchPath: string, fileExists: (fileName: string) => boolean, configName = "tsconfig.json"): string | undefined {
     return forEachAncestorDirectory(searchPath, ancestor => {
         const fileName = combinePaths(ancestor, configName);
@@ -2940,6 +2938,9 @@ export function createProgram(_rootNamesOrOptions: readonly string[] | CreatePro
         return diagnostics;
     }
 
+    /** Diagnostic codes that the @expectException comment directive can suppress (unhandled throw/reject). */
+    const unhandledExceptionErrorCodes = new Set([Diagnostics.Unhandled_thrown_type_Colon_0.code, Diagnostics.Unhandled_promise_rejection_type_Colon_0.code]);
+
     /**
      * Creates a map of comment directives along with the diagnostics immediately preceded by one of them.
      * Comments that match to any of those diagnostics are marked as used.
@@ -2975,7 +2976,7 @@ export function createProgram(_rootNamesOrOptions: readonly string[] | CreatePro
             const directive = directives.getDirectiveForLine(line);
             if (directive !== undefined) {
                 const isIgnoreThrowDirective = directive.type === CommentDirectiveType.ExpectException;
-                const isExceptionError = THROWS_ERROR_CODES.has(diagnostic.code);
+                const isExceptionError = unhandledExceptionErrorCodes.has(diagnostic.code);
 
                 if (!isIgnoreThrowDirective) {
                     directives.markUsed(line);

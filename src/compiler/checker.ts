@@ -3471,7 +3471,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 if (isEntityNameExpression((node as ExpressionWithTypeArguments).expression)) {
                     return (node as ExpressionWithTypeArguments).expression as EntityNameExpression;
                 }
-                // falls through
+            // falls through
             default:
                 return undefined;
         }
@@ -5708,7 +5708,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                     if (!isExternalOrCommonJsModule(location as SourceFile)) {
                         break;
                     }
-                    // falls through
+                // falls through
                 case SyntaxKind.ModuleDeclaration:
                     const sym = getSymbolOfDeclaration(location as ModuleDeclaration);
                     // `sym` may not have exports if this module declaration is backed by the symbol for a `const` that's being rewritten
@@ -10502,7 +10502,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                             );
                             break;
                         }
-                        // else fall through and treat commonjs require just like import=
+                    // else fall through and treat commonjs require just like import=
                     case SyntaxKind.ImportEqualsDeclaration:
                         // This _specifically_ only exists to handle json declarations - where we make aliases, but since
                         // we emit no declarations for the json document, must not refer to it in the declarations
@@ -11373,7 +11373,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                         // If the binding pattern is empty, this variable declaration is not visible
                         return false;
                     }
-                    // falls through
+                // falls through
                 case SyntaxKind.ModuleDeclaration:
                 case SyntaxKind.ClassDeclaration:
                 case SyntaxKind.InterfaceDeclaration:
@@ -11406,8 +11406,8 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                         // Private/protected properties/methods are not visible
                         return false;
                     }
-                    // Public properties/methods are visible if its parents are visible, so:
-                    // falls through
+                // Public properties/methods are visible if its parents are visible, so:
+                // falls through
 
                 case SyntaxKind.Constructor:
                 case SyntaxKind.ConstructSignature:
@@ -11965,7 +11965,16 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
             }
             const parameterTypeOfTypeTag = getParameterTypeOfTypeTag(func, declaration);
             if (parameterTypeOfTypeTag) return parameterTypeOfTypeTag;
-            // Use contextual parameter type if one is available
+            if (declaration.symbol.escapedName !== InternalSymbolName.This && checkedThrows && rejectEffectCache) {
+                const receiver = getPromiseRejectionReceiverForParameter(declaration);
+                if (receiver) {
+                    checkExpression(receiver, CheckMode.TypeOnly);
+                    const rejectType = getRejectEffectOfExpression(receiver);
+                    if (rejectType !== neverType) {
+                        return addOptionality(rejectType, /*isProperty*/ false, isOptional);
+                    }
+                }
+            }
             const type = declaration.symbol.escapedName === InternalSymbolName.This ? getContextualThisParameterType(func) : getContextuallyTypedParameterType(declaration);
             if (type) {
                 return addOptionality(type, /*isProperty*/ false, isOptional);
@@ -21446,7 +21455,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 if (!isConstAssertion(node)) {
                     break;
                 }
-                // fallthrough
+            // fallthrough
             case SyntaxKind.JsxExpression:
             case SyntaxKind.ParenthesizedExpression:
                 return elaborateError((node as AsExpression | ParenthesizedExpression | JsxExpression).expression, source, target, relation, headMessage, containingMessageChain, errorOutputContainer);
@@ -27796,7 +27805,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 if (isCallExpression(node.parent)) {
                     return Diagnostics.Cannot_find_name_0_Did_you_mean_to_write_this_in_an_async_function;
                 }
-                // falls through
+            // falls through
             default:
                 if (node.parent.kind === SyntaxKind.ShorthandPropertyAssignment) {
                     return Diagnostics.No_value_exists_in_scope_for_the_shorthand_property_0_Either_declare_one_or_provide_an_initializer;
@@ -27852,7 +27861,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                     const symbol = getResolvedSymbol(node as Identifier);
                     return symbol !== unknownSymbol ? `${flowContainer ? getNodeId(flowContainer) : "-1"}|${getTypeId(declaredType)}|${getTypeId(initialType)}|${getSymbolId(symbol)}` : undefined;
                 }
-                // falls through
+            // falls through
             case SyntaxKind.ThisKeyword:
                 return `0|${flowContainer ? getNodeId(flowContainer) : "-1"}|${getTypeId(declaredType)}|${getTypeId(initialType)}`;
             case SyntaxKind.NonNullExpression:
@@ -30238,7 +30247,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                             }
                         }
                     }
-                    // falls through
+                // falls through
                 case SyntaxKind.ThisKeyword:
                 case SyntaxKind.SuperKeyword:
                 case SyntaxKind.PropertyAccessExpression:
@@ -31987,11 +31996,39 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         return undefined;
     }
 
+    function getPromiseRejectionReceiverForParameter(parameter: ParameterDeclaration): Expression | undefined {
+        const func = parameter.parent;
+        if (!isFunctionLike(func) || func.parameters.indexOf(parameter) !== 0) return undefined;
+        let callNode: Node | undefined = func.parent;
+        if (callNode?.kind === SyntaxKind.ParenthesizedExpression) callNode = callNode.parent;
+        if (!callNode || callNode.kind !== SyntaxKind.CallExpression) return undefined;
+        const call = callNode as CallExpression;
+        const invoked = call.expression;
+        if (invoked.kind !== SyntaxKind.PropertyAccessExpression) return undefined;
+        const pa = invoked as PropertyAccessExpression;
+        const methodName = idText(pa.name);
+        const arg0 = call.arguments?.[0];
+        const arg1 = call.arguments?.[1];
+        if (methodName === "catch" && arg0 && skipParentheses(arg0) === func) return pa.expression;
+        if (methodName === "then" && arg1 && skipParentheses(arg1) === func) return pa.expression;
+        return undefined;
+    }
+
     // Return contextual type of parameter or undefined if no contextual type is available
     function getContextuallyTypedParameterType(parameter: ParameterDeclaration): Type | undefined {
         const func = parameter.parent;
         if (!isContextSensitiveFunctionOrObjectLiteralMethod(func)) {
             return undefined;
+        }
+        if (checkedThrows && rejectEffectCache) {
+            const receiver = getPromiseRejectionReceiverForParameter(parameter);
+            if (receiver) {
+                checkExpression(receiver, CheckMode.TypeOnly);
+                const rejectType = getRejectEffectOfExpression(receiver);
+                if (rejectType !== neverType) {
+                    return addOptionality(rejectType, /*isProperty*/ false, !!parameter.questionToken);
+                }
+            }
         }
         const iife = getImmediatelyInvokedFunctionExpression(func);
         if (iife && iife.arguments) {
@@ -38740,7 +38777,18 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
             const parameter = signature.parameters[i];
             const declaration = parameter.valueDeclaration as ParameterDeclaration;
             if (!getEffectiveTypeAnnotationNode(declaration)) {
-                let type = tryGetTypeAtPosition(context, i);
+                let type: Type | undefined;
+                if (i === 0 && checkedThrows && rejectEffectCache) {
+                    const receiver = getPromiseRejectionReceiverForParameter(declaration);
+                    if (receiver) {
+                        checkExpression(receiver, CheckMode.TypeOnly);
+                        const rejectType = getRejectEffectOfExpression(receiver);
+                        if (rejectType !== neverType) {
+                            type = addOptionality(rejectType, /*isProperty*/ false, !!declaration.questionToken);
+                        }
+                    }
+                }
+                if (type === undefined) type = tryGetTypeAtPosition(context, i);
                 if (type && declaration.initializer) {
                     let initializerType = checkDeclarationInitializer(declaration, CheckMode.Normal);
                     if (!isTypeAssignableTo(initializerType, type) && isTypeAssignableTo(type, initializerType = widenTypeInferredFromInitializer(declaration, initializerType))) {
@@ -39986,7 +40034,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                                 hasError = true;
                                 break;
                             }
-                            // fallthrough
+                        // fallthrough
                         case ModuleKind.ES2022:
                         case ModuleKind.ESNext:
                         case ModuleKind.Preserve:
@@ -39994,7 +40042,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                             if (languageVersion >= ScriptTarget.ES2017) {
                                 break;
                             }
-                            // fallthrough
+                        // fallthrough
                         default:
                             span ??= getSpanOfTokenAtPosition(sourceFile, node.pos);
                             const message = isAwaitExpression(node) ? Diagnostics.Top_level_await_expressions_are_only_allowed_when_the_module_option_is_set_to_es2022_esnext_system_node16_node18_node20_nodenext_or_preserve_and_the_target_option_is_set_to_es2017_or_higher :
@@ -41947,7 +41995,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 if (isImportCall(node)) {
                     return checkImportCallExpression(node);
                 }
-                // falls through
+            // falls through
             case SyntaxKind.NewExpression:
                 return checkCallExpression(node as CallExpression, checkMode);
             case SyntaxKind.TaggedTemplateExpression:
@@ -42427,7 +42475,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                         if (useDefineForClassFields) {
                             break;
                         }
-                        // fall through
+                    // fall through
                     case "prototype":
                         const message = Diagnostics.Static_property_0_conflicts_with_built_in_property_Function_0_of_constructor_function_1;
                         const className = getNameOfSymbolAsWritten(getSymbolOfDeclaration(node));
@@ -44121,7 +44169,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                     headMessage = Diagnostics.Decorator_function_return_type_0_is_not_assignable_to_type_1;
                     break;
                 }
-                // falls through
+            // falls through
 
             case SyntaxKind.Parameter:
                 headMessage = Diagnostics.Decorator_function_return_type_is_0_but_is_expected_to_be_void_or_any;
@@ -46826,60 +46874,52 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         return body && body.kind === SyntaxKind.Block ? body as Block : undefined;
     }
 
+    function getDirectThrownTypeOfInvocation(signature: Signature | undefined, node: CallExpression | NewExpression): Type {
+        if (!signature || signature === resolvingSignature) return neverType;
+        const returnType = getReturnTypeOfSignature(signature);
+        const args = node.arguments;
+        const isAssertNeverLike = returnType === neverType && args?.length && getTypeOfNode(args[0]) === neverType;
+        if (isAssertNeverLike) return neverType;
+        return getEffectiveThrows(signature, node);
+    }
+
+    function collectThrownTypesFromInvocation(
+        node: CallExpression | NewExpression,
+        direct: Type,
+        thrownTypeOfExpression: (expr: Expression) => Type,
+    ): Type {
+        const fromCallee = thrownTypeOfExpression(node.expression);
+        const args = node.arguments;
+        const types: Type[] = [];
+        if (direct !== neverType) types.push(direct);
+        if (fromCallee !== neverType) types.push(fromCallee);
+        if (args) {
+            for (const arg of args) {
+                const t = arg.kind === SyntaxKind.SpreadElement
+                    ? thrownTypeOfExpression((arg as SpreadElement).expression)
+                    : thrownTypeOfExpression(arg);
+                if (t !== neverType) types.push(t);
+            }
+        }
+        if (types.length === 0) return neverType;
+        if (types.length === 1) return types[0];
+        return getUnionType(types);
+    }
+
     function thrownTypeOfExpression(expr: Expression): Type {
         expr = skipParentheses(expr);
         switch (expr.kind) {
             case SyntaxKind.CallExpression: {
                 const call = expr as CallExpression;
                 const signature = getResolvedSignature(call, /*candidatesOutArray*/ undefined);
-                const direct = !signature || signature === resolvingSignature ? neverType : (() => {
-                    const returnType = getReturnTypeOfSignature(signature);
-                    const isAssertNeverLike = returnType === neverType
-                        && call.arguments?.length
-                        && getTypeOfNode(call.arguments[0]) === neverType;
-                    return isAssertNeverLike ? neverType : getEffectiveThrows(signature, call);
-                })();
-                const fromCallee = thrownTypeOfExpression(call.expression);
-                const types: Type[] = [];
-                if (direct !== neverType) types.push(direct);
-                if (fromCallee !== neverType) types.push(fromCallee);
-                if (call.arguments) {
-                    for (const arg of call.arguments) {
-                        const t = arg.kind === SyntaxKind.SpreadElement
-                            ? thrownTypeOfExpression((arg as SpreadElement).expression)
-                            : thrownTypeOfExpression(arg);
-                        if (t !== neverType) types.push(t);
-                    }
-                }
-                if (types.length === 0) return neverType;
-                if (types.length === 1) return types[0];
-                return getUnionType(types);
+                const direct = getDirectThrownTypeOfInvocation(signature, call);
+                return collectThrownTypesFromInvocation(call, direct, thrownTypeOfExpression);
             }
             case SyntaxKind.NewExpression: {
                 const newExpr = expr as NewExpression;
                 const signature = getResolvedSignature(newExpr, /*candidatesOutArray*/ undefined);
-                const direct = !signature || signature === resolvingSignature ? neverType : (() => {
-                    const returnType = getReturnTypeOfSignature(signature);
-                    const isAssertNeverLike = returnType === neverType
-                        && newExpr.arguments?.length
-                        && getTypeOfNode(newExpr.arguments[0]) === neverType;
-                    return isAssertNeverLike ? neverType : getEffectiveThrows(signature, newExpr);
-                })();
-                const fromCallee = thrownTypeOfExpression(newExpr.expression);
-                const newTypes: Type[] = [];
-                if (direct !== neverType) newTypes.push(direct);
-                if (fromCallee !== neverType) newTypes.push(fromCallee);
-                if (newExpr.arguments) {
-                    for (const arg of newExpr.arguments) {
-                        const t = arg.kind === SyntaxKind.SpreadElement
-                            ? thrownTypeOfExpression((arg as SpreadElement).expression)
-                            : thrownTypeOfExpression(arg);
-                        if (t !== neverType) newTypes.push(t);
-                    }
-                }
-                if (newTypes.length === 0) return neverType;
-                if (newTypes.length === 1) return newTypes[0];
-                return getUnionType(newTypes);
+                const direct = getDirectThrownTypeOfInvocation(signature, newExpr);
+                return collectThrownTypesFromInvocation(newExpr, direct, thrownTypeOfExpression);
             }
             case SyntaxKind.PropertyAccessExpression:
                 return thrownTypeOfExpression((expr as PropertyAccessExpression).expression);
@@ -46916,6 +46956,8 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
     /**
      * Returns the thrown type contributed by a single statement (throw expressions, rethrows, try/catch/finally, branches).
      * Used as a building block for inferred thrown type (Einf). Reachability: we over-approximate by unioning all branches.
+     * Try/catch/finally effect typing: catch variable = Throws(A) only; await adds Rejects at await point; .catch handles rejects only.
+     * Outward Throws: with catch returns TB ∪ TC (TA absorbed); without catch returns TA ∪ TC.
      */
     function thrownTypeOfStatement(stmt: Statement): Type {
         switch (stmt.kind) {
@@ -47337,6 +47379,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
             if (catchClause.variableDeclaration) {
                 const declaration = catchClause.variableDeclaration;
                 if (checkedThrows && catchVariableThrownTypeMap && !getEffectiveTypeAnnotationNode(declaration)) {
+                    // Try/catch/finally effect typing: catch variable = Throws(A) only; await adds Rejects at await point; .catch handles rejects only.
                     const tTry = thrownTypeOfStatement(node.tryBlock);
                     catchVariableThrownTypeMap.set(getCatchVariableMapKey(declaration), tTry);
                 }
@@ -48907,7 +48950,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
             case SyntaxKind.ImportEqualsDeclaration:
                 // import a = e.x; in module augmentation is ok, but not import a = require('fs)
                 if (isInternalModuleImportEqualsDeclaration(node)) break;
-                // falls through
+            // falls through
             case SyntaxKind.ImportDeclaration:
                 grammarErrorOnFirstToken(node, Diagnostics.Imports_are_not_permitted_in_module_augmentations_Consider_moving_them_to_the_enclosing_external_module);
                 break;
@@ -48921,7 +48964,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                     }
                     break;
                 }
-                // falls through
+            // falls through
             case SyntaxKind.ClassDeclaration:
             case SyntaxKind.EnumDeclaration:
             case SyntaxKind.FunctionDeclaration:
@@ -49802,7 +49845,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 return checkJSDocPropertyTag(node as JSDocPropertyTag);
             case SyntaxKind.JSDocFunctionType:
                 checkJSDocFunctionType(node as JSDocFunctionType);
-                // falls through
+            // falls through
             case SyntaxKind.JSDocNonNullableType:
             case SyntaxKind.JSDocNullableType:
             case SyntaxKind.JSDocAllType:
@@ -50411,7 +50454,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 switch (location.kind) {
                     case SyntaxKind.SourceFile:
                         if (!isExternalModule(location as SourceFile)) break;
-                        // falls through
+                    // falls through
                     case SyntaxKind.ModuleDeclaration:
                         copyLocallyVisibleExportSymbols(getSymbolOfDeclaration(location as ModuleDeclaration | SourceFile).exports!, meaning & SymbolFlags.ModuleMember);
                         break;
@@ -50576,7 +50619,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 if (isPropertyAccessExpression(entityName.parent) && getLeftmostAccessExpression(entityName.parent) === entityName) {
                     return undefined;
                 }
-                // falls through
+            // falls through
             case AssignmentDeclarationKind.ThisProperty:
             case AssignmentDeclarationKind.ModuleExports:
                 return getSymbolOfDeclaration(entityName.parent.parent as BinaryExpression);
@@ -50875,7 +50918,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 if (!isThisInTypeQuery(node)) {
                     return getSymbolOfNameOrPropertyAccessExpression(node as EntityName | PrivateIdentifier | PropertyAccessExpression);
                 }
-                // falls through
+            // falls through
 
             case SyntaxKind.ThisKeyword:
                 const container = getThisContainer(node, /*includeArrowFunctions*/ false, /*includeClassComputedPropertyName*/ false);
@@ -50888,7 +50931,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 if (isInExpressionContext(node)) {
                     return checkExpression(node as Expression).symbol;
                 }
-                // falls through
+            // falls through
 
             case SyntaxKind.ThisType:
                 return getTypeFromThisTypeNode(node as ThisExpression | ThisTypeNode).symbol;
@@ -50922,7 +50965,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 if (isCallExpression(parent) && isBindableObjectDefinePropertyCall(parent) && parent.arguments[1] === node) {
                     return getSymbolOfDeclaration(parent);
                 }
-                // falls through
+            // falls through
 
             case SyntaxKind.NumericLiteral:
                 // index access
@@ -50948,7 +50991,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 if (isMetaProperty(node.parent) && node.parent.name.escapedText === "defer") {
                     return undefined;
                 }
-                // falls through
+            // falls through
             case SyntaxKind.NewKeyword:
                 return isMetaProperty(node.parent) ? checkMetaPropertyKeyword(node.parent).symbol : undefined;
             case SyntaxKind.InstanceOfKeyword:
@@ -50965,7 +51008,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                     const symbol = getIntrinsicTagSymbol(node.parent as JsxOpeningLikeElement);
                     return symbol === unknownSymbol ? undefined : symbol;
                 }
-                // falls through
+            // falls through
 
             default:
                 return undefined;
@@ -53397,7 +53440,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                                     );
                                     break;
                                 }
-                                // fallthrough
+                            // fallthrough
                             case ModuleKind.ES2022:
                             case ModuleKind.ESNext:
                             case ModuleKind.Preserve:
@@ -53405,7 +53448,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                                 if (languageVersion >= ScriptTarget.ES2017) {
                                     break;
                                 }
-                                // fallthrough
+                            // fallthrough
                             default:
                                 diagnostics.add(
                                     createDiagnosticForNode(forInOrOfStatement.awaitModifier, Diagnostics.Top_level_for_await_loops_are_only_allowed_when_the_module_option_is_set_to_es2022_esnext_system_node16_node18_node20_nodenext_or_preserve_and_the_target_option_is_set_to_es2017_or_higher),

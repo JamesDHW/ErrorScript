@@ -171,6 +171,28 @@ function demoCatchTypingForBoth() {
     }
 }
 
+promiseFnBoth().catch(e => {
+    if (e instanceof RejectTimeError) { }
+});
+
+promiseFnBoth().then(() => { }, e => {
+    if (e instanceof RejectTimeError) { }
+});
+
+declaredBoth().catch(e => {
+    if (e instanceof BothErrorB) { }
+});
+
+asyncRejectsEarly().catch(e => {
+    if (e instanceof RejectTimeError) { }
+});
+
+function assertRejectTimeError(e: RejectTimeError): asserts e is RejectTimeError { }
+
+promiseFnBoth().catch((e) => {
+    assertRejectTimeError(e);
+});
+
 
 //// [checkedThrowsThrowsAndRejects.js]
 "use strict";
@@ -328,3 +350,19 @@ function demoCatchTypingForBoth() {
         if (e instanceof CallTimeError) { }
     }
 }
+promiseFnBoth().catch(e => {
+    if (e instanceof RejectTimeError) { }
+});
+promiseFnBoth().then(() => { }, e => {
+    if (e instanceof RejectTimeError) { }
+});
+declaredBoth().catch(e => {
+    if (e instanceof BothErrorB) { }
+});
+asyncRejectsEarly().catch(e => {
+    if (e instanceof RejectTimeError) { }
+});
+function assertRejectTimeError(e) { }
+promiseFnBoth().catch((e) => {
+    assertRejectTimeError(e);
+});

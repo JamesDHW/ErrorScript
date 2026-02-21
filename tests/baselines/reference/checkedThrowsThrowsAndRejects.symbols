@@ -375,3 +375,70 @@ function demoCatchTypingForBoth() {
     }
 }
 
+promiseFnBoth().catch(e => {
+>promiseFnBoth().catch : Symbol(Promise.catch, Decl(lib.es5.d.ts, --, --))
+>promiseFnBoth : Symbol(promiseFnBoth, Decl(checkedThrowsThrowsAndRejects.ts, 36, 26))
+>catch : Symbol(Promise.catch, Decl(lib.es5.d.ts, --, --))
+>e : Symbol(e, Decl(checkedThrowsThrowsAndRejects.ts, 170, 22))
+
+    if (e instanceof RejectTimeError) { }
+>e : Symbol(e, Decl(checkedThrowsThrowsAndRejects.ts, 170, 22))
+>RejectTimeError : Symbol(RejectTimeError, Decl(checkedThrowsThrowsAndRejects.ts, 2, 70))
+
+});
+
+promiseFnBoth().then(() => { }, e => {
+>promiseFnBoth().then : Symbol(Promise.then, Decl(lib.es5.d.ts, --, --))
+>promiseFnBoth : Symbol(promiseFnBoth, Decl(checkedThrowsThrowsAndRejects.ts, 36, 26))
+>then : Symbol(Promise.then, Decl(lib.es5.d.ts, --, --))
+>e : Symbol(e, Decl(checkedThrowsThrowsAndRejects.ts, 174, 31))
+
+    if (e instanceof RejectTimeError) { }
+>e : Symbol(e, Decl(checkedThrowsThrowsAndRejects.ts, 174, 31))
+>RejectTimeError : Symbol(RejectTimeError, Decl(checkedThrowsThrowsAndRejects.ts, 2, 70))
+
+});
+
+declaredBoth().catch(e => {
+>declaredBoth().catch : Symbol(Promise.catch, Decl(lib.es5.d.ts, --, --))
+>declaredBoth : Symbol(declaredBoth, Decl(checkedThrowsThrowsAndRejects.ts, 104, 26))
+>catch : Symbol(Promise.catch, Decl(lib.es5.d.ts, --, --))
+>e : Symbol(e, Decl(checkedThrowsThrowsAndRejects.ts, 178, 21))
+
+    if (e instanceof BothErrorB) { }
+>e : Symbol(e, Decl(checkedThrowsThrowsAndRejects.ts, 178, 21))
+>BothErrorB : Symbol(BothErrorB, Decl(checkedThrowsThrowsAndRejects.ts, 4, 64))
+
+});
+
+asyncRejectsEarly().catch(e => {
+>asyncRejectsEarly().catch : Symbol(Promise.catch, Decl(lib.es5.d.ts, --, --))
+>asyncRejectsEarly : Symbol(asyncRejectsEarly, Decl(checkedThrowsThrowsAndRejects.ts, 17, 1))
+>catch : Symbol(Promise.catch, Decl(lib.es5.d.ts, --, --))
+>e : Symbol(e, Decl(checkedThrowsThrowsAndRejects.ts, 182, 26))
+
+    if (e instanceof RejectTimeError) { }
+>e : Symbol(e, Decl(checkedThrowsThrowsAndRejects.ts, 182, 26))
+>RejectTimeError : Symbol(RejectTimeError, Decl(checkedThrowsThrowsAndRejects.ts, 2, 70))
+
+});
+
+function assertRejectTimeError(e: RejectTimeError): asserts e is RejectTimeError { }
+>assertRejectTimeError : Symbol(assertRejectTimeError, Decl(checkedThrowsThrowsAndRejects.ts, 184, 3))
+>e : Symbol(e, Decl(checkedThrowsThrowsAndRejects.ts, 186, 31))
+>RejectTimeError : Symbol(RejectTimeError, Decl(checkedThrowsThrowsAndRejects.ts, 2, 70))
+>e : Symbol(e, Decl(checkedThrowsThrowsAndRejects.ts, 186, 31))
+>RejectTimeError : Symbol(RejectTimeError, Decl(checkedThrowsThrowsAndRejects.ts, 2, 70))
+
+promiseFnBoth().catch((e) => {
+>promiseFnBoth().catch : Symbol(Promise.catch, Decl(lib.es5.d.ts, --, --))
+>promiseFnBoth : Symbol(promiseFnBoth, Decl(checkedThrowsThrowsAndRejects.ts, 36, 26))
+>catch : Symbol(Promise.catch, Decl(lib.es5.d.ts, --, --))
+>e : Symbol(e, Decl(checkedThrowsThrowsAndRejects.ts, 188, 23))
+
+    assertRejectTimeError(e);
+>assertRejectTimeError : Symbol(assertRejectTimeError, Decl(checkedThrowsThrowsAndRejects.ts, 184, 3))
+>e : Symbol(e, Decl(checkedThrowsThrowsAndRejects.ts, 188, 23))
+
+});
+

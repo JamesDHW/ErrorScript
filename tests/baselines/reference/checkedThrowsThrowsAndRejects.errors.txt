@@ -21,9 +21,13 @@ checkedThrowsThrowsAndRejects.ts(131,59): error TS18067: throws clause is not al
 checkedThrowsThrowsAndRejects.ts(135,47): error TS18066: rejects clause requires a Promise-like return type.
 checkedThrowsThrowsAndRejects.ts(149,5): error TS18063: Unhandled thrown type: CallTimeError.
 checkedThrowsThrowsAndRejects.ts(149,5): error TS18064: Unhandled promise rejection type: RejectTimeError.
+checkedThrowsThrowsAndRejects.ts(171,1): error TS18063: Unhandled thrown type: CallTimeError.
+checkedThrowsThrowsAndRejects.ts(175,1): error TS18063: Unhandled thrown type: CallTimeError.
+checkedThrowsThrowsAndRejects.ts(179,1): error TS18063: Unhandled thrown type: BothErrorA.
+checkedThrowsThrowsAndRejects.ts(189,1): error TS18063: Unhandled thrown type: CallTimeError.
 
 
-==== checkedThrowsThrowsAndRejects.ts (23 errors) ====
+==== checkedThrowsThrowsAndRejects.ts (27 errors) ====
     /* Sync = throws only; async = rejects only; non-async Promise-returning = both throws and rejects. */
     
     class CallTimeError extends Error { readonly kind = "CallTimeError"; }
@@ -239,4 +243,34 @@ checkedThrowsThrowsAndRejects.ts(149,5): error TS18064: Unhandled promise reject
             if (e instanceof CallTimeError) { }
         }
     }
+    
+    promiseFnBoth().catch(e => {
+    ~~~~~~~~~~~~~~~
+!!! error TS18063: Unhandled thrown type: CallTimeError.
+        if (e instanceof RejectTimeError) { }
+    });
+    
+    promiseFnBoth().then(() => { }, e => {
+    ~~~~~~~~~~~~~~~
+!!! error TS18063: Unhandled thrown type: CallTimeError.
+        if (e instanceof RejectTimeError) { }
+    });
+    
+    declaredBoth().catch(e => {
+    ~~~~~~~~~~~~~~
+!!! error TS18063: Unhandled thrown type: BothErrorA.
+        if (e instanceof BothErrorB) { }
+    });
+    
+    asyncRejectsEarly().catch(e => {
+        if (e instanceof RejectTimeError) { }
+    });
+    
+    function assertRejectTimeError(e: RejectTimeError): asserts e is RejectTimeError { }
+    
+    promiseFnBoth().catch((e) => {
+    ~~~~~~~~~~~~~~~
+!!! error TS18063: Unhandled thrown type: CallTimeError.
+        assertRejectTimeError(e);
+    });
     

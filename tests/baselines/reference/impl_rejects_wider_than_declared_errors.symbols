@@ -1,0 +1,15 @@
+//// [tests/cases/compiler/checkedThrows/decl/impl_rejects_wider_than_declared_errors.ts] ////
+
+=== impl_rejects_wider_than_declared_errors.ts ===
+declare function g(): Promise<number> rejects TypeError;
+>g : Symbol(g, Decl(impl_rejects_wider_than_declared_errors.ts, 0, 0))
+>Promise : Symbol(Promise, Decl(lib.es5.d.ts, --, --), Decl(lib.es2015.iterable.d.ts, --, --), Decl(lib.es2015.promise.d.ts, --, --), Decl(lib.es2015.symbol.wellknown.d.ts, --, --), Decl(lib.es2018.promise.d.ts, --, --))
+>TypeError : Symbol(TypeError, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --))
+
+async function unhandledReject() {
+>unhandledReject : Symbol(unhandledReject, Decl(impl_rejects_wider_than_declared_errors.ts, 0, 56))
+
+    await g();
+>g : Symbol(g, Decl(impl_rejects_wider_than_declared_errors.ts, 0, 0))
+}
+

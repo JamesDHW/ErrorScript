@@ -1,0 +1,10 @@
+//// [tests/cases/compiler/checkedThrows/decl/throws_forbidden_on_async.ts] ////
+
+=== throws_forbidden_on_async.ts ===
+async function illegalAsyncThrows(): Promise<void> throws Error {
+>illegalAsyncThrows : () => Promise<void> throws Error
+>                   : ^^^^^^             ^^^^^^^^^^^^^
+
+    return;
+}
+

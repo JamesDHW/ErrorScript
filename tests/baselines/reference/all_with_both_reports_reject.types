@@ -1,0 +1,144 @@
+//// [tests/cases/compiler/checkedThrows/combinators/all_with_both_reports_reject.ts] ////
+
+=== all_with_both_reports_reject.ts ===
+class CallTimeError extends Error { readonly kind = "CallTimeError"; }
+>CallTimeError : CallTimeError
+>              : ^^^^^^^^^^^^^
+>Error : Error
+>      : ^^^^^
+>kind : "CallTimeError"
+>     : ^^^^^^^^^^^^^^^
+>"CallTimeError" : "CallTimeError"
+>                : ^^^^^^^^^^^^^^^
+
+class RejectTimeError extends Error { readonly kind = "RejectTimeError"; }
+>RejectTimeError : RejectTimeError
+>                : ^^^^^^^^^^^^^^^
+>Error : Error
+>      : ^^^^^
+>kind : "RejectTimeError"
+>     : ^^^^^^^^^^^^^^^^^
+>"RejectTimeError" : "RejectTimeError"
+>                  : ^^^^^^^^^^^^^^^^^
+
+function mkBoth1() {
+>mkBoth1 : () => Promise<never>
+>        : ^^^^^^^^^^^^^^^^^^^^
+
+    if (Math.random() > 0.5) throw new CallTimeError("A");
+>Math.random() > 0.5 : boolean
+>                    : ^^^^^^^
+>Math.random() : number
+>              : ^^^^^^
+>Math.random : () => number
+>            : ^^^^^^      
+>Math : Math
+>     : ^^^^
+>random : () => number
+>       : ^^^^^^      
+>0.5 : 0.5
+>    : ^^^
+>new CallTimeError("A") : CallTimeError
+>                       : ^^^^^^^^^^^^^
+>CallTimeError : typeof CallTimeError
+>              : ^^^^^^^^^^^^^^^^^^^^
+>"A" : "A"
+>    : ^^^
+
+    return Promise.reject(new RejectTimeError("A"));
+>Promise.reject(new RejectTimeError("A")) : Promise<never>
+>                                         : ^^^^^^^^^^^^^^
+>Promise.reject : <T = never>(reason?: any) => Promise<T>
+>               : ^ ^^^^^^^^^^      ^^^   ^^^^^          
+>Promise : PromiseConstructor
+>        : ^^^^^^^^^^^^^^^^^^
+>reject : <T = never>(reason?: any) => Promise<T>
+>       : ^ ^^^^^^^^^^      ^^^   ^^^^^          
+>new RejectTimeError("A") : RejectTimeError
+>                         : ^^^^^^^^^^^^^^^
+>RejectTimeError : typeof RejectTimeError
+>                : ^^^^^^^^^^^^^^^^^^^^^^
+>"A" : "A"
+>    : ^^^
+}
+function mkBoth2() {
+>mkBoth2 : () => Promise<never>
+>        : ^^^^^^^^^^^^^^^^^^^^
+
+    if (Math.random() > 0.5) throw new CallTimeError("B");
+>Math.random() > 0.5 : boolean
+>                    : ^^^^^^^
+>Math.random() : number
+>              : ^^^^^^
+>Math.random : () => number
+>            : ^^^^^^      
+>Math : Math
+>     : ^^^^
+>random : () => number
+>       : ^^^^^^      
+>0.5 : 0.5
+>    : ^^^
+>new CallTimeError("B") : CallTimeError
+>                       : ^^^^^^^^^^^^^
+>CallTimeError : typeof CallTimeError
+>              : ^^^^^^^^^^^^^^^^^^^^
+>"B" : "B"
+>    : ^^^
+
+    return Promise.reject(new RejectTimeError("B"));
+>Promise.reject(new RejectTimeError("B")) : Promise<never>
+>                                         : ^^^^^^^^^^^^^^
+>Promise.reject : <T = never>(reason?: any) => Promise<T>
+>               : ^ ^^^^^^^^^^      ^^^   ^^^^^          
+>Promise : PromiseConstructor
+>        : ^^^^^^^^^^^^^^^^^^
+>reject : <T = never>(reason?: any) => Promise<T>
+>       : ^ ^^^^^^^^^^      ^^^   ^^^^^          
+>new RejectTimeError("B") : RejectTimeError
+>                         : ^^^^^^^^^^^^^^^
+>RejectTimeError : typeof RejectTimeError
+>                : ^^^^^^^^^^^^^^^^^^^^^^
+>"B" : "B"
+>    : ^^^
+}
+async function allWithBoth() {
+>allWithBoth : () => Promise<void>
+>            : ^^^^^^^^^^^^^^^^^^^
+
+    try {
+        await Promise.all([mkBoth1(), mkBoth2()]);
+>await Promise.all([mkBoth1(), mkBoth2()]) : [never, never]
+>                                          : ^^^^^^^^^^^^^^
+>Promise.all([mkBoth1(), mkBoth2()]) : Promise<[never, never]>
+>                                    : ^^^^^^^^^^^^^^^^^^^^^^^
+>Promise.all : { <T>(values: Iterable<T | PromiseLike<T>>): Promise<Awaited<T>[]>; <T extends readonly unknown[] | []>(values: T): Promise<{ -readonly [P in keyof T]: Awaited<T[P]>; }>; }
+>            : ^^^ ^^      ^^                            ^^^                     ^^^ ^^^^^^^^^                       ^^      ^^ ^^^                                                     ^^^
+>Promise : PromiseConstructor
+>        : ^^^^^^^^^^^^^^^^^^
+>all : { <T>(values: Iterable<T | PromiseLike<T>>): Promise<Awaited<T>[]>; <T extends readonly unknown[] | []>(values: T): Promise<{ -readonly [P in keyof T]: Awaited<T[P]>; }>; }
+>    : ^^^ ^^      ^^                            ^^^                     ^^^ ^^^^^^^^^                       ^^      ^^ ^^^                                                     ^^^
+>[mkBoth1(), mkBoth2()] : [Promise<never>, Promise<never>]
+>                       : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>mkBoth1() : Promise<never>
+>          : ^^^^^^^^^^^^^^
+>mkBoth1 : () => Promise<never>
+>        : ^^^^^^^^^^^^^^^^^^^^
+>mkBoth2() : Promise<never>
+>          : ^^^^^^^^^^^^^^
+>mkBoth2 : () => Promise<never>
+>        : ^^^^^^^^^^^^^^^^^^^^
+
+    } catch (e) {
+>e : CallTimeError | RejectTimeError
+>  : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+        if (e instanceof CallTimeError) { }
+>e instanceof CallTimeError : boolean
+>                           : ^^^^^^^
+>e : CallTimeError | RejectTimeError
+>  : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>CallTimeError : typeof CallTimeError
+>              : ^^^^^^^^^^^^^^^^^^^^
+    }
+}
+

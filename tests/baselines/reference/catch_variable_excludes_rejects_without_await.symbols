@@ -1,0 +1,17 @@
+//// [tests/cases/compiler/checkedThrows/try/catch_variable_excludes_rejects_without_await.ts] ////
+
+=== catch_variable_excludes_rejects_without_await.ts ===
+async function rejectingPromise() {
+>rejectingPromise : Symbol(rejectingPromise, Decl(catch_variable_excludes_rejects_without_await.ts, 0, 0))
+
+    throw new Error("reject");
+>Error : Symbol(Error, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2022.error.d.ts, --, --))
+}
+try {
+    rejectingPromise();
+>rejectingPromise : Symbol(rejectingPromise, Decl(catch_variable_excludes_rejects_without_await.ts, 0, 0))
+
+} catch (e) {
+>e : Symbol(e, Decl(catch_variable_excludes_rejects_without_await.ts, 5, 9))
+}
+

@@ -1,0 +1,26 @@
+//// [tests/cases/compiler/checkedThrows/throws/finally_contributes.ts] ////
+
+=== finally_contributes.ts ===
+function boom() {
+>boom : Symbol(boom, Decl(finally_contributes.ts, 0, 0))
+
+    throw new Error("x");
+>Error : Symbol(Error, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2022.error.d.ts, --, --))
+}
+function withFinally() {
+>withFinally : Symbol(withFinally, Decl(finally_contributes.ts, 2, 1))
+
+    try {
+        boom();
+>boom : Symbol(boom, Decl(finally_contributes.ts, 0, 0))
+
+    } catch (e) {
+>e : Symbol(e, Decl(finally_contributes.ts, 6, 13))
+
+    } finally {
+        throw "finally";
+    }
+}
+withFinally();
+>withFinally : Symbol(withFinally, Decl(finally_contributes.ts, 2, 1))
+

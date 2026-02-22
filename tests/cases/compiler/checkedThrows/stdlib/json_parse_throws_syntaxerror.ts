@@ -1,0 +1,3 @@
+// @checkedThrows: true
+
+JSON.parse("{");

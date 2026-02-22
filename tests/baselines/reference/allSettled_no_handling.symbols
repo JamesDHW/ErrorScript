@@ -1,0 +1,24 @@
+//// [tests/cases/compiler/checkedThrows/combinators/allSettled_no_handling.ts] ////
+
+=== allSettled_no_handling.ts ===
+async function a() {
+>a : Symbol(a, Decl(allSettled_no_handling.ts, 0, 0))
+
+    throw "a";
+}
+async function b() {
+>b : Symbol(b, Decl(allSettled_no_handling.ts, 2, 1))
+
+    throw 123;
+}
+async function allSettledNoHandlingRequired() {
+>allSettledNoHandlingRequired : Symbol(allSettledNoHandlingRequired, Decl(allSettled_no_handling.ts, 5, 1))
+
+    await Promise.allSettled([a(), b()]);
+>Promise.allSettled : Symbol(PromiseConstructor.allSettled, Decl(lib.es2020.promise.d.ts, --, --), Decl(lib.es2020.promise.d.ts, --, --))
+>Promise : Symbol(Promise, Decl(lib.es5.d.ts, --, --), Decl(lib.es2015.iterable.d.ts, --, --), Decl(lib.es2015.promise.d.ts, --, --), Decl(lib.es2015.symbol.wellknown.d.ts, --, --), Decl(lib.es2018.promise.d.ts, --, --))
+>allSettled : Symbol(PromiseConstructor.allSettled, Decl(lib.es2020.promise.d.ts, --, --), Decl(lib.es2020.promise.d.ts, --, --))
+>a : Symbol(a, Decl(allSettled_no_handling.ts, 0, 0))
+>b : Symbol(b, Decl(allSettled_no_handling.ts, 2, 1))
+}
+

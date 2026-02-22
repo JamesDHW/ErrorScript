@@ -1,0 +1,23 @@
+//// [tests/cases/compiler/checkedThrows/overloads/overload_sync_throws_enforced.ts] ////
+
+=== overload_sync_throws_enforced.ts ===
+declare function overload(x: string): number throws Error;
+>overload : { (x: string): number throws Error; (x: number): Promise<number> rejects TypeError; }
+>         : ^^^ ^^      ^^^      ^^^^^^^^^^^^^^^^ ^^      ^^^               ^^^^^^^^^^^^^^^^^^^^^
+>x : string
+>  : ^^^^^^
+
+declare function overload(x: number): Promise<number> rejects TypeError;
+>overload : { (x: string): number throws Error; (x: number): Promise<number> rejects TypeError; }
+>         : ^^^ ^^      ^^^      ^^^^^^^^^^^^^^^^ ^^      ^^^               ^^^^^^^^^^^^^^^^^^^^^
+>x : number
+>  : ^^^^^^
+
+overload("a");
+>overload("a") : number
+>              : ^^^^^^
+>overload : { (x: string): number throws Error; (x: number): Promise<number> rejects TypeError; }
+>         : ^^^ ^^      ^^^      ^^^^^^^^^^^^^^^^ ^^      ^^^               ^^^^^^^^^^^^^^^^^^^^^
+>"a" : "a"
+>    : ^^^
+

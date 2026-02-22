@@ -1,0 +1,37 @@
+//// [tests/cases/compiler/checkedThrows/recursion/scc_degrades_to_unknown_throw.ts] ////
+
+=== scc_degrades_to_unknown_throw.ts ===
+function r1() {
+>r1 : () => void
+>   : ^^^^^^^^^^
+
+    r2();
+>r2() : void
+>     : ^^^^
+>r2 : () => void
+>   : ^^^^^^^^^^
+}
+function r2() {
+>r2 : () => void
+>   : ^^^^^^^^^^
+
+    r1();
+>r1() : void
+>     : ^^^^
+>r1 : () => void
+>   : ^^^^^^^^^^
+
+    throw new Error("x");
+>new Error("x") : Error
+>               : ^^^^^
+>Error : ErrorConstructor
+>      : ^^^^^^^^^^^^^^^^
+>"x" : "x"
+>    : ^^^
+}
+r1();
+>r1() : void
+>     : ^^^^
+>r1 : () => void
+>   : ^^^^^^^^^^
+

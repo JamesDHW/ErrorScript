@@ -1,0 +1,58 @@
+//// [tests/cases/compiler/checkedThrows/try/catch_variable_includes_rejects_with_await.ts] ////
+
+=== catch_variable_includes_rejects_with_await.ts ===
+class RejectTimeError extends Error { readonly kind = "RejectTimeError"; }
+>RejectTimeError : RejectTimeError
+>                : ^^^^^^^^^^^^^^^
+>Error : Error
+>      : ^^^^^
+>kind : "RejectTimeError"
+>     : ^^^^^^^^^^^^^^^^^
+>"RejectTimeError" : "RejectTimeError"
+>                  : ^^^^^^^^^^^^^^^^^
+
+declare function acceptRejectTimeError(e: RejectTimeError): void;
+>acceptRejectTimeError : (e: RejectTimeError) => void
+>                      : ^ ^^               ^^^^^    
+>e : RejectTimeError
+>  : ^^^^^^^^^^^^^^^
+
+async function rejectingPromise() {
+>rejectingPromise : () => Promise<void>
+>                 : ^^^^^^^^^^^^^^^^^^^
+
+    throw new RejectTimeError("reject");
+>new RejectTimeError("reject") : RejectTimeError
+>                              : ^^^^^^^^^^^^^^^
+>RejectTimeError : typeof RejectTimeError
+>                : ^^^^^^^^^^^^^^^^^^^^^^
+>"reject" : "reject"
+>         : ^^^^^^^^
+}
+async function withAwait() {
+>withAwait : () => Promise<void>
+>          : ^^^^^^^^^^^^^^^^^^^
+
+    try {
+        await rejectingPromise();
+>await rejectingPromise() : void
+>                         : ^^^^
+>rejectingPromise() : Promise<void>
+>                   : ^^^^^^^^^^^^^
+>rejectingPromise : () => Promise<void>
+>                 : ^^^^^^^^^^^^^^^^^^^
+
+    } catch (e) {
+>e : RejectTimeError
+>  : ^^^^^^^^^^^^^^^
+
+        acceptRejectTimeError(e);
+>acceptRejectTimeError(e) : void
+>                         : ^^^^
+>acceptRejectTimeError : (e: RejectTimeError) => void
+>                      : ^ ^^               ^^^^^    
+>e : RejectTimeError
+>  : ^^^^^^^^^^^^^^^
+    }
+}
+

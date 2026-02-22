@@ -1,0 +1,15 @@
+//// [tests/cases/compiler/checkedThrows/stdlib/json_parse_throws_syntaxerror.ts] ////
+
+=== json_parse_throws_syntaxerror.ts ===
+JSON.parse("{");
+>JSON.parse("{") : any
+>                : ^^^
+>JSON.parse : (text: string, reviver?: (this: any, key: string, value: any) => any) => any
+>           : ^    ^^      ^^       ^^^                                           ^^^^^   
+>JSON : JSON
+>     : ^^^^
+>parse : (text: string, reviver?: (this: any, key: string, value: any) => any) => any
+>      : ^    ^^      ^^       ^^^                                           ^^^^^   
+>"{" : "{"
+>    : ^^^
+

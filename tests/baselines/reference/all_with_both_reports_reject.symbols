@@ -1,0 +1,63 @@
+//// [tests/cases/compiler/checkedThrows/combinators/all_with_both_reports_reject.ts] ////
+
+=== all_with_both_reports_reject.ts ===
+class CallTimeError extends Error { readonly kind = "CallTimeError"; }
+>CallTimeError : Symbol(CallTimeError, Decl(all_with_both_reports_reject.ts, 0, 0))
+>Error : Symbol(Error, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2022.error.d.ts, --, --))
+>kind : Symbol(CallTimeError.kind, Decl(all_with_both_reports_reject.ts, 0, 35))
+
+class RejectTimeError extends Error { readonly kind = "RejectTimeError"; }
+>RejectTimeError : Symbol(RejectTimeError, Decl(all_with_both_reports_reject.ts, 0, 70))
+>Error : Symbol(Error, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2022.error.d.ts, --, --))
+>kind : Symbol(RejectTimeError.kind, Decl(all_with_both_reports_reject.ts, 1, 37))
+
+function mkBoth1() {
+>mkBoth1 : Symbol(mkBoth1, Decl(all_with_both_reports_reject.ts, 1, 74))
+
+    if (Math.random() > 0.5) throw new CallTimeError("A");
+>Math.random : Symbol(Math.random, Decl(lib.es5.d.ts, --, --))
+>Math : Symbol(Math, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2015.core.d.ts, --, --), Decl(lib.es2015.symbol.wellknown.d.ts, --, --), Decl(lib.es2025.float16.d.ts, --, --))
+>random : Symbol(Math.random, Decl(lib.es5.d.ts, --, --))
+>CallTimeError : Symbol(CallTimeError, Decl(all_with_both_reports_reject.ts, 0, 0))
+
+    return Promise.reject(new RejectTimeError("A"));
+>Promise.reject : Symbol(PromiseConstructor.reject, Decl(lib.es2015.promise.d.ts, --, --))
+>Promise : Symbol(Promise, Decl(lib.es5.d.ts, --, --), Decl(lib.es2015.iterable.d.ts, --, --), Decl(lib.es2015.promise.d.ts, --, --), Decl(lib.es2015.symbol.wellknown.d.ts, --, --), Decl(lib.es2018.promise.d.ts, --, --))
+>reject : Symbol(PromiseConstructor.reject, Decl(lib.es2015.promise.d.ts, --, --))
+>RejectTimeError : Symbol(RejectTimeError, Decl(all_with_both_reports_reject.ts, 0, 70))
+}
+function mkBoth2() {
+>mkBoth2 : Symbol(mkBoth2, Decl(all_with_both_reports_reject.ts, 6, 1))
+
+    if (Math.random() > 0.5) throw new CallTimeError("B");
+>Math.random : Symbol(Math.random, Decl(lib.es5.d.ts, --, --))
+>Math : Symbol(Math, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2015.core.d.ts, --, --), Decl(lib.es2015.symbol.wellknown.d.ts, --, --), Decl(lib.es2025.float16.d.ts, --, --))
+>random : Symbol(Math.random, Decl(lib.es5.d.ts, --, --))
+>CallTimeError : Symbol(CallTimeError, Decl(all_with_both_reports_reject.ts, 0, 0))
+
+    return Promise.reject(new RejectTimeError("B"));
+>Promise.reject : Symbol(PromiseConstructor.reject, Decl(lib.es2015.promise.d.ts, --, --))
+>Promise : Symbol(Promise, Decl(lib.es5.d.ts, --, --), Decl(lib.es2015.iterable.d.ts, --, --), Decl(lib.es2015.promise.d.ts, --, --), Decl(lib.es2015.symbol.wellknown.d.ts, --, --), Decl(lib.es2018.promise.d.ts, --, --))
+>reject : Symbol(PromiseConstructor.reject, Decl(lib.es2015.promise.d.ts, --, --))
+>RejectTimeError : Symbol(RejectTimeError, Decl(all_with_both_reports_reject.ts, 0, 70))
+}
+async function allWithBoth() {
+>allWithBoth : Symbol(allWithBoth, Decl(all_with_both_reports_reject.ts, 10, 1))
+
+    try {
+        await Promise.all([mkBoth1(), mkBoth2()]);
+>Promise.all : Symbol(PromiseConstructor.all, Decl(lib.es2015.iterable.d.ts, --, --), Decl(lib.es2015.promise.d.ts, --, --))
+>Promise : Symbol(Promise, Decl(lib.es5.d.ts, --, --), Decl(lib.es2015.iterable.d.ts, --, --), Decl(lib.es2015.promise.d.ts, --, --), Decl(lib.es2015.symbol.wellknown.d.ts, --, --), Decl(lib.es2018.promise.d.ts, --, --))
+>all : Symbol(PromiseConstructor.all, Decl(lib.es2015.iterable.d.ts, --, --), Decl(lib.es2015.promise.d.ts, --, --))
+>mkBoth1 : Symbol(mkBoth1, Decl(all_with_both_reports_reject.ts, 1, 74))
+>mkBoth2 : Symbol(mkBoth2, Decl(all_with_both_reports_reject.ts, 6, 1))
+
+    } catch (e) {
+>e : Symbol(e, Decl(all_with_both_reports_reject.ts, 14, 13))
+
+        if (e instanceof CallTimeError) { }
+>e : Symbol(e, Decl(all_with_both_reports_reject.ts, 14, 13))
+>CallTimeError : Symbol(CallTimeError, Decl(all_with_both_reports_reject.ts, 0, 0))
+    }
+}
+

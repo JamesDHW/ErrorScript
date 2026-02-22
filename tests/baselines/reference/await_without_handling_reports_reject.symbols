@@ -1,0 +1,44 @@
+//// [tests/cases/compiler/checkedThrows/both/await_without_handling_reports_reject.ts] ////
+
+=== await_without_handling_reports_reject.ts ===
+// Rejection unhandled; sync throw handled by try/catch => TS18064 only
+
+class CallTimeError extends Error { readonly kind = "CallTimeError"; }
+>CallTimeError : Symbol(CallTimeError, Decl(await_without_handling_reports_reject.ts, 0, 0))
+>Error : Symbol(Error, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2022.error.d.ts, --, --))
+>kind : Symbol(CallTimeError.kind, Decl(await_without_handling_reports_reject.ts, 2, 35))
+
+class RejectTimeError extends Error { readonly kind = "RejectTimeError"; }
+>RejectTimeError : Symbol(RejectTimeError, Decl(await_without_handling_reports_reject.ts, 2, 70))
+>Error : Symbol(Error, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2022.error.d.ts, --, --))
+>kind : Symbol(RejectTimeError.kind, Decl(await_without_handling_reports_reject.ts, 3, 37))
+
+function promiseFnBoth() {
+>promiseFnBoth : Symbol(promiseFnBoth, Decl(await_without_handling_reports_reject.ts, 3, 74))
+
+    if (Math.random() > 0.5) {
+>Math.random : Symbol(Math.random, Decl(lib.es5.d.ts, --, --))
+>Math : Symbol(Math, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2015.core.d.ts, --, --), Decl(lib.es2015.symbol.wellknown.d.ts, --, --), Decl(lib.es2025.float16.d.ts, --, --))
+>random : Symbol(Math.random, Decl(lib.es5.d.ts, --, --))
+
+        throw new CallTimeError("thrown before returning promise");
+>CallTimeError : Symbol(CallTimeError, Decl(await_without_handling_reports_reject.ts, 0, 0))
+    }
+    return Promise.reject(new RejectTimeError("rejected after returning promise"));
+>Promise.reject : Symbol(PromiseConstructor.reject, Decl(lib.es2015.promise.d.ts, --, --))
+>Promise : Symbol(Promise, Decl(lib.es5.d.ts, --, --), Decl(lib.es2015.iterable.d.ts, --, --), Decl(lib.es2015.promise.d.ts, --, --), Decl(lib.es2015.symbol.wellknown.d.ts, --, --), Decl(lib.es2018.promise.d.ts, --, --))
+>reject : Symbol(PromiseConstructor.reject, Decl(lib.es2015.promise.d.ts, --, --))
+>RejectTimeError : Symbol(RejectTimeError, Decl(await_without_handling_reports_reject.ts, 2, 70))
+}
+try {
+    promiseFnBoth();
+>promiseFnBoth : Symbol(promiseFnBoth, Decl(await_without_handling_reports_reject.ts, 3, 74))
+
+} catch (e) {
+>e : Symbol(e, Decl(await_without_handling_reports_reject.ts, 13, 9))
+
+    if (e instanceof CallTimeError) { }
+>e : Symbol(e, Decl(await_without_handling_reports_reject.ts, 13, 9))
+>CallTimeError : Symbol(CallTimeError, Decl(await_without_handling_reports_reject.ts, 0, 0))
+}
+

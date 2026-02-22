@@ -1,0 +1,13 @@
+//// [tests/cases/compiler/checkedThrows/combinators/promise_reject_requires_handling.ts] ////
+
+=== promise_reject_requires_handling.ts ===
+async function rejectRequiresHandling() {
+>rejectRequiresHandling : Symbol(rejectRequiresHandling, Decl(promise_reject_requires_handling.ts, 0, 0))
+
+    await Promise.reject(new Error("reject"));
+>Promise.reject : Symbol(PromiseConstructor.reject, Decl(lib.es2015.promise.d.ts, --, --))
+>Promise : Symbol(Promise, Decl(lib.es5.d.ts, --, --), Decl(lib.es2015.iterable.d.ts, --, --), Decl(lib.es2015.promise.d.ts, --, --), Decl(lib.es2015.symbol.wellknown.d.ts, --, --), Decl(lib.es2018.promise.d.ts, --, --))
+>reject : Symbol(PromiseConstructor.reject, Decl(lib.es2015.promise.d.ts, --, --))
+>Error : Symbol(Error, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2022.error.d.ts, --, --))
+}
+

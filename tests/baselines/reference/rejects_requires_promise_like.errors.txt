@@ -1,0 +1,10 @@
+rejects_requires_promise_like.ts(1,47): error TS18066: Rejects clause requires a Promise-like return type.
+
+
+==== rejects_requires_promise_like.ts (1 errors) ====
+    function illegalSyncRejects(): number rejects Error {
+                                                  ~~~~~
+!!! error TS18066: Rejects clause requires a Promise-like return type.
+        return 1;
+    }
+    

@@ -1,0 +1,26 @@
+//// [tests/cases/compiler/checkedThrows/combinators/promise_reject_requires_handling.ts] ////
+
+=== promise_reject_requires_handling.ts ===
+async function rejectRequiresHandling() {
+>rejectRequiresHandling : () => Promise<void>
+>                       : ^^^^^^^^^^^^^^^^^^^
+
+    await Promise.reject(new Error("reject"));
+>await Promise.reject(new Error("reject")) : never
+>                                          : ^^^^^
+>Promise.reject(new Error("reject")) : Promise<never>
+>                                    : ^^^^^^^^^^^^^^
+>Promise.reject : <T = never>(reason?: any) => Promise<T>
+>               : ^ ^^^^^^^^^^      ^^^   ^^^^^          
+>Promise : PromiseConstructor
+>        : ^^^^^^^^^^^^^^^^^^
+>reject : <T = never>(reason?: any) => Promise<T>
+>       : ^ ^^^^^^^^^^      ^^^   ^^^^^          
+>new Error("reject") : Error
+>                    : ^^^^^
+>Error : ErrorConstructor
+>      : ^^^^^^^^^^^^^^^^
+>"reject" : "reject"
+>         : ^^^^^^^^
+}
+

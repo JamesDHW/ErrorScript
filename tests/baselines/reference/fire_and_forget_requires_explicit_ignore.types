@@ -1,0 +1,26 @@
+//// [tests/cases/compiler/checkedThrows/rejects/fire_and_forget_requires_explicit_ignore.ts] ////
+
+=== fire_and_forget_requires_explicit_ignore.ts ===
+async function boom() {
+>boom : () => Promise<void>
+>     : ^^^^^^^^^^^^^^^^^^^
+
+    throw new Error("x");
+>new Error("x") : Error
+>               : ^^^^^
+>Error : ErrorConstructor
+>      : ^^^^^^^^^^^^^^^^
+>"x" : "x"
+>    : ^^^
+}
+function fireAndForget() {
+>fireAndForget : () => void
+>              : ^^^^^^^^^^
+
+    boom();
+>boom() : Promise<void>
+>       : ^^^^^^^^^^^^^
+>boom : () => Promise<void>
+>     : ^^^^^^^^^^^^^^^^^^^
+}
+

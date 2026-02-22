@@ -1,0 +1,24 @@
+//// [tests/cases/compiler/checkedThrows/combinators/any_unions_rejects.ts] ////
+
+=== any_unions_rejects.ts ===
+async function a() {
+>a : Symbol(a, Decl(any_unions_rejects.ts, 0, 0))
+
+    throw "a";
+}
+async function b() {
+>b : Symbol(b, Decl(any_unions_rejects.ts, 2, 1))
+
+    throw 123;
+}
+async function anyRequiresHandling() {
+>anyRequiresHandling : Symbol(anyRequiresHandling, Decl(any_unions_rejects.ts, 5, 1))
+
+    await Promise.any([a(), b()]);
+>Promise.any : Symbol(PromiseConstructor.any, Decl(lib.es2021.promise.d.ts, --, --), Decl(lib.es2021.promise.d.ts, --, --))
+>Promise : Symbol(Promise, Decl(lib.es5.d.ts, --, --), Decl(lib.es2015.iterable.d.ts, --, --), Decl(lib.es2015.promise.d.ts, --, --), Decl(lib.es2015.symbol.wellknown.d.ts, --, --), Decl(lib.es2018.promise.d.ts, --, --))
+>any : Symbol(PromiseConstructor.any, Decl(lib.es2021.promise.d.ts, --, --), Decl(lib.es2021.promise.d.ts, --, --))
+>a : Symbol(a, Decl(any_unions_rejects.ts, 0, 0))
+>b : Symbol(b, Decl(any_unions_rejects.ts, 2, 1))
+}
+

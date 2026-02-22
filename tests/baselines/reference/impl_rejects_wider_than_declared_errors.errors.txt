@@ -1,0 +1,11 @@
+impl_rejects_wider_than_declared_errors.ts(3,5): error TS18064: Unhandled promise rejection type: TypeError.
+
+
+==== impl_rejects_wider_than_declared_errors.ts (1 errors) ====
+    declare function g(): Promise<number> rejects TypeError;
+    async function unhandledReject() {
+        await g();
+        ~~~~~~~~~
+!!! error TS18064: Unhandled promise rejection type: TypeError.
+    }
+    

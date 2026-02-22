@@ -1,0 +1,16 @@
+//// [tests/cases/compiler/checkedThrows/throws/try_finally_not_handling.ts] ////
+
+=== try_finally_not_handling.ts ===
+function boom() {
+>boom : Symbol(boom, Decl(try_finally_not_handling.ts, 0, 0))
+
+    throw new Error("x");
+>Error : Symbol(Error, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2022.error.d.ts, --, --))
+}
+try {
+    boom();
+>boom : Symbol(boom, Decl(try_finally_not_handling.ts, 0, 0))
+
+} finally {
+}
+

@@ -1,0 +1,35 @@
+//// [tests/cases/compiler/checkedThrows/throws/handled_by_trycatch.ts] ////
+
+=== handled_by_trycatch.ts ===
+function boom() {
+>boom : () => void
+>     : ^^^^^^^^^^
+
+    throw new Error("x");
+>new Error("x") : Error
+>               : ^^^^^
+>Error : ErrorConstructor
+>      : ^^^^^^^^^^^^^^^^
+>"x" : "x"
+>    : ^^^
+}
+try {
+    boom();
+>boom() : void
+>       : ^^^^
+>boom : () => void
+>     : ^^^^^^^^^^
+
+} catch (e) {
+>e : Error
+>  : ^^^^^
+
+    e.message;
+>e.message : string
+>          : ^^^^^^
+>e : Error
+>  : ^^^^^
+>message : string
+>        : ^^^^^^
+}
+

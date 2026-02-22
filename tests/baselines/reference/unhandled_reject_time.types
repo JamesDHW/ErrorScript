@@ -1,0 +1,63 @@
+//// [tests/cases/compiler/checkedThrows/both/unhandled_reject_time.ts] ////
+
+=== unhandled_reject_time.ts ===
+class CallTimeError extends Error { readonly kind = "CallTimeError"; }
+>CallTimeError : CallTimeError
+>              : ^^^^^^^^^^^^^
+>Error : Error
+>      : ^^^^^
+>kind : "CallTimeError"
+>     : ^^^^^^^^^^^^^^^
+>"CallTimeError" : "CallTimeError"
+>                : ^^^^^^^^^^^^^^^
+
+class RejectTimeError extends Error { readonly kind = "RejectTimeError"; }
+>RejectTimeError : RejectTimeError
+>                : ^^^^^^^^^^^^^^^
+>Error : Error
+>      : ^^^^^
+>kind : "RejectTimeError"
+>     : ^^^^^^^^^^^^^^^^^
+>"RejectTimeError" : "RejectTimeError"
+>                  : ^^^^^^^^^^^^^^^^^
+
+function promiseFnBoth() {
+>promiseFnBoth : () => Promise<never>
+>              : ^^^^^^^^^^^^^^^^^^^^
+
+    return Promise.reject(new RejectTimeError("rejected after returning promise"));
+>Promise.reject(new RejectTimeError("rejected after returning promise")) : Promise<never>
+>                                                                        : ^^^^^^^^^^^^^^
+>Promise.reject : <T = never>(reason?: any) => Promise<T>
+>               : ^ ^^^^^^^^^^      ^^^   ^^^^^          
+>Promise : PromiseConstructor
+>        : ^^^^^^^^^^^^^^^^^^
+>reject : <T = never>(reason?: any) => Promise<T>
+>       : ^ ^^^^^^^^^^      ^^^   ^^^^^          
+>new RejectTimeError("rejected after returning promise") : RejectTimeError
+>                                                        : ^^^^^^^^^^^^^^^
+>RejectTimeError : typeof RejectTimeError
+>                : ^^^^^^^^^^^^^^^^^^^^^^
+>"rejected after returning promise" : "rejected after returning promise"
+>                                   : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+}
+try {
+    promiseFnBoth();
+>promiseFnBoth() : Promise<never>
+>                : ^^^^^^^^^^^^^^
+>promiseFnBoth : () => Promise<never>
+>              : ^^^^^^^^^^^^^^^^^^^^
+
+} catch (e) {
+>e : never
+>  : ^^^^^
+
+    if (e instanceof CallTimeError) { }
+>e instanceof CallTimeError : boolean
+>                           : ^^^^^^^
+>e : never
+>  : ^^^^^
+>CallTimeError : typeof CallTimeError
+>              : ^^^^^^^^^^^^^^^^^^^^
+}
+

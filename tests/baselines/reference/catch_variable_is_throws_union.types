@@ -1,0 +1,51 @@
+//// [tests/cases/compiler/checkedThrows/typing/catch_variable_is_throws_union.ts] ////
+
+=== catch_variable_is_throws_union.ts ===
+class E1 extends Error { readonly kind = "E1"; }
+>E1 : E1
+>   : ^^
+>Error : Error
+>      : ^^^^^
+>kind : "E1"
+>     : ^^^^
+>"E1" : "E1"
+>     : ^^^^
+
+declare function acceptE1(e: E1): void;
+>acceptE1 : (e: E1) => void
+>         : ^ ^^  ^^^^^    
+>e : E1
+>  : ^^
+
+function throwsE1() {
+>throwsE1 : () => void
+>         : ^^^^^^^^^^
+
+    throw new E1("e1");
+>new E1("e1") : E1
+>             : ^^
+>E1 : typeof E1
+>   : ^^^^^^^^^
+>"e1" : "e1"
+>     : ^^^^
+}
+try {
+    throwsE1();
+>throwsE1() : void
+>           : ^^^^
+>throwsE1 : () => void
+>         : ^^^^^^^^^^
+
+} catch (e) {
+>e : E1
+>  : ^^
+
+    acceptE1(e);
+>acceptE1(e) : void
+>            : ^^^^
+>acceptE1 : (e: E1) => void
+>         : ^ ^^  ^^^^^    
+>e : E1
+>  : ^^
+}
+

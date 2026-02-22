@@ -1,0 +1,46 @@
+//// [tests/cases/compiler/checkedThrows/combinators/race_unions_rejects.ts] ////
+
+=== race_unions_rejects.ts ===
+async function a() {
+>a : () => Promise<void>
+>  : ^^^^^^^^^^^^^^^^^^^
+
+    throw "a";
+>"a" : "a"
+>    : ^^^
+}
+async function b() {
+>b : () => Promise<void>
+>  : ^^^^^^^^^^^^^^^^^^^
+
+    throw 123;
+>123 : 123
+>    : ^^^
+}
+async function raceRequiresHandling() {
+>raceRequiresHandling : () => Promise<void>
+>                     : ^^^^^^^^^^^^^^^^^^^
+
+    await Promise.race([a(), b()]);
+>await Promise.race([a(), b()]) : void
+>                               : ^^^^
+>Promise.race([a(), b()]) : Promise<void>
+>                         : ^^^^^^^^^^^^^
+>Promise.race : { <T>(values: Iterable<T | PromiseLike<T>>): Promise<Awaited<T>>; <T extends readonly unknown[] | []>(values: T): Promise<Awaited<T[number]>>; }
+>             : ^^^ ^^      ^^                            ^^^                   ^^^ ^^^^^^^^^                       ^^      ^^ ^^^                           ^^^
+>Promise : PromiseConstructor
+>        : ^^^^^^^^^^^^^^^^^^
+>race : { <T>(values: Iterable<T | PromiseLike<T>>): Promise<Awaited<T>>; <T extends readonly unknown[] | []>(values: T): Promise<Awaited<T[number]>>; }
+>     : ^^^ ^^      ^^                            ^^^                   ^^^ ^^^^^^^^^                       ^^      ^^ ^^^                           ^^^
+>[a(), b()] : [Promise<void>, Promise<void>]
+>           : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>a() : Promise<void>
+>    : ^^^^^^^^^^^^^
+>a : () => Promise<void>
+>  : ^^^^^^^^^^^^^^^^^^^
+>b() : Promise<void>
+>    : ^^^^^^^^^^^^^
+>b : () => Promise<void>
+>  : ^^^^^^^^^^^^^^^^^^^
+}
+

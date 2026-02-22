@@ -1,0 +1,27 @@
+//// [tests/cases/compiler/checkedThrows/try/catch_variable_excludes_rejects_without_await.ts] ////
+
+=== catch_variable_excludes_rejects_without_await.ts ===
+async function rejectingPromise() {
+>rejectingPromise : () => Promise<void>
+>                 : ^^^^^^^^^^^^^^^^^^^
+
+    throw new Error("reject");
+>new Error("reject") : Error
+>                    : ^^^^^
+>Error : ErrorConstructor
+>      : ^^^^^^^^^^^^^^^^
+>"reject" : "reject"
+>         : ^^^^^^^^
+}
+try {
+    rejectingPromise();
+>rejectingPromise() : Promise<void>
+>                   : ^^^^^^^^^^^^^
+>rejectingPromise : () => Promise<void>
+>                 : ^^^^^^^^^^^^^^^^^^^
+
+} catch (e) {
+>e : never
+>  : ^^^^^
+}
+

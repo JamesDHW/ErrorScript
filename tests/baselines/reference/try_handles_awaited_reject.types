@@ -1,0 +1,42 @@
+//// [tests/cases/compiler/checkedThrows/rejects/try_handles_awaited_reject.ts] ////
+
+=== try_handles_awaited_reject.ts ===
+async function boom() {
+>boom : () => Promise<void>
+>     : ^^^^^^^^^^^^^^^^^^^
+
+    throw new Error("x");
+>new Error("x") : Error
+>               : ^^^^^
+>Error : ErrorConstructor
+>      : ^^^^^^^^^^^^^^^^
+>"x" : "x"
+>    : ^^^
+}
+async function tryHandlesAwaitedRejection() {
+>tryHandlesAwaitedRejection : () => Promise<void>
+>                           : ^^^^^^^^^^^^^^^^^^^
+
+    try {
+        await boom();
+>await boom() : void
+>             : ^^^^
+>boom() : Promise<void>
+>       : ^^^^^^^^^^^^^
+>boom : () => Promise<void>
+>     : ^^^^^^^^^^^^^^^^^^^
+
+    } catch (e) {
+>e : Error
+>  : ^^^^^
+
+        e.message;
+>e.message : string
+>          : ^^^^^^
+>e : Error
+>  : ^^^^^
+>message : string
+>        : ^^^^^^
+    }
+}
+

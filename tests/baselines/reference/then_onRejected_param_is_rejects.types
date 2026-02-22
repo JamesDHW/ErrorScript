@@ -1,0 +1,68 @@
+//// [tests/cases/compiler/checkedThrows/typing/then_onRejected_param_is_rejects.ts] ////
+
+=== then_onRejected_param_is_rejects.ts ===
+class RejectTimeError extends Error { readonly kind = "RejectTimeError"; }
+>RejectTimeError : RejectTimeError
+>                : ^^^^^^^^^^^^^^^
+>Error : Error
+>      : ^^^^^
+>kind : "RejectTimeError"
+>     : ^^^^^^^^^^^^^^^^^
+>"RejectTimeError" : "RejectTimeError"
+>                  : ^^^^^^^^^^^^^^^^^
+
+declare function acceptRejectTimeError(e: RejectTimeError): void;
+>acceptRejectTimeError : (e: RejectTimeError) => void
+>                      : ^ ^^               ^^^^^    
+>e : RejectTimeError
+>  : ^^^^^^^^^^^^^^^
+
+function promiseFnBoth() {
+>promiseFnBoth : () => Promise<never>
+>              : ^^^^^^^^^^^^^^^^^^^^
+
+    return Promise.reject(new RejectTimeError("rejected after returning promise"));
+>Promise.reject(new RejectTimeError("rejected after returning promise")) : Promise<never>
+>                                                                        : ^^^^^^^^^^^^^^
+>Promise.reject : <T = never>(reason?: any) => Promise<T>
+>               : ^ ^^^^^^^^^^      ^^^   ^^^^^          
+>Promise : PromiseConstructor
+>        : ^^^^^^^^^^^^^^^^^^
+>reject : <T = never>(reason?: any) => Promise<T>
+>       : ^ ^^^^^^^^^^      ^^^   ^^^^^          
+>new RejectTimeError("rejected after returning promise") : RejectTimeError
+>                                                        : ^^^^^^^^^^^^^^^
+>RejectTimeError : typeof RejectTimeError
+>                : ^^^^^^^^^^^^^^^^^^^^^^
+>"rejected after returning promise" : "rejected after returning promise"
+>                                   : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+}
+try {
+    promiseFnBoth().then(() => { }, e => acceptRejectTimeError(e));
+>promiseFnBoth().then(() => { }, e => acceptRejectTimeError(e)) : Promise<void>
+>                                                               : ^^^^^^^^^^^^^
+>promiseFnBoth().then : <TResult1 = never, TResult2 = never>(onfulfilled?: ((value: never) => TResult1 | PromiseLike<TResult1>) | null | undefined, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null | undefined) => Promise<TResult1 | TResult2>
+>                     : ^        ^^^^^^^^^^        ^^^^^^^^^^           ^^^^^     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^          ^^^^^      ^^   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>promiseFnBoth() : Promise<never>
+>                : ^^^^^^^^^^^^^^
+>promiseFnBoth : () => Promise<never>
+>              : ^^^^^^^^^^^^^^^^^^^^
+>then : <TResult1 = never, TResult2 = never>(onfulfilled?: ((value: never) => TResult1 | PromiseLike<TResult1>) | null | undefined, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null | undefined) => Promise<TResult1 | TResult2>
+>     : ^        ^^^^^^^^^^        ^^^^^^^^^^           ^^^^^     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^          ^^^^^      ^^   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>() => { } : () => void
+>          : ^^^^^^^^^^
+>e => acceptRejectTimeError(e) : (e: RejectTimeError) => void
+>                              : ^ ^^^^^^^^^^^^^^^^^^^^^^^^^^
+>e : RejectTimeError
+>  : ^^^^^^^^^^^^^^^
+>acceptRejectTimeError(e) : void
+>                         : ^^^^
+>acceptRejectTimeError : (e: RejectTimeError) => void
+>                      : ^ ^^               ^^^^^    
+>e : RejectTimeError
+>  : ^^^^^^^^^^^^^^^
+
+} catch (e) { }
+>e : never
+>  : ^^^^^
+

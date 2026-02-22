@@ -1,0 +1,8 @@
+//// [tests/cases/compiler/checkedThrows/stdlib/json_parse_throws_syntaxerror.ts] ////
+
+=== json_parse_throws_syntaxerror.ts ===
+JSON.parse("{");
+>JSON.parse : Symbol(JSON.parse, Decl(lib.es5.d.ts, --, --))
+>JSON : Symbol(JSON, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2015.symbol.wellknown.d.ts, --, --))
+>parse : Symbol(JSON.parse, Decl(lib.es5.d.ts, --, --))
+

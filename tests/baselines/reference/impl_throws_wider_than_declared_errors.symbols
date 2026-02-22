@@ -1,0 +1,11 @@
+//// [tests/cases/compiler/checkedThrows/decl/impl_throws_wider_than_declared_errors.ts] ////
+
+=== impl_throws_wider_than_declared_errors.ts ===
+function implThrowsNarrower(): number throws RangeError {
+>implThrowsNarrower : Symbol(implThrowsNarrower, Decl(impl_throws_wider_than_declared_errors.ts, 0, 0))
+>RangeError : Symbol(RangeError, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --))
+
+    throw new TypeError("x");
+>TypeError : Symbol(TypeError, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --))
+}
+

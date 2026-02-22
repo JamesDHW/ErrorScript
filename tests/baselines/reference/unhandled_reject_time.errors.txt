@@ -1,0 +1,21 @@
+unhandled_reject_time.ts(8,5): error TS18064: Unhandled promise rejection type: RejectTimeError.
+unhandled_reject_time.ts(10,9): error TS2358: The left-hand side of an 'instanceof' expression must be of type 'any', an object type or a type parameter.
+
+
+==== unhandled_reject_time.ts (2 errors) ====
+    class CallTimeError extends Error { readonly kind = "CallTimeError"; }
+    class RejectTimeError extends Error { readonly kind = "RejectTimeError"; }
+    
+    function promiseFnBoth() {
+        return Promise.reject(new RejectTimeError("rejected after returning promise"));
+    }
+    try {
+        promiseFnBoth();
+        ~~~~~~~~~~~~~~~
+!!! error TS18064: Unhandled promise rejection type: RejectTimeError.
+    } catch (e) {
+        if (e instanceof CallTimeError) { }
+            ~
+!!! error TS2358: The left-hand side of an 'instanceof' expression must be of type 'any', an object type or a type parameter.
+    }
+    

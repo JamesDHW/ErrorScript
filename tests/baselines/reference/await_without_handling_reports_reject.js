@@ -1,4 +1,4 @@
-//// [tests/cases/compiler/checkedThrows/both/await_without_handling_reports_reject.ts] ////
+//// [tests/cases/compiler/checkedErrors/both/await_without_handling_reports_reject.ts] ////
 
 //// [await_without_handling_reports_reject.ts]
 // Rejection unhandled; sync throw handled by try/catch => TS18064 only

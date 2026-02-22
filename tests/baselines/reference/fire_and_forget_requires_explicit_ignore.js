@@ -1,4 +1,4 @@
-//// [tests/cases/compiler/checkedThrows/rejects/fire_and_forget_requires_explicit_ignore.ts] ////
+//// [tests/cases/compiler/checkedErrors/rejects/fire_and_forget_requires_explicit_ignore.ts] ////
 
 //// [fire_and_forget_requires_explicit_ignore.ts]
 async function boom() {

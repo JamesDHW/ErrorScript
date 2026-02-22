@@ -1,4 +1,4 @@
-//// [tests/cases/compiler/checkedThrows/typing/catch_variable_is_throws_union.ts] ////
+//// [tests/cases/compiler/checkedErrors/typing/catch_variable_is_throws_union.ts] ////
 
 === catch_variable_is_throws_union.ts ===
 class E1 extends Error { readonly kind = "E1"; }

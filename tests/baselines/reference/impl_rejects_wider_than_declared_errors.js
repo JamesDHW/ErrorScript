@@ -1,4 +1,4 @@
-//// [tests/cases/compiler/checkedThrows/decl/impl_rejects_wider_than_declared_errors.ts] ////
+//// [tests/cases/compiler/checkedErrors/decl/impl_rejects_wider_than_declared_errors.ts] ////
 
 //// [impl_rejects_wider_than_declared_errors.ts]
 declare function g(): Promise<number> rejects TypeError;

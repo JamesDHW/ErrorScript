@@ -1,4 +1,4 @@
-//// [tests/cases/compiler/checkedThrows/typing/promise_catch_param_excludes_throws.ts] ////
+//// [tests/cases/compiler/checkedErrors/typing/promise_catch_param_excludes_throws.ts] ////
 
 //// [promise_catch_param_excludes_throws.ts]
 class CallTimeError extends Error { readonly kind = "CallTimeError"; }

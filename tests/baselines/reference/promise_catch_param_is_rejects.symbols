@@ -1,4 +1,4 @@
-//// [tests/cases/compiler/checkedThrows/typing/promise_catch_param_is_rejects.ts] ////
+//// [tests/cases/compiler/checkedErrors/typing/promise_catch_param_is_rejects.ts] ////
 
 === promise_catch_param_is_rejects.ts ===
 class RejectTimeError extends Error { readonly kind = "RejectTimeError"; }

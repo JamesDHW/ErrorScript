@@ -221,7 +221,7 @@ Ensure 'use strict' is always emitted.
 type: boolean
 default: true
 
-[94m--checkedThrows[39m
+[94m--checkedErrors[39m
 Enforce that thrown types are handled at call sites (checked throws).
 type: boolean
 default: false

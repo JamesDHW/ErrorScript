@@ -1,4 +1,4 @@
-//// [tests/cases/compiler/checkedThrows/rejects/try_handles_awaited_reject.ts] ////
+//// [tests/cases/compiler/checkedErrors/rejects/try_handles_awaited_reject.ts] ////
 
 === try_handles_awaited_reject.ts ===
 async function boom() {

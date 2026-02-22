@@ -1,4 +1,4 @@
-//// [tests/cases/compiler/checkedThrows/throws/rethrow_preserves_effect.ts] ////
+//// [tests/cases/compiler/checkedErrors/throws/rethrow_preserves_effect.ts] ////
 
 //// [rethrow_preserves_effect.ts]
 function boom() {

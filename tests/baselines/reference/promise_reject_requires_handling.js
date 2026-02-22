@@ -1,4 +1,4 @@
-//// [tests/cases/compiler/checkedThrows/combinators/promise_reject_requires_handling.ts] ////
+//// [tests/cases/compiler/checkedErrors/combinators/promise_reject_requires_handling.ts] ////
 
 //// [promise_reject_requires_handling.ts]
 async function rejectRequiresHandling() {

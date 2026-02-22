@@ -1,4 +1,4 @@
-//// [tests/cases/compiler/checkedThrows/decl/throws_forbidden_on_async.ts] ////
+//// [tests/cases/compiler/checkedErrors/decl/throws_forbidden_on_async.ts] ////
 
 //// [throws_forbidden_on_async.ts]
 async function illegalAsyncThrows(): Promise<void> throws Error {

@@ -1,4 +1,4 @@
-//// [tests/cases/compiler/checkedThrows/combinators/all_with_both_reports_throw.ts] ////
+//// [tests/cases/compiler/checkedErrors/combinators/all_with_both_reports_throw.ts] ////
 
 === all_with_both_reports_throw.ts ===
 class CallTimeError extends Error { readonly kind = "CallTimeError"; }

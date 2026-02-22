@@ -1,4 +1,4 @@
-//// [tests/cases/compiler/checkedThrows/combinators/any_unions_rejects.ts] ////
+//// [tests/cases/compiler/checkedErrors/combinators/any_unions_rejects.ts] ////
 
 //// [any_unions_rejects.ts]
 async function a() {

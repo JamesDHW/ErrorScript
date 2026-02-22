@@ -1,4 +1,4 @@
-//// [tests/cases/compiler/checkedThrows/suppress/expect_exception_suppresses_checked_error.ts] ////
+//// [tests/cases/compiler/checkedErrors/suppress/expect_exception_suppresses_checked_error.ts] ////
 
 //// [expect_exception_suppresses_checked_error.ts]
 async function fail() {

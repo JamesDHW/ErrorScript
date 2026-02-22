@@ -1,4 +1,4 @@
-//// [tests/cases/compiler/checkedThrows/suppress/ts_ignore_suppresses_checked_error.ts] ////
+//// [tests/cases/compiler/checkedErrors/suppress/ts_ignore_suppresses_checked_error.ts] ////
 
 === ts_ignore_suppresses_checked_error.ts ===
 async function fail() {

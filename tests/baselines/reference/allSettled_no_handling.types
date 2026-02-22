@@ -1,4 +1,4 @@
-//// [tests/cases/compiler/checkedThrows/combinators/allSettled_no_handling.ts] ////
+//// [tests/cases/compiler/checkedErrors/combinators/allSettled_no_handling.ts] ////
 
 === allSettled_no_handling.ts ===
 async function a() {

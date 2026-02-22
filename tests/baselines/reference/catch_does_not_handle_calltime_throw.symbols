@@ -1,4 +1,4 @@
-//// [tests/cases/compiler/checkedThrows/both/catch_does_not_handle_calltime_throw.ts] ////
+//// [tests/cases/compiler/checkedErrors/both/catch_does_not_handle_calltime_throw.ts] ////
 
 === catch_does_not_handle_calltime_throw.ts ===
 class CallTimeError extends Error { readonly kind = "CallTimeError"; }

@@ -1,4 +1,4 @@
-//// [tests/cases/compiler/checkedThrows/decl/rejects_requires_promise_like.ts] ////
+//// [tests/cases/compiler/checkedErrors/decl/rejects_requires_promise_like.ts] ////
 
 //// [rejects_requires_promise_like.ts]
 function illegalSyncRejects(): number rejects Error {

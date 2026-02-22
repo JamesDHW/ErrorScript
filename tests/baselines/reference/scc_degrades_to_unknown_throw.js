@@ -1,4 +1,4 @@
-//// [tests/cases/compiler/checkedThrows/recursion/scc_degrades_to_unknown_throw.ts] ////
+//// [tests/cases/compiler/checkedErrors/recursion/scc_degrades_to_unknown_throw.ts] ////
 
 //// [scc_degrades_to_unknown_throw.ts]
 function r1() {

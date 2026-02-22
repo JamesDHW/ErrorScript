@@ -1,4 +1,4 @@
-//// [tests/cases/compiler/checkedThrows/rejects/catch_suppresses_rejects.ts] ////
+//// [tests/cases/compiler/checkedErrors/rejects/catch_suppresses_rejects.ts] ////
 
 //// [catch_suppresses_rejects.ts]
 async function boom() {

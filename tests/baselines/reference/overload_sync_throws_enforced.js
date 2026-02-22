@@ -1,4 +1,4 @@
-//// [tests/cases/compiler/checkedThrows/overloads/overload_sync_throws_enforced.ts] ////
+//// [tests/cases/compiler/checkedErrors/overloads/overload_sync_throws_enforced.ts] ////
 
 //// [overload_sync_throws_enforced.ts]
 declare function overload(x: string): number throws Error;

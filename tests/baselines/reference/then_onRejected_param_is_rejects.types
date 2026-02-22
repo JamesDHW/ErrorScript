@@ -1,4 +1,4 @@
-//// [tests/cases/compiler/checkedThrows/typing/then_onRejected_param_is_rejects.ts] ////
+//// [tests/cases/compiler/checkedErrors/typing/then_onRejected_param_is_rejects.ts] ////
 
 === then_onRejected_param_is_rejects.ts ===
 class RejectTimeError extends Error { readonly kind = "RejectTimeError"; }

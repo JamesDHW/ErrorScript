@@ -1,4 +1,4 @@
-//// [tests/cases/compiler/checkedThrows/throws/handled_by_trycatch.ts] ////
+//// [tests/cases/compiler/checkedErrors/throws/handled_by_trycatch.ts] ////
 
 //// [handled_by_trycatch.ts]
 function boom() {

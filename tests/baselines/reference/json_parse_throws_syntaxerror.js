@@ -1,4 +1,4 @@
-//// [tests/cases/compiler/checkedThrows/stdlib/json_parse_throws_syntaxerror.ts] ////
+//// [tests/cases/compiler/checkedErrors/stdlib/json_parse_throws_syntaxerror.ts] ////
 
 //// [json_parse_throws_syntaxerror.ts]
 JSON.parse("{");

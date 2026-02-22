@@ -1542,17 +1542,17 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
     var noImplicitAny = getStrictOptionValue(compilerOptions, "noImplicitAny");
     var noImplicitThis = getStrictOptionValue(compilerOptions, "noImplicitThis");
     var useUnknownInCatchVariables = getStrictOptionValue(compilerOptions, "useUnknownInCatchVariables");
-    var checkedThrows = !!compilerOptions.checkedThrows;
+    var checkedErrors = !!compilerOptions.checkedErrors;
     type ThrownTypeCacheEntry = { kind: "computing"; } | { kind: "done"; type: Type; };
-    var thrownTypeCache = checkedThrows ? new Map<FunctionLikeDeclaration, ThrownTypeCacheEntry>() : undefined;
-    var catchVariableThrownTypeMap = checkedThrows ? new Map<string, Type>() : undefined;
+    var thrownTypeCache = checkedErrors ? new Map<FunctionLikeDeclaration, ThrownTypeCacheEntry>() : undefined;
+    var catchVariableThrownTypeMap = checkedErrors ? new Map<string, Type>() : undefined;
     function getCatchVariableMapKey(decl: VariableDeclaration): string {
         const file = getSourceFileOfNode(decl);
         return `${file.fileName}:${decl.pos}`;
     }
-    var rejectEffectCache = checkedThrows ? new Map<Node, Type>() : undefined;
+    var rejectEffectCache = checkedErrors ? new Map<Node, Type>() : undefined;
     type RejectEffectAsyncCacheEntry = { kind: "computing"; } | { kind: "done"; type: Type; };
-    var rejectEffectAsyncCache = checkedThrows ? new Map<FunctionLikeDeclaration, RejectEffectAsyncCacheEntry>() : undefined;
+    var rejectEffectAsyncCache = checkedErrors ? new Map<FunctionLikeDeclaration, RejectEffectAsyncCacheEntry>() : undefined;
 
     var exactOptionalPropertyTypes = compilerOptions.exactOptionalPropertyTypes;
     var noUncheckedSideEffectImports = compilerOptions.noUncheckedSideEffectImports !== false;
@@ -11899,7 +11899,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 // If the catch clause is explicitly annotated with any or unknown, accept it, otherwise error.
                 return isTypeAny(declaredType) || declaredType === unknownType ? declaredType : errorType;
             }
-            if (checkedThrows && catchVariableThrownTypeMap) {
+            if (checkedErrors && catchVariableThrownTypeMap) {
                 const rootDecl = declaration.kind === SyntaxKind.VariableDeclaration
                     ? declaration as VariableDeclaration
                     : findAncestor(declaration, (n): n is VariableDeclaration => n.kind === SyntaxKind.VariableDeclaration);
@@ -11965,7 +11965,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
             }
             const parameterTypeOfTypeTag = getParameterTypeOfTypeTag(func, declaration);
             if (parameterTypeOfTypeTag) return parameterTypeOfTypeTag;
-            if (declaration.symbol.escapedName !== InternalSymbolName.This && checkedThrows && rejectEffectCache) {
+            if (declaration.symbol.escapedName !== InternalSymbolName.This && checkedErrors && rejectEffectCache) {
                 const receiver = getPromiseRejectionReceiverForParameter(declaration);
                 if (receiver) {
                     checkExpression(receiver, CheckMode.TypeOnly);
@@ -12587,14 +12587,14 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
     function getTypeOfVariableOrParameterOrProperty(symbol: Symbol): Type {
         const links = getSymbolLinks(symbol);
         const declaration = symbol.valueDeclaration;
-        if (declaration && checkedThrows && catchVariableThrownTypeMap && isCatchClauseVariableDeclarationOrBindingElement(declaration)) {
+        if (declaration && checkedErrors && catchVariableThrownTypeMap && isCatchClauseVariableDeclarationOrBindingElement(declaration)) {
             const rootDecl = declaration.kind === SyntaxKind.VariableDeclaration
                 ? declaration as VariableDeclaration
                 : findAncestor(declaration, (n): n is VariableDeclaration => n.kind === SyntaxKind.VariableDeclaration);
             const mapKey = rootDecl ? getCatchVariableMapKey(rootDecl) : undefined;
             if (mapKey && catchVariableThrownTypeMap.has(mapKey)) {
                 const type = getTypeOfVariableOrParameterOrPropertyWorker(symbol);
-                if (!checkedThrows) links.type = type;
+                if (!checkedErrors) links.type = type;
                 return type;
             }
         }
@@ -12605,13 +12605,13 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
             // to preserve this type. In fact, we need to _prefer_ that type, but it won't
             // be assigned until contextual typing is complete, so we need to defer in
             // cases where contextual typing may take place.
-            const isCatchVarWithCheckedThrows = declaration && isCatchClauseVariableDeclarationOrBindingElement(declaration) && checkedThrows;
-            if (!links.type && !isParameterOfContextSensitiveSignature(symbol) && !isCatchVarWithCheckedThrows) {
+            const isCatchVarWithcheckedErrors = declaration && isCatchClauseVariableDeclarationOrBindingElement(declaration) && checkedErrors;
+            if (!links.type && !isParameterOfContextSensitiveSignature(symbol) && !isCatchVarWithcheckedErrors) {
                 links.type = type;
             }
             return type;
         }
-        if (declaration && isCatchClauseVariableDeclarationOrBindingElement(declaration) && checkedThrows && catchVariableThrownTypeMap) {
+        if (declaration && isCatchClauseVariableDeclarationOrBindingElement(declaration) && checkedErrors && catchVariableThrownTypeMap) {
             return getTypeOfVariableOrParameterOrPropertyWorker(symbol);
         }
         return links.type;
@@ -32024,7 +32024,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         if (!isContextSensitiveFunctionOrObjectLiteralMethod(func)) {
             return undefined;
         }
-        if (checkedThrows && rejectEffectCache) {
+        if (checkedErrors && rejectEffectCache) {
             const receiver = getPromiseRejectionReceiverForParameter(parameter);
             if (receiver) {
                 checkExpression(receiver, CheckMode.TypeOnly);
@@ -37971,7 +37971,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
             }
         }
 
-        if (checkedThrows) {
+        if (checkedErrors) {
             const effectiveThrows = getEffectiveThrows(signature, node);
             const returnType = getReturnTypeOfSignature(signature);
             const isAssertNeverLike = returnType === neverType
@@ -38782,7 +38782,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
             const declaration = parameter.valueDeclaration as ParameterDeclaration;
             if (!getEffectiveTypeAnnotationNode(declaration)) {
                 let type: Type | undefined;
-                if (i === 0 && checkedThrows && rejectEffectCache) {
+                if (i === 0 && checkedErrors && rejectEffectCache) {
                     const receiver = getPromiseRejectionReceiverForParameter(declaration);
                     if (receiver) {
                         checkExpression(receiver, CheckMode.TypeOnly);
@@ -40092,7 +40092,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         if (awaitedType === operandType && !isErrorType(awaitedType) && !(operandType.flags & TypeFlags.AnyOrUnknown)) {
             addErrorOrSuggestion(/*isError*/ false, createDiagnosticForNode(node, Diagnostics.await_has_no_effect_on_the_type_of_this_expression));
         }
-        if (checkedThrows) {
+        if (checkedErrors) {
             const throwsFromOperand = thrownTypeOfExpression(node.expression);
             if (throwsFromOperand !== neverType && !isHandledByTry(node)) {
                 error(node, Diagnostics.Unhandled_thrown_type_Colon_0, typeToString(throwsFromOperand));
@@ -42336,7 +42336,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                     checkAsyncFunctionReturnType(node as FunctionLikeDeclaration, returnTypeNode, returnTypeErrorLocation);
                 }
             }
-            if (checkedThrows && node.kind !== SyntaxKind.Constructor && node.kind !== SyntaxKind.ConstructSignature && node.kind !== SyntaxKind.IndexSignature && node.kind !== SyntaxKind.JSDocFunctionType) {
+            if (checkedErrors && node.kind !== SyntaxKind.Constructor && node.kind !== SyntaxKind.ConstructSignature && node.kind !== SyntaxKind.IndexSignature && node.kind !== SyntaxKind.JSDocFunctionType) {
                 const declWithEffects = node as SignatureDeclarationBase;
                 if (declWithEffects.throwsType || declWithEffects.rejectsType) {
                     const signature = getSignatureFromDeclaration(node);
@@ -44528,7 +44528,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         checkAllCodePathsInNonVoidFunctionReturnOrThrow(node, getReturnTypeFromAnnotation(node));
 
         // Effect validation: error only if inferred T is not assignable to declared E (soundness-only; E may be wider than T).
-        if (checkedThrows && nodeIsPresent(body) && node.kind !== SyntaxKind.MethodSignature) {
+        if (checkedErrors && nodeIsPresent(body) && node.kind !== SyntaxKind.MethodSignature) {
             const declWithEffects = node as SignatureDeclarationBase;
             if (declWithEffects.throwsType || declWithEffects.rejectsType) {
                 const signature = getSignatureFromDeclaration(node);
@@ -47096,7 +47096,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
     }
 
     function getTypeFromThrowMapNames(names: string[]): Type {
-        if (!checkedThrows || names.length === 0) return neverType;
+        if (!checkedErrors || names.length === 0) return neverType;
         const types: Type[] = [];
         for (const name of names) {
             const t = getGlobalType(name as __String, 0, /*reportErrors*/ false);
@@ -47187,7 +47187,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
     }
 
     function getRejectEffectOfAsyncFunction(decl: FunctionLikeDeclaration): Type {
-        if (!checkedThrows || !rejectEffectAsyncCache) return neverType;
+        if (!checkedErrors || !rejectEffectAsyncCache) return neverType;
         const cached = rejectEffectAsyncCache.get(decl);
         if (cached?.kind === "done") return cached.type;
         if (cached?.kind === "computing") return unknownType;
@@ -47226,7 +47226,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
     }
 
     function getRejectEffectOfExpression(expr: Expression): Type {
-        if (!checkedThrows || !rejectEffectCache) return neverType;
+        if (!checkedErrors || !rejectEffectCache) return neverType;
         expr = skipParentheses(expr);
         if (expr.kind === SyntaxKind.AwaitExpression) {
             return getRejectEffectOfExpression((expr as AwaitExpression).expression);
@@ -47294,7 +47294,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
      * (no control-flow reachability). Returns unknownType when re-entered during recursion (validation then fails).
      */
     function thrownTypeOfFunctionLike(node: FunctionLikeDeclaration): Type {
-        if (!checkedThrows || !thrownTypeCache) return neverType;
+        if (!checkedErrors || !thrownTypeCache) return neverType;
         const cached = thrownTypeCache.get(node);
         if (cached?.kind === "done") return cached.type;
         if (cached?.kind === "computing") return unknownType;
@@ -47382,7 +47382,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
             // Grammar checking
             if (catchClause.variableDeclaration) {
                 const declaration = catchClause.variableDeclaration;
-                if (checkedThrows && catchVariableThrownTypeMap && !getEffectiveTypeAnnotationNode(declaration)) {
+                if (checkedErrors && catchVariableThrownTypeMap && !getEffectiveTypeAnnotationNode(declaration)) {
                     // Try/catch/finally effect typing: catch variable = Throws(A) only; await adds Rejects at await point; .catch handles rejects only.
                     const tTry = thrownTypeOfStatement(node.tryBlock);
                     catchVariableThrownTypeMap.set(getCatchVariableMapKey(declaration), tTry);

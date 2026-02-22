@@ -1,4 +1,4 @@
-//// [tests/cases/compiler/checkedThrows/both/unhandled_reject_time.ts] ////
+//// [tests/cases/compiler/checkedErrors/both/unhandled_reject_time.ts] ////
 
 //// [unhandled_reject_time.ts]
 class CallTimeError extends Error { readonly kind = "CallTimeError"; }

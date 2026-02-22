@@ -1,4 +1,4 @@
-//// [tests/cases/compiler/checkedThrows/rejects/await_requires_handling.ts] ////
+//// [tests/cases/compiler/checkedErrors/rejects/await_requires_handling.ts] ////
 
 //// [await_requires_handling.ts]
 async function boom() {

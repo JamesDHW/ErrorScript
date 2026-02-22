@@ -1,4 +1,4 @@
-//// [tests/cases/compiler/checkedThrows/suppress/expect_exception_does_not_suppress_type_error.ts] ////
+//// [tests/cases/compiler/checkedErrors/suppress/expect_exception_does_not_suppress_type_error.ts] ////
 
 === expect_exception_does_not_suppress_type_error.ts ===
 async function fail() {

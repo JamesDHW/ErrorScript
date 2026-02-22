@@ -7031,7 +7031,7 @@ declare namespace ts {
         /** @deprecated */
         charset?: string;
         checkJs?: boolean;
-        checkedThrows?: boolean;
+        checkedErrors?: boolean;
         customConditions?: string[];
         declaration?: boolean;
         declarationMap?: boolean;

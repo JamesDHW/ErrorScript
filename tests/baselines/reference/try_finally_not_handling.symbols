@@ -1,4 +1,4 @@
-//// [tests/cases/compiler/checkedThrows/throws/try_finally_not_handling.ts] ////
+//// [tests/cases/compiler/checkedErrors/throws/try_finally_not_handling.ts] ////
 
 === try_finally_not_handling.ts ===
 function boom() {

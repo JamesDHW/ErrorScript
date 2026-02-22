@@ -1,6 +1,6 @@
 /// <reference path='fourslash.ts' />
 
-// @checkedThrows: true
+// @checkedErrors: true
 //// function boom() {
 ////     throw new Error("x");
 //// }

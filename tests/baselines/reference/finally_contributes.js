@@ -1,4 +1,4 @@
-//// [tests/cases/compiler/checkedThrows/throws/finally_contributes.ts] ////
+//// [tests/cases/compiler/checkedErrors/throws/finally_contributes.ts] ////
 
 //// [finally_contributes.ts]
 function boom() {

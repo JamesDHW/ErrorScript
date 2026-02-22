@@ -1054,7 +1054,7 @@ const commandOptionsWithoutBuild: CommandLineOption[] = [
         defaultValueDescription: false,
     },
     {
-        name: "checkedThrows",
+        name: "checkedErrors",
         type: "boolean",
         affectsSemanticDiagnostics: true,
         affectsBuildInfo: true,

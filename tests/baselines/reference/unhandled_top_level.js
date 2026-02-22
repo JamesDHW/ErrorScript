@@ -1,4 +1,4 @@
-//// [tests/cases/compiler/checkedThrows/throws/unhandled_top_level.ts] ////
+//// [tests/cases/compiler/checkedErrors/throws/unhandled_top_level.ts] ////
 
 //// [unhandled_top_level.ts]
 function boom() {

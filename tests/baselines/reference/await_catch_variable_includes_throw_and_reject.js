@@ -1,4 +1,4 @@
-//// [tests/cases/compiler/checkedThrows/both/await_catch_variable_includes_throw_and_reject.ts] ////
+//// [tests/cases/compiler/checkedErrors/both/await_catch_variable_includes_throw_and_reject.ts] ////
 
 //// [await_catch_variable_includes_throw_and_reject.ts]
 class CallTimeError extends Error { readonly kind = "CallTimeError"; }

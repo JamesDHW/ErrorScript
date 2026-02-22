@@ -1,4 +1,4 @@
-//// [tests/cases/compiler/checkedThrows/try/catch_variable_includes_rejects_with_await.ts] ////
+//// [tests/cases/compiler/checkedErrors/try/catch_variable_includes_rejects_with_await.ts] ////
 
 //// [catch_variable_includes_rejects_with_await.ts]
 class RejectTimeError extends Error { readonly kind = "RejectTimeError"; }

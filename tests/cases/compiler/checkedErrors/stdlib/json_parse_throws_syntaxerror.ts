@@ -1,3 +1,0 @@
-// @checkedErrors: true
-
-JSON.parse("{");

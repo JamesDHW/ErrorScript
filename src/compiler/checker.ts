@@ -1151,7 +1151,6 @@ import {
 } from "./_namespaces/ts.js";
 import * as moduleSpecifiers from "./_namespaces/ts.moduleSpecifiers.js";
 import * as performance from "./_namespaces/ts.performance.js";
-import { NATIVE_THROW_MAP } from "./nativeThrowMap.js";
 
 const ambientModuleSymbolRegex = /^".+"$/;
 const anon = "(anonymous)" as __String & string;
@@ -37972,7 +37971,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         }
 
         if (checkedErrors) {
-            const effectiveThrows = getEffectiveThrows(signature, node);
+            const effectiveThrows = getEffectiveThrows(signature);
             const returnType = getReturnTypeOfSignature(signature);
             const isAssertNeverLike = returnType === neverType
                 && node.arguments?.length
@@ -46884,7 +46883,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         const args = node.arguments;
         const isAssertNeverLike = returnType === neverType && args?.length && getTypeOfNode(args[0]) === neverType;
         if (isAssertNeverLike) return neverType;
-        return getEffectiveThrows(signature, node);
+        return getEffectiveThrows(signature);
     }
 
     function collectThrownTypesFromInvocation(
@@ -47095,16 +47094,6 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         return funcDecl;
     }
 
-    function getTypeFromThrowMapNames(names: string[]): Type {
-        if (!checkedErrors || names.length === 0) return neverType;
-        const types: Type[] = [];
-        for (const name of names) {
-            const t = getGlobalType(name as __String, 0, /*reportErrors*/ false);
-            if (t && t !== errorType) types.push(t);
-        }
-        return types.length === 0 ? neverType : types.length === 1 ? types[0] : getUnionType(types);
-    }
-
     function getDeclaredThrowsType(signature: Signature): Type | undefined {
         if (signature.target && signature.mapper) {
             const base = getDeclaredThrowsType(signature.target);
@@ -47137,7 +47126,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         return undefined;
     }
 
-    function getEffectiveThrows(signature: Signature, callNode?: CallExpression | NewExpression): Type {
+    function getEffectiveThrows(signature: Signature): Type {
         const decl = signature.declaration;
         if (decl && isFunctionLike(decl) && (getFunctionFlags(decl) & FunctionFlags.Async) !== 0) {
             return neverType;
@@ -47149,27 +47138,19 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         if (getFunctionBodyForThrownType(funcDecl)) {
             return thrownTypeOfFunctionLike(funcDecl);
         }
-        const symbol = getSymbolOfDeclaration(decl);
-        const key = getFullyQualifiedName(symbol, callNode);
-        const entry = NATIVE_THROW_MAP[key];
-        if (entry?.throws) return getTypeFromThrowMapNames(entry.throws);
+
         return neverType;
     }
 
-    function getEffectiveRejects(signature: Signature, callNode?: CallExpression | NewExpression): Type {
+    function getEffectiveRejects(signature: Signature): Type {
         const declared = getDeclaredRejectsType(signature);
         if (declared !== undefined) return declared;
         const decl = signature.declaration;
         if (!decl || !isFunctionLike(decl)) return neverType;
         const funcDecl = decl as FunctionLikeDeclaration;
         const body = getFunctionBodyForThrownType(funcDecl);
-        if (!body) {
-            const symbol = getSymbolOfDeclaration(decl);
-            const key = getFullyQualifiedName(symbol, callNode);
-            const entry = NATIVE_THROW_MAP[key];
-            if (entry?.rejects) return getTypeFromThrowMapNames(entry.rejects);
-            return neverType;
-        }
+        if (!body) return neverType;
+        
         if ((getFunctionFlags(funcDecl) & FunctionFlags.Async) !== 0) {
             return getRejectEffectOfAsyncFunction(funcDecl);
         }
@@ -47178,12 +47159,12 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
 
     function getInferredThrowsType(signature: Signature): Type {
         if (getDeclaredThrowsType(signature) !== undefined) return neverType;
-        return getEffectiveThrows(signature, /*callNode*/ undefined);
+        return getEffectiveThrows(signature);
     }
 
     function getInferredRejectsType(signature: Signature): Type {
         if (getDeclaredRejectsType(signature) !== undefined) return neverType;
-        return getEffectiveRejects(signature, /*callNode*/ undefined);
+        return getEffectiveRejects(signature);
     }
 
     function getRejectEffectOfAsyncFunction(decl: FunctionLikeDeclaration): Type {
@@ -47282,7 +47263,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
             rejectEffectCache.set(expr, neverType);
             return neverType;
         }
-        const effect = getEffectiveRejects(signature, call);
+        const effect = getEffectiveRejects(signature);
         rejectEffectCache.set(expr, effect);
         return effect;
     }

@@ -1,0 +1,23 @@
+promise_catch_param_excludes_throws.ts(11,52): error TS2345: Argument of type 'RejectTimeError' is not assignable to parameter of type 'CallTimeError'.
+  Types of property 'kind' are incompatible.
+    Type '"RejectTimeError"' is not assignable to type '"CallTimeError"'.
+
+
+==== promise_catch_param_excludes_throws.ts (1 errors) ====
+    class CallTimeError extends Error { readonly kind = "CallTimeError"; }
+    class RejectTimeError extends Error { readonly kind = "RejectTimeError"; }
+    declare function acceptCallTimeError(e: CallTimeError): void;
+    function promiseFnBoth() {
+        if (Math.random() > 0.5) {
+            throw new CallTimeError("thrown before returning promise");
+        }
+        return Promise.reject(new RejectTimeError("rejected after returning promise"));
+    }
+    try {
+        promiseFnBoth().catch(e => acceptCallTimeError(e));
+                                                       ~
+!!! error TS2345: Argument of type 'RejectTimeError' is not assignable to parameter of type 'CallTimeError'.
+!!! error TS2345:   Types of property 'kind' are incompatible.
+!!! error TS2345:     Type '"RejectTimeError"' is not assignable to type '"CallTimeError"'.
+    } catch (e) { }
+    

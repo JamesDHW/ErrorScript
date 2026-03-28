@@ -449,6 +449,8 @@ export function transformLegacyDecorators(context: TransformationContext): (x: S
                 visitNodes(node.parameters, visitor, isParameter),
                 /*type*/ undefined,
                 visitNode(node.body, visitor, isBlock),
+                node.throwsType,
+                node.rejectsType,
             ),
             node,
         );
@@ -463,6 +465,8 @@ export function transformLegacyDecorators(context: TransformationContext): (x: S
                 visitNodes(node.parameters, visitor, isParameter),
                 /*type*/ undefined,
                 visitNode(node.body, visitor, isBlock),
+                node.throwsType,
+                node.rejectsType,
             ),
             node,
         );

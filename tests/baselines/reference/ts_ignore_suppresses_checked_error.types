@@ -1,0 +1,29 @@
+//// [tests/cases/compiler/checkedErrors/suppress/ts_ignore_suppresses_checked_error.ts] ////
+
+=== ts_ignore_suppresses_checked_error.ts ===
+async function fail() {
+>fail : () => Promise<void>
+>     : ^^^^^^^^^^^^^^^^^^^
+
+    throw new Error("x");
+>new Error("x") : Error
+>               : ^^^^^
+>Error : ErrorConstructor
+>      : ^^^^^^^^^^^^^^^^
+>"x" : "x"
+>    : ^^^
+}
+async function tsIgnoreSuppressesAll() {
+>tsIgnoreSuppressesAll : () => Promise<void>
+>                      : ^^^^^^^^^^^^^^^^^^^
+
+    // @ts-ignore
+    await fail();
+>await fail() : void
+>             : ^^^^
+>fail() : Promise<void>
+>       : ^^^^^^^^^^^^^
+>fail : () => Promise<void>
+>     : ^^^^^^^^^^^^^^^^^^^
+}
+

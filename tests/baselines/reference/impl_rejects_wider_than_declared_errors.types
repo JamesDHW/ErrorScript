@@ -1,0 +1,20 @@
+//// [tests/cases/compiler/checkedErrors/decl/impl_rejects_wider_than_declared_errors.ts] ////
+
+=== impl_rejects_wider_than_declared_errors.ts ===
+declare function g(): Promise<number> rejects TypeError;
+>g : () => Promise<number> rejects TypeError
+>  : ^^^^^^               ^^^^^^^^^^^^^^^^^^
+
+async function unhandledReject() {
+>unhandledReject : () => Promise<void>
+>                : ^^^^^^^^^^^^^^^^^^^
+
+    await g();
+>await g() : number
+>          : ^^^^^^
+>g() : Promise<number>
+>    : ^^^^^^^^^^^^^^^
+>g : () => Promise<number> rejects TypeError
+>  : ^^^^^^               ^^^^^^^^^^^^^^^^^^
+}
+

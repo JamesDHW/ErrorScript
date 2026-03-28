@@ -264,6 +264,8 @@ export function addNewNodeForMemberSymbol(
                         emptyArray,
                         createTypeNode(typeNode),
                         createBody(body, quotePreference, ambient),
+                        /*throwsType*/ undefined,
+                        /*rejectsType*/ undefined,
                     ));
                 }
                 else {
@@ -471,16 +473,16 @@ export function createSignatureDeclarationFromSignature(
     const questionToken = optional ? factory.createToken(SyntaxKind.QuestionToken) : undefined;
     const asteriskToken = signatureDeclaration.asteriskToken;
     if (isFunctionExpression(signatureDeclaration)) {
-        return factory.updateFunctionExpression(signatureDeclaration, modifiers, signatureDeclaration.asteriskToken, tryCast(name, isIdentifier), typeParameters, parameters, type, body ?? signatureDeclaration.body);
+        return factory.updateFunctionExpression(signatureDeclaration, modifiers, signatureDeclaration.asteriskToken, tryCast(name, isIdentifier), typeParameters, parameters, type, body ?? signatureDeclaration.body, signatureDeclaration.throwsType, signatureDeclaration.rejectsType);
     }
     if (isArrowFunction(signatureDeclaration)) {
-        return factory.updateArrowFunction(signatureDeclaration, modifiers, typeParameters, parameters, type, signatureDeclaration.equalsGreaterThanToken, body ?? signatureDeclaration.body);
+        return factory.updateArrowFunction(signatureDeclaration, modifiers, typeParameters, parameters, type, signatureDeclaration.equalsGreaterThanToken, body ?? signatureDeclaration.body, signatureDeclaration.throwsType, signatureDeclaration.rejectsType);
     }
     if (isMethodDeclaration(signatureDeclaration)) {
-        return factory.updateMethodDeclaration(signatureDeclaration, modifiers, asteriskToken, name ?? factory.createIdentifier(""), questionToken, typeParameters, parameters, type, body);
+        return factory.updateMethodDeclaration(signatureDeclaration, modifiers, asteriskToken, name ?? factory.createIdentifier(""), questionToken, typeParameters, parameters, type, body, signatureDeclaration.throwsType, signatureDeclaration.rejectsType);
     }
     if (isFunctionDeclaration(signatureDeclaration)) {
-        return factory.updateFunctionDeclaration(signatureDeclaration, modifiers, signatureDeclaration.asteriskToken, tryCast(name, isIdentifier), typeParameters, parameters, type, body ?? signatureDeclaration.body);
+        return factory.updateFunctionDeclaration(signatureDeclaration, modifiers, signatureDeclaration.asteriskToken, tryCast(name, isIdentifier), typeParameters, parameters, type, body ?? signatureDeclaration.body, signatureDeclaration.throwsType, signatureDeclaration.rejectsType);
     }
     return undefined;
 }
@@ -539,6 +541,8 @@ export function createSignatureDeclarationFromCallExpression(
                 parameters,
                 type,
                 createStubbedMethodBody(quotePreference),
+                /*throwsType*/ undefined,
+                /*rejectsType*/ undefined,
             );
         case SyntaxKind.MethodSignature:
             return factory.createMethodSignature(
@@ -548,6 +552,8 @@ export function createSignatureDeclarationFromCallExpression(
                 typeParameters,
                 parameters,
                 type === undefined ? factory.createKeywordTypeNode(SyntaxKind.UnknownKeyword) : type,
+                /*throwsType*/ undefined,
+                /*rejectsType*/ undefined,
             );
         case SyntaxKind.FunctionDeclaration:
             Debug.assert(typeof name === "string" || isIdentifier(name), "Unexpected name");
@@ -559,6 +565,8 @@ export function createSignatureDeclarationFromCallExpression(
                 parameters,
                 type,
                 createStubbedBody(Diagnostics.Function_not_implemented.message, quotePreference),
+                /*throwsType*/ undefined,
+                /*rejectsType*/ undefined,
             );
         default:
             Debug.fail("Unexpected kind");
@@ -868,6 +876,8 @@ function createStubbedMethod(
         parameters,
         returnType,
         body || createStubbedMethodBody(quotePreference),
+        /*throwsType*/ undefined,
+        /*rejectsType*/ undefined,
     );
 }
 

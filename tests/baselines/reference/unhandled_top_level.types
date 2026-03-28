@@ -1,0 +1,21 @@
+//// [tests/cases/compiler/checkedErrors/throws/unhandled_top_level.ts] ////
+
+=== unhandled_top_level.ts ===
+function boom() {
+>boom : () => void
+>     : ^^^^^^^^^^
+
+    throw new Error("x");
+>new Error("x") : Error
+>               : ^^^^^
+>Error : ErrorConstructor
+>      : ^^^^^^^^^^^^^^^^
+>"x" : "x"
+>    : ^^^
+}
+boom();
+>boom() : void
+>       : ^^^^
+>boom : () => void
+>     : ^^^^^^^^^^
+

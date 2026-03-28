@@ -1,0 +1,10 @@
+throws_forbidden_on_async.ts(1,59): error TS18067: Throws clause is not allowed on async functions.
+
+
+==== throws_forbidden_on_async.ts (1 errors) ====
+    async function illegalAsyncThrows(): Promise<void> throws Error {
+                                                              ~~~~~
+!!! error TS18067: Throws clause is not allowed on async functions.
+        return;
+    }
+    

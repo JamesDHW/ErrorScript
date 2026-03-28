@@ -2,7 +2,7 @@
     "name": "typescript",
     "author": "Microsoft Corp.",
     "homepage": "https://www.typescriptlang.org/",
-    "version": "6.0.0",
+    "version": "6.0.0-errorscript",
     "license": "Apache-2.0",
     "description": "TypeScript is a language for application scale JavaScript development",
     "keywords": [
@@ -93,6 +93,7 @@
         "build:compiler": "hereby local",
         "build:tests": "hereby tests",
         "build:tests:notypecheck": "hereby tests --no-typecheck",
+        "build:playground": "npm run build && npx hereby LKG && npm pack",
         "clean": "hereby clean",
         "gulp": "hereby",
         "lint": "hereby lint",

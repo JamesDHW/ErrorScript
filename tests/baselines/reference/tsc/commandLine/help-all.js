@@ -221,6 +221,11 @@ Ensure 'use strict' is always emitted.
 type: boolean
 default: true
 
+[94m--checkedErrors[39m
+Enforce that thrown types are handled at call sites (checked throws).
+type: boolean
+default: false
+
 [94m--exactOptionalPropertyTypes[39m
 Interpret optional property types as written, rather than adding 'undefined'.
 type: boolean

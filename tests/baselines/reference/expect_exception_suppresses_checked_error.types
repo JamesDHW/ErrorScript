@@ -1,0 +1,29 @@
+//// [tests/cases/compiler/checkedErrors/suppress/expect_exception_suppresses_checked_error.ts] ////
+
+=== expect_exception_suppresses_checked_error.ts ===
+async function fail() {
+>fail : () => Promise<void>
+>     : ^^^^^^^^^^^^^^^^^^^
+
+    throw new Error("x");
+>new Error("x") : Error
+>               : ^^^^^
+>Error : ErrorConstructor
+>      : ^^^^^^^^^^^^^^^^
+>"x" : "x"
+>    : ^^^
+}
+async function ignoreThrowsSuppressesRejection() {
+>ignoreThrowsSuppressesRejection : () => Promise<void>
+>                                : ^^^^^^^^^^^^^^^^^^^
+
+    // @ts-expect-exception
+    await fail();
+>await fail() : void
+>             : ^^^^
+>fail() : Promise<void>
+>       : ^^^^^^^^^^^^^
+>fail : () => Promise<void>
+>     : ^^^^^^^^^^^^^^^^^^^
+}
+

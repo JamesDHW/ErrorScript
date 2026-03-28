@@ -1,0 +1,16 @@
+//// [tests/cases/compiler/checkedErrors/rejects/fire_and_forget_requires_explicit_ignore.ts] ////
+
+=== fire_and_forget_requires_explicit_ignore.ts ===
+async function boom() {
+>boom : Symbol(boom, Decl(fire_and_forget_requires_explicit_ignore.ts, 0, 0))
+
+    throw new Error("x");
+>Error : Symbol(Error, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2022.error.d.ts, --, --))
+}
+function fireAndForget() {
+>fireAndForget : Symbol(fireAndForget, Decl(fire_and_forget_requires_explicit_ignore.ts, 2, 1))
+
+    boom();
+>boom : Symbol(boom, Decl(fire_and_forget_requires_explicit_ignore.ts, 0, 0))
+}
+

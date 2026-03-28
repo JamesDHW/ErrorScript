@@ -857,6 +857,8 @@ export function transformClassFields(context: TransformationContext): (x: Source
                         visitParameterList(node.parameters, visitor, context),
                         /*type*/ undefined,
                         visitFunctionBody(node.body!, visitor, context),
+                        /*throwsType*/ undefined,
+                        /*rejectsType*/ undefined,
                     ),
                 ),
             );
@@ -2166,6 +2168,8 @@ export function transformClassFields(context: TransformationContext): (x: Source
                     /*type*/ undefined,
                     /*equalsGreaterThanToken*/ undefined,
                     factory.createBlock([statement]),
+                    /*throwsType*/ undefined,
+                    /*rejectsType*/ undefined,
                 );
                 prologue = factory.createAssignment(temp, arrow);
                 statement = factory.createExpressionStatement(factory.createCallExpression(temp, /*typeArguments*/ undefined, []));

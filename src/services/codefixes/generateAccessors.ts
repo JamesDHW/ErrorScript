@@ -216,6 +216,8 @@ function generateGetAccessor(fieldName: AcceptedNameType, accessorName: Accepted
                 createAccessorAccessExpression(fieldName, isStatic, container),
             ),
         ], /*multiLine*/ true),
+        /*throwsType*/ undefined,
+        /*rejectsType*/ undefined,
     );
 }
 

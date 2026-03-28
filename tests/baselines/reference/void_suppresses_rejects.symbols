@@ -1,0 +1,12 @@
+//// [tests/cases/compiler/checkedErrors/rejects/void_suppresses_rejects.ts] ////
+
+=== void_suppresses_rejects.ts ===
+async function boom() {
+>boom : Symbol(boom, Decl(void_suppresses_rejects.ts, 0, 0))
+
+    throw new Error("x");
+>Error : Symbol(Error, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2022.error.d.ts, --, --))
+}
+void boom();
+>boom : Symbol(boom, Decl(void_suppresses_rejects.ts, 0, 0))
+

@@ -1,0 +1,23 @@
+//// [tests/cases/compiler/checkedErrors/rejects/void_suppresses_rejects.ts] ////
+
+=== void_suppresses_rejects.ts ===
+async function boom() {
+>boom : () => Promise<void>
+>     : ^^^^^^^^^^^^^^^^^^^
+
+    throw new Error("x");
+>new Error("x") : Error
+>               : ^^^^^
+>Error : ErrorConstructor
+>      : ^^^^^^^^^^^^^^^^
+>"x" : "x"
+>    : ^^^
+}
+void boom();
+>void boom() : undefined
+>            : ^^^^^^^^^
+>boom() : Promise<void>
+>       : ^^^^^^^^^^^^^
+>boom : () => Promise<void>
+>     : ^^^^^^^^^^^^^^^^^^^
+

@@ -1,0 +1,14 @@
+//// [tests/cases/compiler/checkedErrors/rejects/catch_suppresses_rejects.ts] ////
+
+=== catch_suppresses_rejects.ts ===
+async function boom() {
+>boom : Symbol(boom, Decl(catch_suppresses_rejects.ts, 0, 0))
+
+    throw new Error("x");
+>Error : Symbol(Error, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2022.error.d.ts, --, --))
+}
+boom().catch(() => {});
+>boom().catch : Symbol(Promise.catch, Decl(lib.es5.d.ts, --, --))
+>boom : Symbol(boom, Decl(catch_suppresses_rejects.ts, 0, 0))
+>catch : Symbol(Promise.catch, Decl(lib.es5.d.ts, --, --))
+

@@ -49,6 +49,7 @@ export * from "../codefixes/fixUnreferenceableDecoratorMetadata.js";
 export * from "../codefixes/fixUnusedIdentifier.js";
 export * from "../codefixes/fixUnreachableCode.js";
 export * from "../codefixes/fixUnusedLabel.js";
+export * from "../codefixes/fixWrapUnhandledInTryCatch.js";
 export * from "../codefixes/fixJSDocTypes.js";
 export * from "../codefixes/fixMissingCallParentheses.js";
 export * from "../codefixes/fixMissingTypeAnnotationOnExports.js";

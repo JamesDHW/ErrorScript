@@ -1,0 +1,33 @@
+//// [tests/cases/compiler/checkedErrors/both/unhandled_calltime_throw.ts] ////
+
+=== unhandled_calltime_throw.ts ===
+class CallTimeError extends Error { readonly kind = "CallTimeError"; }
+>CallTimeError : Symbol(CallTimeError, Decl(unhandled_calltime_throw.ts, 0, 0))
+>Error : Symbol(Error, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2022.error.d.ts, --, --))
+>kind : Symbol(CallTimeError.kind, Decl(unhandled_calltime_throw.ts, 0, 35))
+
+class RejectTimeError extends Error { readonly kind = "RejectTimeError"; }
+>RejectTimeError : Symbol(RejectTimeError, Decl(unhandled_calltime_throw.ts, 0, 70))
+>Error : Symbol(Error, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2022.error.d.ts, --, --))
+>kind : Symbol(RejectTimeError.kind, Decl(unhandled_calltime_throw.ts, 1, 37))
+
+function promiseFnBoth() {
+>promiseFnBoth : Symbol(promiseFnBoth, Decl(unhandled_calltime_throw.ts, 1, 74))
+
+    if (Math.random() > 0.5) {
+>Math.random : Symbol(Math.random, Decl(lib.es5.d.ts, --, --))
+>Math : Symbol(Math, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2015.core.d.ts, --, --), Decl(lib.es2015.symbol.wellknown.d.ts, --, --), Decl(lib.es2025.float16.d.ts, --, --))
+>random : Symbol(Math.random, Decl(lib.es5.d.ts, --, --))
+
+        throw new CallTimeError("thrown before returning promise");
+>CallTimeError : Symbol(CallTimeError, Decl(unhandled_calltime_throw.ts, 0, 0))
+    }
+    return Promise.reject(new RejectTimeError("rejected after returning promise"));
+>Promise.reject : Symbol(PromiseConstructor.reject, Decl(lib.es2015.promise.d.ts, --, --))
+>Promise : Symbol(Promise, Decl(lib.es5.d.ts, --, --), Decl(lib.es2015.iterable.d.ts, --, --), Decl(lib.es2015.promise.d.ts, --, --), Decl(lib.es2015.symbol.wellknown.d.ts, --, --), Decl(lib.es2018.promise.d.ts, --, --))
+>reject : Symbol(PromiseConstructor.reject, Decl(lib.es2015.promise.d.ts, --, --))
+>RejectTimeError : Symbol(RejectTimeError, Decl(unhandled_calltime_throw.ts, 0, 70))
+}
+promiseFnBoth();
+>promiseFnBoth : Symbol(promiseFnBoth, Decl(unhandled_calltime_throw.ts, 1, 74))
+

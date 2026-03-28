@@ -1,0 +1,35 @@
+//// [tests/cases/compiler/checkedErrors/try/catch_variable_includes_rejects_with_await.ts] ////
+
+=== catch_variable_includes_rejects_with_await.ts ===
+class RejectTimeError extends Error { readonly kind = "RejectTimeError"; }
+>RejectTimeError : Symbol(RejectTimeError, Decl(catch_variable_includes_rejects_with_await.ts, 0, 0))
+>Error : Symbol(Error, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2022.error.d.ts, --, --))
+>kind : Symbol(RejectTimeError.kind, Decl(catch_variable_includes_rejects_with_await.ts, 0, 37))
+
+declare function acceptRejectTimeError(e: RejectTimeError): void;
+>acceptRejectTimeError : Symbol(acceptRejectTimeError, Decl(catch_variable_includes_rejects_with_await.ts, 0, 74))
+>e : Symbol(e, Decl(catch_variable_includes_rejects_with_await.ts, 1, 39))
+>RejectTimeError : Symbol(RejectTimeError, Decl(catch_variable_includes_rejects_with_await.ts, 0, 0))
+
+async function rejectingPromise() {
+>rejectingPromise : Symbol(rejectingPromise, Decl(catch_variable_includes_rejects_with_await.ts, 1, 65))
+
+    throw new RejectTimeError("reject");
+>RejectTimeError : Symbol(RejectTimeError, Decl(catch_variable_includes_rejects_with_await.ts, 0, 0))
+}
+async function withAwait() {
+>withAwait : Symbol(withAwait, Decl(catch_variable_includes_rejects_with_await.ts, 4, 1))
+
+    try {
+        await rejectingPromise();
+>rejectingPromise : Symbol(rejectingPromise, Decl(catch_variable_includes_rejects_with_await.ts, 1, 65))
+
+    } catch (e) {
+>e : Symbol(e, Decl(catch_variable_includes_rejects_with_await.ts, 8, 13))
+
+        acceptRejectTimeError(e);
+>acceptRejectTimeError : Symbol(acceptRejectTimeError, Decl(catch_variable_includes_rejects_with_await.ts, 0, 74))
+>e : Symbol(e, Decl(catch_variable_includes_rejects_with_await.ts, 8, 13))
+    }
+}
+

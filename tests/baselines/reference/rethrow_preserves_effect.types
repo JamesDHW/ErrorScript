@@ -1,0 +1,41 @@
+//// [tests/cases/compiler/checkedErrors/throws/rethrow_preserves_effect.ts] ////
+
+=== rethrow_preserves_effect.ts ===
+function boom() {
+>boom : () => void
+>     : ^^^^^^^^^^
+
+    throw new Error("x");
+>new Error("x") : Error
+>               : ^^^^^
+>Error : ErrorConstructor
+>      : ^^^^^^^^^^^^^^^^
+>"x" : "x"
+>    : ^^^
+}
+function c() {
+>c : () => void
+>  : ^^^^^^^^^^
+
+    try {
+        boom();
+>boom() : void
+>       : ^^^^
+>boom : () => void
+>     : ^^^^^^^^^^
+
+    } catch (e) {
+>e : Error
+>  : ^^^^^
+
+        throw e;
+>e : Error
+>  : ^^^^^
+    }
+}
+c();
+>c() : void
+>    : ^^^^
+>c : () => void
+>  : ^^^^^^^^^^
+

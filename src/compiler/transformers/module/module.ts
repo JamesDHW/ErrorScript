@@ -392,6 +392,8 @@ export function transformModule(context: TransformationContext): (x: SourceFile 
                                         ],
                                         /*type*/ undefined,
                                         transformAsynchronousModuleBody(node),
+                                        /*throwsType*/ undefined,
+                                        /*rejectsType*/ undefined,
                                     ),
                             ],
                         ),
@@ -494,6 +496,8 @@ export function transformModule(context: TransformationContext): (x: SourceFile 
                 ),
                 /*location*/ undefined,
             ),
+            /*throwsType*/ undefined,
+            /*rejectsType*/ undefined,
         );
 
         // Create an updated SourceFile:
@@ -532,6 +536,8 @@ export function transformModule(context: TransformationContext): (x: SourceFile 
                                     ],
                                     /*type*/ undefined,
                                     transformAsynchronousModuleBody(node),
+                                    /*throwsType*/ undefined,
+                                    /*rejectsType*/ undefined,
                                 ),
                             ],
                         ),
@@ -1301,6 +1307,8 @@ export function transformModule(context: TransformationContext): (x: SourceFile 
                 /*type*/ undefined,
                 /*equalsGreaterThanToken*/ undefined,
                 body,
+                /*throwsType*/ undefined,
+                /*rejectsType*/ undefined,
             );
         }
         else {
@@ -1312,6 +1320,8 @@ export function transformModule(context: TransformationContext): (x: SourceFile 
                 parameters,
                 /*type*/ undefined,
                 body,
+                /*throwsType*/ undefined,
+                /*rejectsType*/ undefined,
             );
 
             // if there is a lexical 'this' in the import call arguments, ensure we indicate
@@ -1387,6 +1397,8 @@ export function transformModule(context: TransformationContext): (x: SourceFile 
                 /*type*/ undefined,
                 /*equalsGreaterThanToken*/ undefined,
                 requireCall,
+                /*throwsType*/ undefined,
+                /*rejectsType*/ undefined,
             );
         }
         else {
@@ -1398,6 +1410,8 @@ export function transformModule(context: TransformationContext): (x: SourceFile 
                 /*parameters*/ parameters,
                 /*type*/ undefined,
                 factory.createBlock([factory.createReturnStatement(requireCall)]),
+                /*throwsType*/ undefined,
+                /*rejectsType*/ undefined,
             );
         }
 
@@ -1761,6 +1775,8 @@ export function transformModule(context: TransformationContext): (x: SourceFile 
                             visitNodes(node.parameters, visitor, isParameter),
                             /*type*/ undefined,
                             visitEachChild(node.body, visitor, context),
+                            /*throwsType*/ undefined,
+                            /*rejectsType*/ undefined,
                         ),
                         /*location*/ node,
                     ),
@@ -2205,6 +2221,8 @@ export function transformModule(context: TransformationContext): (x: SourceFile 
                                 /*parameters*/ [],
                                 /*type*/ undefined,
                                 factory.createBlock([factory.createReturnStatement(value)]),
+                                /*throwsType*/ undefined,
+                                /*rejectsType*/ undefined,
                             ),
                         ),
                     ]),

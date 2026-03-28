@@ -70,6 +70,8 @@ export function createNodeConverters(factory: NodeFactory): NodeConverters {
             node.parameters,
             node.type,
             node.body,
+            node.throwsType,
+            node.rejectsType,
         );
         setOriginalNode(updated, node);
         setTextRange(updated, node);

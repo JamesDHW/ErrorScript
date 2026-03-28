@@ -225,6 +225,8 @@ export function transformSystemModule(context: TransformationContext): (x: Sourc
             ],
             /*type*/ undefined,
             moduleBodyBlock,
+            /*throwsType*/ undefined,
+            /*rejectsType*/ undefined,
         );
 
         // Write the call to `System.register`
@@ -412,6 +414,8 @@ export function transformSystemModule(context: TransformationContext): (x: Sourc
                     /*parameters*/ [],
                     /*type*/ undefined,
                     factory.createBlock(executeStatements, /*multiLine*/ true),
+                    /*throwsType*/ undefined,
+                    /*rejectsType*/ undefined,
                 ),
             ),
         ], /*multiLine*/ true);
@@ -580,6 +584,8 @@ export function transformSystemModule(context: TransformationContext): (x: Sourc
                     ),
                 ),
             ], /*multiLine*/ true),
+            /*throwsType*/ undefined,
+            /*rejectsType*/ undefined,
         );
     }
 
@@ -710,6 +716,8 @@ export function transformSystemModule(context: TransformationContext): (x: Sourc
                     [factory.createParameterDeclaration(/*modifiers*/ undefined, /*dotDotDotToken*/ undefined, parameterName)],
                     /*type*/ undefined,
                     factory.createBlock(statements, /*multiLine*/ true),
+                    /*throwsType*/ undefined,
+                    /*rejectsType*/ undefined,
                 ),
             );
         }
@@ -809,6 +817,8 @@ export function transformSystemModule(context: TransformationContext): (x: Sourc
                     visitNodes(node.parameters, visitor, isParameter),
                     /*type*/ undefined,
                     visitNode(node.body, visitor, isBlock),
+                    node.throwsType,
+                    node.rejectsType,
                 ),
             );
         }

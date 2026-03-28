@@ -1,0 +1,60 @@
+//// [tests/cases/compiler/checkedErrors/both/await_catch_variable_includes_throw_and_reject.ts] ////
+
+=== await_catch_variable_includes_throw_and_reject.ts ===
+class CallTimeError extends Error { readonly kind = "CallTimeError"; }
+>CallTimeError : Symbol(CallTimeError, Decl(await_catch_variable_includes_throw_and_reject.ts, 0, 0))
+>Error : Symbol(Error, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2022.error.d.ts, --, --))
+>kind : Symbol(CallTimeError.kind, Decl(await_catch_variable_includes_throw_and_reject.ts, 0, 35))
+
+class RejectTimeError extends Error { readonly kind = "RejectTimeError"; }
+>RejectTimeError : Symbol(RejectTimeError, Decl(await_catch_variable_includes_throw_and_reject.ts, 0, 70))
+>Error : Symbol(Error, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2022.error.d.ts, --, --))
+>kind : Symbol(RejectTimeError.kind, Decl(await_catch_variable_includes_throw_and_reject.ts, 1, 37))
+
+declare function acceptCallTimeError(e: CallTimeError): void;
+>acceptCallTimeError : Symbol(acceptCallTimeError, Decl(await_catch_variable_includes_throw_and_reject.ts, 1, 74))
+>e : Symbol(e, Decl(await_catch_variable_includes_throw_and_reject.ts, 3, 37))
+>CallTimeError : Symbol(CallTimeError, Decl(await_catch_variable_includes_throw_and_reject.ts, 0, 0))
+
+declare function acceptRejectTimeError(e: RejectTimeError): void;
+>acceptRejectTimeError : Symbol(acceptRejectTimeError, Decl(await_catch_variable_includes_throw_and_reject.ts, 3, 61))
+>e : Symbol(e, Decl(await_catch_variable_includes_throw_and_reject.ts, 4, 39))
+>RejectTimeError : Symbol(RejectTimeError, Decl(await_catch_variable_includes_throw_and_reject.ts, 0, 70))
+
+function promiseFnBoth() {
+>promiseFnBoth : Symbol(promiseFnBoth, Decl(await_catch_variable_includes_throw_and_reject.ts, 4, 65))
+
+    if (Math.random() > 0.5) {
+>Math.random : Symbol(Math.random, Decl(lib.es5.d.ts, --, --))
+>Math : Symbol(Math, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2015.core.d.ts, --, --), Decl(lib.es2015.symbol.wellknown.d.ts, --, --), Decl(lib.es2025.float16.d.ts, --, --))
+>random : Symbol(Math.random, Decl(lib.es5.d.ts, --, --))
+
+        throw new CallTimeError("thrown before returning promise");
+>CallTimeError : Symbol(CallTimeError, Decl(await_catch_variable_includes_throw_and_reject.ts, 0, 0))
+    }
+    return Promise.reject(new RejectTimeError("rejected after returning promise"));
+>Promise.reject : Symbol(PromiseConstructor.reject, Decl(lib.es2015.promise.d.ts, --, --))
+>Promise : Symbol(Promise, Decl(lib.es5.d.ts, --, --), Decl(lib.es2015.iterable.d.ts, --, --), Decl(lib.es2015.promise.d.ts, --, --), Decl(lib.es2015.symbol.wellknown.d.ts, --, --), Decl(lib.es2018.promise.d.ts, --, --))
+>reject : Symbol(PromiseConstructor.reject, Decl(lib.es2015.promise.d.ts, --, --))
+>RejectTimeError : Symbol(RejectTimeError, Decl(await_catch_variable_includes_throw_and_reject.ts, 0, 70))
+}
+async function awaitHandlesBothChannels() {
+>awaitHandlesBothChannels : Symbol(awaitHandlesBothChannels, Decl(await_catch_variable_includes_throw_and_reject.ts, 11, 1))
+
+    try {
+        await promiseFnBoth();
+>promiseFnBoth : Symbol(promiseFnBoth, Decl(await_catch_variable_includes_throw_and_reject.ts, 4, 65))
+
+    } catch (e) {
+>e : Symbol(e, Decl(await_catch_variable_includes_throw_and_reject.ts, 15, 13))
+
+        acceptCallTimeError(e);
+>acceptCallTimeError : Symbol(acceptCallTimeError, Decl(await_catch_variable_includes_throw_and_reject.ts, 1, 74))
+>e : Symbol(e, Decl(await_catch_variable_includes_throw_and_reject.ts, 15, 13))
+
+        acceptRejectTimeError(e);
+>acceptRejectTimeError : Symbol(acceptRejectTimeError, Decl(await_catch_variable_includes_throw_and_reject.ts, 3, 61))
+>e : Symbol(e, Decl(await_catch_variable_includes_throw_and_reject.ts, 15, 13))
+    }
+}
+

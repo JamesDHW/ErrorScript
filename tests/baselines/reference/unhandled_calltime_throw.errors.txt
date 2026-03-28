@@ -1,0 +1,20 @@
+unhandled_calltime_throw.ts(10,1): error TS18063: Unhandled thrown type: CallTimeError.
+unhandled_calltime_throw.ts(10,1): error TS18064: Unhandled promise rejection type: RejectTimeError.
+
+
+==== unhandled_calltime_throw.ts (2 errors) ====
+    class CallTimeError extends Error { readonly kind = "CallTimeError"; }
+    class RejectTimeError extends Error { readonly kind = "RejectTimeError"; }
+    
+    function promiseFnBoth() {
+        if (Math.random() > 0.5) {
+            throw new CallTimeError("thrown before returning promise");
+        }
+        return Promise.reject(new RejectTimeError("rejected after returning promise"));
+    }
+    promiseFnBoth();
+    ~~~~~~~~~~~~~~~
+!!! error TS18063: Unhandled thrown type: CallTimeError.
+    ~~~~~~~~~~~~~~~
+!!! error TS18064: Unhandled promise rejection type: RejectTimeError.
+    

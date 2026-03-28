@@ -698,6 +698,8 @@ const visitEachChildTable: VisitEachChildTable = {
             nodesVisitor(node.typeParameters, visitor, isTypeParameterDeclaration),
             nodesVisitor(node.parameters, visitor, isParameter),
             nodeVisitor(node.type, visitor, isTypeNode),
+            nodeVisitor(node.throwsType, visitor, isTypeNode),
+            nodeVisitor(node.rejectsType, visitor, isTypeNode),
         );
     },
 
@@ -712,6 +714,8 @@ const visitEachChildTable: VisitEachChildTable = {
             visitParameterList(node.parameters, visitor, context, nodesVisitor),
             nodeVisitor(node.type, visitor, isTypeNode),
             visitFunctionBody(node.body!, visitor, context, nodeVisitor),
+            nodeVisitor(node.throwsType, visitor, isTypeNode),
+            nodeVisitor(node.rejectsType, visitor, isTypeNode),
         );
     },
 
@@ -732,6 +736,8 @@ const visitEachChildTable: VisitEachChildTable = {
             visitParameterList(node.parameters, visitor, context, nodesVisitor),
             nodeVisitor(node.type, visitor, isTypeNode),
             visitFunctionBody(node.body!, visitor, context, nodeVisitor),
+            nodeVisitor(node.throwsType, visitor, isTypeNode),
+            nodeVisitor(node.rejectsType, visitor, isTypeNode),
         );
     },
 
@@ -760,6 +766,8 @@ const visitEachChildTable: VisitEachChildTable = {
             nodesVisitor(node.typeParameters, visitor, isTypeParameterDeclaration),
             nodesVisitor(node.parameters, visitor, isParameter),
             nodeVisitor(node.type, visitor, isTypeNode),
+            nodeVisitor(node.throwsType, visitor, isTypeNode),
+            nodeVisitor(node.rejectsType, visitor, isTypeNode),
         );
     },
 
@@ -805,6 +813,8 @@ const visitEachChildTable: VisitEachChildTable = {
             nodesVisitor(node.typeParameters, visitor, isTypeParameterDeclaration),
             nodesVisitor(node.parameters, visitor, isParameter),
             Debug.checkDefined(nodeVisitor(node.type, visitor, isTypeNode)),
+            nodeVisitor(node.throwsType, visitor, isTypeNode),
+            nodeVisitor(node.rejectsType, visitor, isTypeNode),
         );
     },
 
@@ -1108,6 +1118,8 @@ const visitEachChildTable: VisitEachChildTable = {
             visitParameterList(node.parameters, visitor, context, nodesVisitor),
             nodeVisitor(node.type, visitor, isTypeNode),
             visitFunctionBody(node.body, visitor, context, nodeVisitor),
+            nodeVisitor(node.throwsType, visitor, isTypeNode),
+            nodeVisitor(node.rejectsType, visitor, isTypeNode),
         );
     },
 
@@ -1120,6 +1132,8 @@ const visitEachChildTable: VisitEachChildTable = {
             nodeVisitor(node.type, visitor, isTypeNode),
             tokenVisitor ? Debug.checkDefined(nodeVisitor(node.equalsGreaterThanToken, tokenVisitor, isEqualsGreaterThanToken)) : node.equalsGreaterThanToken,
             visitFunctionBody(node.body, visitor, context, nodeVisitor),
+            nodeVisitor(node.throwsType, visitor, isTypeNode),
+            nodeVisitor(node.rejectsType, visitor, isTypeNode),
         );
     },
 
@@ -1436,6 +1450,8 @@ const visitEachChildTable: VisitEachChildTable = {
             visitParameterList(node.parameters, visitor, context, nodesVisitor),
             nodeVisitor(node.type, visitor, isTypeNode),
             visitFunctionBody(node.body, visitor, context, nodeVisitor),
+            nodeVisitor(node.throwsType, visitor, isTypeNode),
+            nodeVisitor(node.rejectsType, visitor, isTypeNode),
         );
     },
 

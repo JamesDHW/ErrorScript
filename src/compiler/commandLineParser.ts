@@ -1054,6 +1054,15 @@ const commandOptionsWithoutBuild: CommandLineOption[] = [
         defaultValueDescription: false,
     },
     {
+        name: "checkedErrors",
+        type: "boolean",
+        affectsSemanticDiagnostics: true,
+        affectsBuildInfo: true,
+        category: Diagnostics.Type_Checking,
+        description: Diagnostics.Enforce_that_thrown_types_are_handled_at_call_sites_checked_throws,
+        defaultValueDescription: false,
+    },
+    {
         name: "noFallthroughCasesInSwitch",
         type: "boolean",
         affectsBindDiagnostics: true,

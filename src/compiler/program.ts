@@ -18,6 +18,7 @@ import {
     commandLineOptionOfCustomType,
     CommentDirective,
     CommentDirectivesMap,
+    CommentDirectiveType,
     compareDataObjects,
     comparePaths,
     compareValues,
@@ -1965,6 +1966,9 @@ export function createProgram(_rootNamesOrOptions: readonly string[] | CreatePro
     performance.measure("Program", "beforeProgram", "afterProgram");
     tracing?.pop();
 
+    /** Diagnostic codes that the @expectException comment directive can suppress (unhandled throw/reject). */
+    const unhandledExceptionErrorCodes = new Set([Diagnostics.Unhandled_thrown_type_Colon_0.code, Diagnostics.Unhandled_promise_rejection_type_Colon_0.code]);
+
     return program;
 
     function getResolvedModule(file: SourceFile, moduleName: string, mode: ResolutionMode) {
@@ -2937,6 +2941,9 @@ export function createProgram(_rootNamesOrOptions: readonly string[] | CreatePro
         return diagnostics;
     }
 
+    /** Diagnostic codes that the @expectException comment directive can suppress (unhandled throw/reject). */
+    const unhandledExceptionErrorCodes = new Set([Diagnostics.Unhandled_thrown_type_Colon_0.code, Diagnostics.Unhandled_promise_rejection_type_Colon_0.code]);
+
     /**
      * Creates a map of comment directives along with the diagnostics immediately preceded by one of them.
      * Comments that match to any of those diagnostics are marked as used.
@@ -2969,9 +2976,20 @@ export function createProgram(_rootNamesOrOptions: readonly string[] | CreatePro
         const lineStarts = getLineStarts(file);
         let line = computeLineAndCharacterOfPosition(lineStarts, start!).line - 1; // TODO: GH#18217
         while (line >= 0) {
-            // As soon as that line is known to have a comment directive, use that
-            if (directives.markUsed(line)) {
-                return line;
+            const directive = directives.getDirectiveForLine(line);
+            if (directive !== undefined) {
+                const isIgnoreThrowDirective = directive.type === CommentDirectiveType.ExpectException;
+                const isExceptionError = unhandledExceptionErrorCodes.has(diagnostic.code);
+
+                if (!isIgnoreThrowDirective) {
+                    directives.markUsed(line);
+                    return line;
+                }
+
+                if (isExceptionError) {
+                    directives.markUsed(line);
+                    return line;
+                }
             }
 
             // Stop searching if the line is not empty and not a comment

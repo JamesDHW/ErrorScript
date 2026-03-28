@@ -87,6 +87,8 @@ function getRefactorEditsToConvertOverloadsToOneSignature(context: RefactorConte
                 lastDeclaration.typeParameters,
                 getNewParametersForCombinedSignature(signatureDecls),
                 lastDeclaration.type,
+                lastDeclaration.throwsType,
+                lastDeclaration.rejectsType,
             );
             break;
         }
@@ -101,6 +103,8 @@ function getRefactorEditsToConvertOverloadsToOneSignature(context: RefactorConte
                 getNewParametersForCombinedSignature(signatureDecls),
                 lastDeclaration.type,
                 lastDeclaration.body,
+                lastDeclaration.throwsType,
+                lastDeclaration.rejectsType,
             );
             break;
         }
@@ -110,6 +114,8 @@ function getRefactorEditsToConvertOverloadsToOneSignature(context: RefactorConte
                 lastDeclaration.typeParameters,
                 getNewParametersForCombinedSignature(signatureDecls),
                 lastDeclaration.type,
+                lastDeclaration.throwsType,
+                lastDeclaration.rejectsType,
             );
             break;
         }
@@ -141,6 +147,8 @@ function getRefactorEditsToConvertOverloadsToOneSignature(context: RefactorConte
                 getNewParametersForCombinedSignature(signatureDecls),
                 lastDeclaration.type,
                 lastDeclaration.body,
+                lastDeclaration.throwsType,
+                lastDeclaration.rejectsType,
             );
             break;
         }

@@ -1418,7 +1418,7 @@ export function transformESDecorators(context: TransformationContext): (x: Sourc
             const parameters = visitNodes(node.parameters, visitor, isParameter);
             const body = visitNode(node.body, visitor, isBlock);
             exitClassElement();
-            return finishClassElement(factory.updateMethodDeclaration(node, modifiers, node.asteriskToken, name, /*questionToken*/ undefined, /*typeParameters*/ undefined, parameters, /*type*/ undefined, body), node);
+            return finishClassElement(factory.updateMethodDeclaration(node, modifiers, node.asteriskToken, name, /*questionToken*/ undefined, /*typeParameters*/ undefined, parameters, /*type*/ undefined, body, node.throwsType, node.rejectsType), node);
         }
     }
 
@@ -1433,7 +1433,7 @@ export function transformESDecorators(context: TransformationContext): (x: Sourc
             const parameters = visitNodes(node.parameters, visitor, isParameter);
             const body = visitNode(node.body, visitor, isBlock);
             exitClassElement();
-            return finishClassElement(factory.updateGetAccessorDeclaration(node, modifiers, name, parameters, /*type*/ undefined, body), node);
+            return finishClassElement(factory.updateGetAccessorDeclaration(node, modifiers, name, parameters, /*type*/ undefined, body, node.throwsType, node.rejectsType), node);
         }
     }
 
@@ -2282,6 +2282,8 @@ export function transformESDecorators(context: TransformationContext): (x: Sourc
             parameters,
             /*type*/ undefined,
             body ?? factory.createBlock([]),
+            /*throwsType*/ undefined,
+            /*rejectsType*/ undefined,
         );
         setOriginalNode(func, original);
         setSourceMapRange(func, moveRangePastDecorators(original));
@@ -2422,6 +2424,8 @@ export function transformESDecorators(context: TransformationContext): (x: Sourc
                     ),
                 ),
             ]),
+            /*throwsType*/ undefined,
+            /*rejectsType*/ undefined,
         );
     }
 
@@ -2451,6 +2455,8 @@ export function transformESDecorators(context: TransformationContext): (x: Sourc
                     ),
                 ),
             ]),
+            /*throwsType*/ undefined,
+            /*rejectsType*/ undefined,
         );
     }
 

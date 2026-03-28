@@ -387,6 +387,8 @@ export function createSyntacticTypeNodeBuilder(
                                 /*initializer*/ undefined,
                             )),
                         visitNode(node.type, visitExistingNodeTreeSymbols, isTypeNode) || factory.createKeywordTypeNode(SyntaxKind.AnyKeyword),
+                        /*throwsType*/ undefined,
+                        /*rejectsType*/ undefined,
                     );
                 }
             }
@@ -976,6 +978,8 @@ export function createSyntacticTypeNodeBuilder(
                 typeParameters,
                 parameters,
                 returnType,
+                /*throwsType*/ undefined,
+                /*rejectsType*/ undefined,
             ),
         );
     }
@@ -1147,6 +1151,8 @@ export function createSyntacticTypeNodeBuilder(
                     typeParameters,
                     parameters,
                     returnType,
+                    /*throwsType*/ undefined,
+                    /*rejectsType*/ undefined,
                 ),
             );
         }
@@ -1161,6 +1167,8 @@ export function createSyntacticTypeNodeBuilder(
                 typeParameters,
                 parameters,
                 returnType,
+                /*throwsType*/ undefined,
+                /*rejectsType*/ undefined,
             );
         }
     }
@@ -1181,6 +1189,8 @@ export function createSyntacticTypeNodeBuilder(
                         parameters,
                         serializeExistingTypeNodeWithFallback(getAccessorType, context),
                         /*body*/ undefined,
+                        /*throwsType*/ undefined,
+                        /*rejectsType*/ undefined,
                     );
                 }
                 else {

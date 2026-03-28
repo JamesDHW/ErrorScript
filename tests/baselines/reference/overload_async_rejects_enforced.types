@@ -1,0 +1,30 @@
+//// [tests/cases/compiler/checkedErrors/overloads/overload_async_rejects_enforced.ts] ////
+
+=== overload_async_rejects_enforced.ts ===
+declare function overload(x: string): number throws Error;
+>overload : { (x: string): number throws Error; (x: number): Promise<number> rejects TypeError; }
+>         : ^^^ ^^      ^^^      ^^^^^^^^^^^^^^^^ ^^      ^^^               ^^^^^^^^^^^^^^^^^^^^^
+>x : string
+>  : ^^^^^^
+
+declare function overload(x: number): Promise<number> rejects TypeError;
+>overload : { (x: string): number throws Error; (x: number): Promise<number> rejects TypeError; }
+>         : ^^^ ^^      ^^^      ^^^^^^^^^^^^^^^^ ^^      ^^^               ^^^^^^^^^^^^^^^^^^^^^
+>x : number
+>  : ^^^^^^
+
+async function unhandledOverload() {
+>unhandledOverload : () => Promise<void>
+>                  : ^^^^^^^^^^^^^^^^^^^
+
+    await overload(1);
+>await overload(1) : number
+>                  : ^^^^^^
+>overload(1) : Promise<number>
+>            : ^^^^^^^^^^^^^^^
+>overload : { (x: string): number throws Error; (x: number): Promise<number> rejects TypeError; }
+>         : ^^^ ^^      ^^^      ^^^^^^^^^^^^^^^^ ^^      ^^^               ^^^^^^^^^^^^^^^^^^^^^
+>1 : 1
+>  : ^
+}
+

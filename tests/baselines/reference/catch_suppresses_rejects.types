@@ -1,0 +1,29 @@
+//// [tests/cases/compiler/checkedErrors/rejects/catch_suppresses_rejects.ts] ////
+
+=== catch_suppresses_rejects.ts ===
+async function boom() {
+>boom : () => Promise<void>
+>     : ^^^^^^^^^^^^^^^^^^^
+
+    throw new Error("x");
+>new Error("x") : Error
+>               : ^^^^^
+>Error : ErrorConstructor
+>      : ^^^^^^^^^^^^^^^^
+>"x" : "x"
+>    : ^^^
+}
+boom().catch(() => {});
+>boom().catch(() => {}) : Promise<void>
+>                       : ^^^^^^^^^^^^^
+>boom().catch : <TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | null | undefined) => Promise<void | TResult>
+>             : ^       ^^^^^^^^^^          ^^^^^      ^^   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>boom() : Promise<void>
+>       : ^^^^^^^^^^^^^
+>boom : () => Promise<void>
+>     : ^^^^^^^^^^^^^^^^^^^
+>catch : <TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | null | undefined) => Promise<void | TResult>
+>      : ^       ^^^^^^^^^^          ^^^^^      ^^   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>() => {} : () => void
+>         : ^^^^^^^^^^
+

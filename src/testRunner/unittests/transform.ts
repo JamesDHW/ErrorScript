@@ -374,7 +374,7 @@ describe("unittests:: TransformAPI", () => {
             function visitNode(sf: ts.SourceFile) {
                 // produce `class Foo { @Bar baz() {} }`;
                 const classDecl = ts.factory.createClassDeclaration(/*modifiers*/ undefined, "Foo", /*typeParameters*/ undefined, /*heritageClauses*/ undefined, [
-                    ts.factory.createMethodDeclaration([ts.factory.createDecorator(ts.factory.createIdentifier("Bar"))], /*asteriskToken*/ undefined, "baz", /*questionToken*/ undefined, /*typeParameters*/ undefined, [], /*type*/ undefined, ts.factory.createBlock([])),
+                    ts.factory.createMethodDeclaration([ts.factory.createDecorator(ts.factory.createIdentifier("Bar"))], /*asteriskToken*/ undefined, "baz", /*questionToken*/ undefined, /*typeParameters*/ undefined, [], /*type*/ undefined, ts.factory.createBlock([]), /*throwsType*/ undefined, /*rejectsType*/ undefined),
                 ]);
                 return ts.factory.updateSourceFile(sf, [classDecl]);
             }
@@ -618,6 +618,8 @@ module MyModule {
                         node.parameters,
                         node.type,
                         node.body,
+                        node.throwsType,
+                        node.rejectsType,
                     );
                 }
                 return ts.visitEachChild(node, visitor, context);

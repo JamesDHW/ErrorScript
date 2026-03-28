@@ -856,6 +856,7 @@ export function emitFiles(
             inlineSourceMap: compilerOptions.inlineSourceMap,
             inlineSources: compilerOptions.inlineSources,
             extendedDiagnostics: compilerOptions.extendedDiagnostics,
+            omitEffectClauses: true,
         };
 
         // Create a printer to print the nodes
@@ -1270,6 +1271,7 @@ export function createPrinter(printerOptions: PrinterOptions = {}, handlers: Pri
     var detachedCommentsInfo: { nodePos: number; detachedCommentEndPos: number; }[] | undefined;
     var hasWrittenComment = false;
     var commentsDisabled = !!printerOptions.removeComments;
+    var omitEffectClauses = !!printerOptions.omitEffectClauses;
     var lastSubstitution: Node | undefined;
     var currentParenthesizerRule: ParenthesizerRule<any> | undefined;
     var { enter: enterComment, exit: exitComment } = performance.createTimerIf(extendedDiagnostics, "commentTime", "beforeComment", "afterComment");
@@ -2360,6 +2362,9 @@ export function createPrinter(printerOptions: PrinterOptions = {}, handlers: Pri
     function emitFunctionTypeBody(node: FunctionTypeNode | ConstructorTypeNode) {
         writeSpace();
         emit(node.type);
+        if (node.kind === SyntaxKind.FunctionType) {
+            emitEffectClause(node);
+        }
     }
 
     function emitJSDocFunctionType(node: JSDocFunctionType) {
@@ -3467,10 +3472,27 @@ export function createPrinter(printerOptions: PrinterOptions = {}, handlers: Pri
         writeTrailingSemicolon();
     }
 
+    function emitEffectClause(node: SignatureDeclaration) {
+        if (omitEffectClauses) return;
+        if (node.throwsType) {
+            writeSpace();
+            writeKeyword("throws");
+            writeSpace();
+            emit(node.throwsType);
+        }
+        if (node.rejectsType) {
+            writeSpace();
+            writeKeyword("rejects");
+            writeSpace();
+            emit(node.rejectsType);
+        }
+    }
+
     function emitSignatureHead(node: SignatureDeclaration) {
         emitTypeParameters(node, node.typeParameters);
         emitParameters(node, node.parameters);
         emitTypeAnnotation(node.type);
+        emitEffectClause(node);
     }
 
     function shouldEmitBlockFunctionBodyOnSingleLine(body: Block) {

@@ -1016,6 +1016,7 @@ import {
     shouldRewriteModuleSpecifier,
     Signature,
     SignatureDeclaration,
+    SignatureDeclarationBase,
     SignatureFlags,
     SignatureKind,
     singleElementArray,
@@ -1540,6 +1541,18 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
     var noImplicitAny = getStrictOptionValue(compilerOptions, "noImplicitAny");
     var noImplicitThis = getStrictOptionValue(compilerOptions, "noImplicitThis");
     var useUnknownInCatchVariables = getStrictOptionValue(compilerOptions, "useUnknownInCatchVariables");
+    var checkedErrors = !!compilerOptions.checkedErrors;
+    type ThrownTypeCacheEntry = { kind: "computing"; } | { kind: "done"; type: Type; };
+    var thrownTypeCache = checkedErrors ? new Map<FunctionLikeDeclaration, ThrownTypeCacheEntry>() : undefined;
+    var catchVariableThrownTypeMap = checkedErrors ? new Map<string, Type>() : undefined;
+    function getCatchVariableMapKey(decl: VariableDeclaration): string {
+        const file = getSourceFileOfNode(decl);
+        return `${file.fileName}:${decl.pos}`;
+    }
+    var rejectEffectCache = checkedErrors ? new Map<Node, Type>() : undefined;
+    type RejectEffectAsyncCacheEntry = { kind: "computing"; } | { kind: "done"; type: Type; };
+    var rejectEffectAsyncCache = checkedErrors ? new Map<FunctionLikeDeclaration, RejectEffectAsyncCacheEntry>() : undefined;
+
     var exactOptionalPropertyTypes = compilerOptions.exactOptionalPropertyTypes;
     var noUncheckedSideEffectImports = compilerOptions.noUncheckedSideEffectImports !== false;
     var stableTypeOrdering = !!compilerOptions.stableTypeOrdering;
@@ -1672,6 +1685,8 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         getPromisedTypeOfPromise,
         getAwaitedType: type => getAwaitedType(type),
         getReturnTypeOfSignature,
+        getInferredThrowsType,
+        getInferredRejectsType,
         isNullableType,
         getNullableType,
         getNonNullableType,
@@ -3455,7 +3470,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 if (isEntityNameExpression((node as ExpressionWithTypeArguments).expression)) {
                     return (node as ExpressionWithTypeArguments).expression as EntityNameExpression;
                 }
-                // falls through
+            // falls through
             default:
                 return undefined;
         }
@@ -5692,7 +5707,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                     if (!isExternalOrCommonJsModule(location as SourceFile)) {
                         break;
                     }
-                    // falls through
+                // falls through
                 case SyntaxKind.ModuleDeclaration:
                     const sym = getSymbolOfDeclaration(location as ModuleDeclaration);
                     // `sym` may not have exports if this module declaration is backed by the symbol for a `const` that's being rewritten
@@ -8033,26 +8048,31 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
 
             const returnTypeNode = serializeReturnTypeForSignature(context, signature);
 
+            const declaredThrowsType = getDeclaredThrowsType(signature);
+            const declaredRejectsType = getDeclaredRejectsType(signature);
+            const throwsTypeNode = declaredThrowsType ? typeToTypeNodeHelper(declaredThrowsType, context) : undefined;
+            const rejectsTypeNode = declaredRejectsType ? typeToTypeNodeHelper(declaredRejectsType, context) : undefined;
+
             let modifiers = options?.modifiers;
             if ((kind === SyntaxKind.ConstructorType) && signature.flags & SignatureFlags.Abstract) {
                 const flags = modifiersToFlags(modifiers);
                 modifiers = factory.createModifiersFromModifierFlags(flags | ModifierFlags.Abstract);
             }
 
-            const node = kind === SyntaxKind.CallSignature ? factory.createCallSignature(typeParameters, parameters, returnTypeNode) :
+            const node = kind === SyntaxKind.CallSignature ? factory.createCallSignature(typeParameters, parameters, returnTypeNode, throwsTypeNode, rejectsTypeNode) :
                 kind === SyntaxKind.ConstructSignature ? factory.createConstructSignature(typeParameters, parameters, returnTypeNode) :
-                kind === SyntaxKind.MethodSignature ? factory.createMethodSignature(modifiers, options?.name ?? factory.createIdentifier(""), options?.questionToken, typeParameters, parameters, returnTypeNode) :
-                kind === SyntaxKind.MethodDeclaration ? factory.createMethodDeclaration(modifiers, /*asteriskToken*/ undefined, options?.name ?? factory.createIdentifier(""), /*questionToken*/ undefined, typeParameters, parameters, returnTypeNode, /*body*/ undefined) :
+                kind === SyntaxKind.MethodSignature ? factory.createMethodSignature(modifiers, options?.name ?? factory.createIdentifier(""), options?.questionToken, typeParameters, parameters, returnTypeNode, throwsTypeNode, rejectsTypeNode) :
+                kind === SyntaxKind.MethodDeclaration ? factory.createMethodDeclaration(modifiers, /*asteriskToken*/ undefined, options?.name ?? factory.createIdentifier(""), /*questionToken*/ undefined, typeParameters, parameters, returnTypeNode, /*body*/ undefined, throwsTypeNode, rejectsTypeNode) :
                 kind === SyntaxKind.Constructor ? factory.createConstructorDeclaration(modifiers, parameters, /*body*/ undefined) :
-                kind === SyntaxKind.GetAccessor ? factory.createGetAccessorDeclaration(modifiers, options?.name ?? factory.createIdentifier(""), parameters, returnTypeNode, /*body*/ undefined) :
+                kind === SyntaxKind.GetAccessor ? factory.createGetAccessorDeclaration(modifiers, options?.name ?? factory.createIdentifier(""), parameters, returnTypeNode, /*body*/ undefined, throwsTypeNode, rejectsTypeNode) :
                 kind === SyntaxKind.SetAccessor ? factory.createSetAccessorDeclaration(modifiers, options?.name ?? factory.createIdentifier(""), parameters, /*body*/ undefined) :
                 kind === SyntaxKind.IndexSignature ? factory.createIndexSignature(modifiers, parameters, returnTypeNode) :
                 kind === SyntaxKind.JSDocFunctionType ? factory.createJSDocFunctionType(parameters, returnTypeNode) :
-                kind === SyntaxKind.FunctionType ? factory.createFunctionTypeNode(typeParameters, parameters, returnTypeNode ?? factory.createTypeReferenceNode(factory.createIdentifier(""))) :
+                kind === SyntaxKind.FunctionType ? factory.createFunctionTypeNode(typeParameters, parameters, returnTypeNode ?? factory.createTypeReferenceNode(factory.createIdentifier("")), throwsTypeNode, rejectsTypeNode) :
                 kind === SyntaxKind.ConstructorType ? factory.createConstructorTypeNode(modifiers, typeParameters, parameters, returnTypeNode ?? factory.createTypeReferenceNode(factory.createIdentifier(""))) :
-                kind === SyntaxKind.FunctionDeclaration ? factory.createFunctionDeclaration(modifiers, /*asteriskToken*/ undefined, options?.name ? cast(options.name, isIdentifier) : factory.createIdentifier(""), typeParameters, parameters, returnTypeNode, /*body*/ undefined) :
-                kind === SyntaxKind.FunctionExpression ? factory.createFunctionExpression(modifiers, /*asteriskToken*/ undefined, options?.name ? cast(options.name, isIdentifier) : factory.createIdentifier(""), typeParameters, parameters, returnTypeNode, factory.createBlock([])) :
-                kind === SyntaxKind.ArrowFunction ? factory.createArrowFunction(modifiers, typeParameters, parameters, returnTypeNode, /*equalsGreaterThanToken*/ undefined, factory.createBlock([])) :
+                kind === SyntaxKind.FunctionDeclaration ? factory.createFunctionDeclaration(modifiers, /*asteriskToken*/ undefined, options?.name ? cast(options.name, isIdentifier) : factory.createIdentifier(""), typeParameters, parameters, returnTypeNode, /*body*/ undefined, throwsTypeNode, rejectsTypeNode) :
+                kind === SyntaxKind.FunctionExpression ? factory.createFunctionExpression(modifiers, /*asteriskToken*/ undefined, options?.name ? cast(options.name, isIdentifier) : factory.createIdentifier(""), typeParameters, parameters, returnTypeNode, factory.createBlock([]), throwsTypeNode, rejectsTypeNode) :
+                kind === SyntaxKind.ArrowFunction ? factory.createArrowFunction(modifiers, typeParameters, parameters, returnTypeNode, /*equalsGreaterThanToken*/ undefined, factory.createBlock([]), throwsTypeNode, rejectsTypeNode) :
                 Debug.assertNever(kind);
 
             if (typeArguments) {
@@ -10481,7 +10501,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                             );
                             break;
                         }
-                        // else fall through and treat commonjs require just like import=
+                    // else fall through and treat commonjs require just like import=
                     case SyntaxKind.ImportEqualsDeclaration:
                         // This _specifically_ only exists to handle json declarations - where we make aliases, but since
                         // we emit no declarations for the json document, must not refer to it in the declarations
@@ -10886,6 +10906,8 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                                     [],
                                     omitType ? undefined : serializeTypeForDeclaration(context, getterDeclaration, getTypeOfSymbol(p), p),
                                     /*body*/ undefined,
+                                    /*throwsType*/ undefined,
+                                    /*rejectsType*/ undefined,
                                 ),
                                 getterDeclaration ?? firstPropertyLikeDecl,
                             ));
@@ -11350,7 +11372,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                         // If the binding pattern is empty, this variable declaration is not visible
                         return false;
                     }
-                    // falls through
+                // falls through
                 case SyntaxKind.ModuleDeclaration:
                 case SyntaxKind.ClassDeclaration:
                 case SyntaxKind.InterfaceDeclaration:
@@ -11383,8 +11405,8 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                         // Private/protected properties/methods are not visible
                         return false;
                     }
-                    // Public properties/methods are visible if its parents are visible, so:
-                    // falls through
+                // Public properties/methods are visible if its parents are visible, so:
+                // falls through
 
                 case SyntaxKind.Constructor:
                 case SyntaxKind.ConstructSignature:
@@ -11876,6 +11898,24 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 // If the catch clause is explicitly annotated with any or unknown, accept it, otherwise error.
                 return isTypeAny(declaredType) || declaredType === unknownType ? declaredType : errorType;
             }
+            if (checkedErrors && catchVariableThrownTypeMap) {
+                const rootDecl = declaration.kind === SyntaxKind.VariableDeclaration
+                    ? declaration as VariableDeclaration
+                    : findAncestor(declaration, (n): n is VariableDeclaration => n.kind === SyntaxKind.VariableDeclaration);
+                if (rootDecl) {
+                    let tTry = catchVariableThrownTypeMap.get(getCatchVariableMapKey(rootDecl));
+                    if (tTry === undefined) {
+                        const catchClause = rootDecl.parent && isCatchClause(rootDecl.parent) ? rootDecl.parent : findAncestor(rootDecl, isCatchClause);
+                        const parent = catchClause?.parent;
+                        const tryStmt = parent?.kind === SyntaxKind.TryStatement ? parent : undefined;
+                        if (tryStmt?.tryBlock) {
+                            tTry = thrownTypeOfStatement(tryStmt.tryBlock);
+                            catchVariableThrownTypeMap.set(getCatchVariableMapKey(rootDecl), tTry);
+                        }
+                    }
+                    if (tTry !== undefined) return tTry;
+                }
+            }
             // If the catch clause is not explicitly annotated, treat it as though it were explicitly
             // annotated with unknown or any, depending on useUnknownInCatchVariables.
             return useUnknownInCatchVariables ? unknownType : anyType;
@@ -11924,7 +11964,16 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
             }
             const parameterTypeOfTypeTag = getParameterTypeOfTypeTag(func, declaration);
             if (parameterTypeOfTypeTag) return parameterTypeOfTypeTag;
-            // Use contextual parameter type if one is available
+            if (declaration.symbol.escapedName !== InternalSymbolName.This && checkedErrors && rejectEffectCache) {
+                const receiver = getPromiseRejectionReceiverForParameter(declaration);
+                if (receiver) {
+                    checkExpression(receiver, CheckMode.TypeOnly);
+                    const rejectType = getRejectEffectOfExpression(receiver);
+                    if (rejectType !== neverType) {
+                        return addOptionality(rejectType, /*isProperty*/ false, isOptional);
+                    }
+                }
+            }
             const type = declaration.symbol.escapedName === InternalSymbolName.This ? getContextualThisParameterType(func) : getContextuallyTypedParameterType(declaration);
             if (type) {
                 return addOptionality(type, /*isProperty*/ false, isOptional);
@@ -12536,6 +12585,18 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
 
     function getTypeOfVariableOrParameterOrProperty(symbol: Symbol): Type {
         const links = getSymbolLinks(symbol);
+        const declaration = symbol.valueDeclaration;
+        if (declaration && checkedErrors && catchVariableThrownTypeMap && isCatchClauseVariableDeclarationOrBindingElement(declaration)) {
+            const rootDecl = declaration.kind === SyntaxKind.VariableDeclaration
+                ? declaration as VariableDeclaration
+                : findAncestor(declaration, (n): n is VariableDeclaration => n.kind === SyntaxKind.VariableDeclaration);
+            const mapKey = rootDecl ? getCatchVariableMapKey(rootDecl) : undefined;
+            if (mapKey && catchVariableThrownTypeMap.has(mapKey)) {
+                const type = getTypeOfVariableOrParameterOrPropertyWorker(symbol);
+                if (!checkedErrors) links.type = type;
+                return type;
+            }
+        }
         if (!links.type) {
             const type = getTypeOfVariableOrParameterOrPropertyWorker(symbol);
             // For a contextually typed parameter it is possible that a type has already
@@ -12543,10 +12604,14 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
             // to preserve this type. In fact, we need to _prefer_ that type, but it won't
             // be assigned until contextual typing is complete, so we need to defer in
             // cases where contextual typing may take place.
-            if (!links.type && !isParameterOfContextSensitiveSignature(symbol)) {
+            const isCatchVarWithcheckedErrors = declaration && isCatchClauseVariableDeclarationOrBindingElement(declaration) && checkedErrors;
+            if (!links.type && !isParameterOfContextSensitiveSignature(symbol) && !isCatchVarWithcheckedErrors) {
                 links.type = type;
             }
             return type;
+        }
+        if (declaration && isCatchClauseVariableDeclarationOrBindingElement(declaration) && checkedErrors && catchVariableThrownTypeMap) {
+            return getTypeOfVariableOrParameterOrPropertyWorker(symbol);
         }
         return links.type;
     }
@@ -21389,7 +21454,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 if (!isConstAssertion(node)) {
                     break;
                 }
-                // fallthrough
+            // fallthrough
             case SyntaxKind.JsxExpression:
             case SyntaxKind.ParenthesizedExpression:
                 return elaborateError((node as AsExpression | ParenthesizedExpression | JsxExpression).expression, source, target, relation, headMessage, containingMessageChain, errorOutputContainer);
@@ -27739,7 +27804,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 if (isCallExpression(node.parent)) {
                     return Diagnostics.Cannot_find_name_0_Did_you_mean_to_write_this_in_an_async_function;
                 }
-                // falls through
+            // falls through
             default:
                 if (node.parent.kind === SyntaxKind.ShorthandPropertyAssignment) {
                     return Diagnostics.No_value_exists_in_scope_for_the_shorthand_property_0_Either_declare_one_or_provide_an_initializer;
@@ -27795,7 +27860,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                     const symbol = getResolvedSymbol(node as Identifier);
                     return symbol !== unknownSymbol ? `${flowContainer ? getNodeId(flowContainer) : "-1"}|${getTypeId(declaredType)}|${getTypeId(initialType)}|${getSymbolId(symbol)}` : undefined;
                 }
-                // falls through
+            // falls through
             case SyntaxKind.ThisKeyword:
                 return `0|${flowContainer ? getNodeId(flowContainer) : "-1"}|${getTypeId(declaredType)}|${getTypeId(initialType)}`;
             case SyntaxKind.NonNullExpression:
@@ -30181,7 +30246,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                             }
                         }
                     }
-                    // falls through
+                // falls through
                 case SyntaxKind.ThisKeyword:
                 case SyntaxKind.SuperKeyword:
                 case SyntaxKind.PropertyAccessExpression:
@@ -31197,7 +31262,8 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                     isInTypeQuery(node) || isInAmbientOrTypeNode(node) || node.parent.kind === SyntaxKind.ExportSpecifier) ||
             node.parent.kind === SyntaxKind.NonNullExpression ||
             declaration.kind === SyntaxKind.VariableDeclaration && (declaration as VariableDeclaration).exclamationToken ||
-            declaration.flags & NodeFlags.Ambient;
+            declaration.flags & NodeFlags.Ambient ||
+            isCatchClauseVariableDeclarationOrBindingElement(declaration);
         const initialType = isAutomaticTypeInNonNull ? undefinedType :
             assumeInitialized ? (isParameter ? removeOptionalityFromDeclaredType(type, declaration as VariableLikeDeclaration) : type) :
             typeIsAutomatic ? undefinedType : getOptionalType(type);
@@ -31929,11 +31995,43 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         return undefined;
     }
 
+    function getPromiseRejectionReceiverForParameter(parameter: ParameterDeclaration): Expression | undefined {
+        const func = parameter.parent;
+        if (!isFunctionLike(func) || func.parameters.indexOf(parameter) !== 0) return undefined;
+
+        let callNode: Node | undefined = func.parent;
+        if (callNode?.kind === SyntaxKind.ParenthesizedExpression) callNode = callNode.parent;
+        if (!callNode || callNode.kind !== SyntaxKind.CallExpression) return undefined;
+
+        const call = callNode as CallExpression;
+        const invoked = call.expression;
+        if (invoked.kind !== SyntaxKind.PropertyAccessExpression) return undefined;
+
+        const pa = invoked as PropertyAccessExpression;
+        const methodName = idText(pa.name);
+        const arg0 = call.arguments?.[0];
+        const arg1 = call.arguments?.[1];
+        
+        if (methodName === "catch" && arg0 && skipParentheses(arg0) === func) return pa.expression;
+        if (methodName === "then" && arg1 && skipParentheses(arg1) === func) return pa.expression;
+        return undefined;
+    }
+
     // Return contextual type of parameter or undefined if no contextual type is available
     function getContextuallyTypedParameterType(parameter: ParameterDeclaration): Type | undefined {
         const func = parameter.parent;
         if (!isContextSensitiveFunctionOrObjectLiteralMethod(func)) {
             return undefined;
+        }
+        if (checkedErrors && rejectEffectCache) {
+            const receiver = getPromiseRejectionReceiverForParameter(parameter);
+            if (receiver) {
+                checkExpression(receiver, CheckMode.TypeOnly);
+                const rejectType = getRejectEffectOfExpression(receiver);
+                if (rejectType !== neverType) {
+                    return addOptionality(rejectType, /*isProperty*/ false, !!parameter.questionToken);
+                }
+            }
         }
         const iife = getImmediatelyInvokedFunctionExpression(func);
         if (iife && iife.arguments) {
@@ -37490,7 +37588,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         // file would probably be preferable.
         const typeSymbol = exports && getSymbol(exports, JsxNames.Element, SymbolFlags.Type);
         const returnNode = typeSymbol && nodeBuilder.symbolToEntityName(typeSymbol, SymbolFlags.Type, node);
-        const declaration = factory.createFunctionTypeNode(/*typeParameters*/ undefined, [factory.createParameterDeclaration(/*modifiers*/ undefined, /*dotDotDotToken*/ undefined, "props", /*questionToken*/ undefined, nodeBuilder.typeToTypeNode(result, node))], returnNode ? factory.createTypeReferenceNode(returnNode, /*typeArguments*/ undefined) : factory.createKeywordTypeNode(SyntaxKind.AnyKeyword));
+        const declaration = factory.createFunctionTypeNode(/*typeParameters*/ undefined, [factory.createParameterDeclaration(/*modifiers*/ undefined, /*dotDotDotToken*/ undefined, "props", /*questionToken*/ undefined, nodeBuilder.typeToTypeNode(result, node))], returnNode ? factory.createTypeReferenceNode(returnNode, /*typeArguments*/ undefined) : factory.createKeywordTypeNode(SyntaxKind.AnyKeyword), /*throwsType*/ undefined, /*rejectsType*/ undefined);
         const parameterSymbol = createSymbol(SymbolFlags.FunctionScopedVariable, "props" as __String);
         parameterSymbol.links.type = result;
         return createSignature(
@@ -37869,6 +37967,21 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 const jsAssignmentType = createAnonymousType(jsSymbol, jsSymbol.exports, emptyArray, emptyArray, emptyArray);
                 jsAssignmentType.objectFlags |= ObjectFlags.JSLiteral;
                 return getIntersectionType([returnType, jsAssignmentType]);
+            }
+        }
+
+        if (checkedErrors) {
+            const effectiveThrows = getEffectiveThrows(signature);
+            const returnType = getReturnTypeOfSignature(signature);
+            const isAssertNeverLike = returnType === neverType
+                && node.arguments?.length
+                && getTypeOfNode(node.arguments[0]) === neverType;
+            if (effectiveThrows !== neverType && !isHandledByTry(node) && !isHandledByPropagation(node) && !isAssertNeverLike) {
+                error(node, Diagnostics.Unhandled_thrown_type_Colon_0, typeToString(effectiveThrows));
+            }
+            const rejectEffect = getRejectEffectOfExpression(node);
+            if (rejectEffect !== neverType && node.parent?.kind === SyntaxKind.ExpressionStatement) {
+                error(node, Diagnostics.Unhandled_promise_rejection_type_Colon_0, typeToString(rejectEffect));
             }
         }
 
@@ -38667,7 +38780,18 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
             const parameter = signature.parameters[i];
             const declaration = parameter.valueDeclaration as ParameterDeclaration;
             if (!getEffectiveTypeAnnotationNode(declaration)) {
-                let type = tryGetTypeAtPosition(context, i);
+                let type: Type | undefined;
+                if (i === 0 && checkedErrors && rejectEffectCache) {
+                    const receiver = getPromiseRejectionReceiverForParameter(declaration);
+                    if (receiver) {
+                        checkExpression(receiver, CheckMode.TypeOnly);
+                        const rejectType = getRejectEffectOfExpression(receiver);
+                        if (rejectType !== neverType) {
+                            type = addOptionality(rejectType, /*isProperty*/ false, !!declaration.questionToken);
+                        }
+                    }
+                }
+                if (type === undefined) type = tryGetTypeAtPosition(context, i);
                 if (type && declaration.initializer) {
                     let initializerType = checkDeclarationInitializer(declaration, CheckMode.Normal);
                     if (!isTypeAssignableTo(initializerType, type) && isTypeAssignableTo(type, initializerType = widenTypeInferredFromInitializer(declaration, initializerType))) {
@@ -39913,7 +40037,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                                 hasError = true;
                                 break;
                             }
-                            // fallthrough
+                        // fallthrough
                         case ModuleKind.ES2022:
                         case ModuleKind.ESNext:
                         case ModuleKind.Preserve:
@@ -39921,7 +40045,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                             if (languageVersion >= ScriptTarget.ES2017) {
                                 break;
                             }
-                            // fallthrough
+                        // fallthrough
                         default:
                             span ??= getSpanOfTokenAtPosition(sourceFile, node.pos);
                             const message = isAwaitExpression(node) ? Diagnostics.Top_level_await_expressions_are_only_allowed_when_the_module_option_is_set_to_es2022_esnext_system_node16_node18_node20_nodenext_or_preserve_and_the_target_option_is_set_to_es2017_or_higher :
@@ -39966,6 +40090,16 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         const awaitedType = checkAwaitedType(operandType, /*withAlias*/ true, node, Diagnostics.Type_of_await_operand_must_either_be_a_valid_promise_or_must_not_contain_a_callable_then_member);
         if (awaitedType === operandType && !isErrorType(awaitedType) && !(operandType.flags & TypeFlags.AnyOrUnknown)) {
             addErrorOrSuggestion(/*isError*/ false, createDiagnosticForNode(node, Diagnostics.await_has_no_effect_on_the_type_of_this_expression));
+        }
+        if (checkedErrors) {
+            const throwsFromOperand = thrownTypeOfExpression(node.expression);
+            if (throwsFromOperand !== neverType && !isHandledByTry(node)) {
+                error(node, Diagnostics.Unhandled_thrown_type_Colon_0, typeToString(throwsFromOperand));
+            }
+            const rejectEffect = getRejectEffectOfExpression(node.expression);
+            if (rejectEffect !== neverType && !isHandledByTry(node)) {
+                error(node, Diagnostics.Unhandled_promise_rejection_type_Colon_0, typeToString(rejectEffect));
+            }
         }
         return awaitedType;
     }
@@ -41864,7 +41998,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 if (isImportCall(node)) {
                     return checkImportCallExpression(node);
                 }
-                // falls through
+            // falls through
             case SyntaxKind.NewExpression:
                 return checkCallExpression(node as CallExpression, checkMode);
             case SyntaxKind.TaggedTemplateExpression:
@@ -42201,6 +42335,25 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                     checkAsyncFunctionReturnType(node as FunctionLikeDeclaration, returnTypeNode, returnTypeErrorLocation);
                 }
             }
+            if (checkedErrors && node.kind !== SyntaxKind.Constructor && node.kind !== SyntaxKind.ConstructSignature && node.kind !== SyntaxKind.IndexSignature && node.kind !== SyntaxKind.JSDocFunctionType) {
+                const declWithEffects = node as SignatureDeclarationBase;
+                if (declWithEffects.throwsType || declWithEffects.rejectsType) {
+                    const signature = getSignatureFromDeclaration(node);
+                    if (signature) {
+                        const returnType = getReturnTypeOfSignature(signature);
+                        if (declWithEffects.rejectsType) {
+                            if (!isThenableType(returnType)) {
+                                error(declWithEffects.rejectsType, Diagnostics.Rejects_clause_requires_a_Promise_like_return_type);
+                            }
+                        }
+                        if (declWithEffects.throwsType) {
+                            if ((getFunctionFlags(node) & FunctionFlags.Async) !== 0) {
+                                error(declWithEffects.throwsType, Diagnostics.Throws_clause_is_not_allowed_on_async_functions);
+                            }
+                        }
+                    }
+                }
+            }
             if (node.kind !== SyntaxKind.IndexSignature && node.kind !== SyntaxKind.JSDocFunctionType) {
                 registerForUnusedIdentifiersCheck(node);
             }
@@ -42325,7 +42478,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                         if (useDefineForClassFields) {
                             break;
                         }
-                        // fall through
+                    // fall through
                     case "prototype":
                         const message = Diagnostics.Static_property_0_conflicts_with_built_in_property_Function_0_of_constructor_function_1;
                         const className = getNameOfSymbolAsWritten(getSymbolOfDeclaration(node));
@@ -44019,7 +44172,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                     headMessage = Diagnostics.Decorator_function_return_type_0_is_not_assignable_to_type_1;
                     break;
                 }
-                // falls through
+            // falls through
 
             case SyntaxKind.Parameter:
                 headMessage = Diagnostics.Decorator_function_return_type_is_0_but_is_expected_to_be_void_or_any;
@@ -44050,7 +44203,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         minArgumentCount: number = parameters.length,
         flags: SignatureFlags = SignatureFlags.None,
     ) {
-        const decl = factory.createFunctionTypeNode(/*typeParameters*/ undefined, emptyArray, factory.createKeywordTypeNode(SyntaxKind.AnyKeyword));
+        const decl = factory.createFunctionTypeNode(/*typeParameters*/ undefined, emptyArray, factory.createKeywordTypeNode(SyntaxKind.AnyKeyword), /*throwsType*/ undefined, /*rejectsType*/ undefined);
         return createSignature(decl, typeParameters, thisParameter, parameters, returnType, typePredicate, minArgumentCount, flags);
     }
 
@@ -44372,6 +44525,47 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         const body = node.kind === SyntaxKind.MethodSignature ? undefined : node.body;
         checkSourceElement(body);
         checkAllCodePathsInNonVoidFunctionReturnOrThrow(node, getReturnTypeFromAnnotation(node));
+
+        // Effect validation: error only if inferred T is not assignable to declared E (soundness-only; E may be wider than T).
+        if (checkedErrors && nodeIsPresent(body) && node.kind !== SyntaxKind.MethodSignature) {
+            const declWithEffects = node as SignatureDeclarationBase;
+            if (declWithEffects.throwsType || declWithEffects.rejectsType) {
+                const signature = getSignatureFromDeclaration(node);
+                if (signature) {
+                    if (declWithEffects.throwsType) {
+                        const declared = getDeclaredThrowsType(signature);
+                        if (declared !== undefined) {
+                            const inferred = thrownTypeOfFunctionLike(node as FunctionLikeDeclaration);
+                            if (!isTypeAssignableTo(inferred, declared)) {
+                                if (inferred === unknownType) {
+                                    error(declWithEffects.throwsType, Diagnostics.Inferred_thrown_type_is_unknown_possible_recursion_or_analysis_limit_declared_type_cannot_be_verified);
+                                }
+                                else {
+                                    error(declWithEffects.throwsType, Diagnostics.Declared_throws_type_0_does_not_include_inferred_thrown_type_1, typeToString(declared), typeToString(inferred));
+                                }
+                            }
+                        }
+                    }
+                    if (declWithEffects.rejectsType) {
+                        const declared = getDeclaredRejectsType(signature);
+                        if (declared !== undefined) {
+                            const funcDecl = node as FunctionLikeDeclaration;
+                            const inferred = (getFunctionFlags(funcDecl) & FunctionFlags.Async) !== 0
+                                ? getRejectEffectOfAsyncFunction(funcDecl)
+                                : getRejectEffectOfNonAsyncReturningPromise(funcDecl);
+                            if (!isTypeAssignableTo(inferred, declared)) {
+                                if (inferred === unknownType) {
+                                    error(declWithEffects.rejectsType, Diagnostics.Inferred_rejection_type_is_unknown_possible_recursion_or_analysis_limit_declared_type_cannot_be_verified);
+                                }
+                                else {
+                                    error(declWithEffects.rejectsType, Diagnostics.Declared_rejects_type_0_does_not_include_inferred_rejection_type_1, typeToString(declared), typeToString(inferred));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         addLazyDiagnostic(checkFunctionOrMethodDeclarationDiagnostics);
 
@@ -46678,6 +46872,474 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         checkSourceElement(node.statement);
     }
 
+    function getFunctionBodyForThrownType(node: FunctionLikeDeclaration): Block | undefined {
+        const body = node.body;
+        return body && body.kind === SyntaxKind.Block ? body as Block : undefined;
+    }
+
+    function getDirectThrownTypeOfInvocation(signature: Signature | undefined, node: CallExpression | NewExpression): Type {
+        if (!signature || signature === resolvingSignature) return neverType;
+        const returnType = getReturnTypeOfSignature(signature);
+        const args = node.arguments;
+        const isAssertNeverLike = returnType === neverType && args?.length && getTypeOfNode(args[0]) === neverType;
+        if (isAssertNeverLike) return neverType;
+        return getEffectiveThrows(signature);
+    }
+
+    function collectThrownTypesFromInvocation(
+        node: CallExpression | NewExpression,
+        direct: Type,
+        thrownTypeOfExpression: (expr: Expression) => Type,
+    ): Type {
+        const fromCallee = thrownTypeOfExpression(node.expression);
+        const args = node.arguments;
+        const types: Type[] = [];
+        if (direct !== neverType) types.push(direct);
+        if (fromCallee !== neverType) types.push(fromCallee);
+        if (args) {
+            for (const arg of args) {
+                const t = arg.kind === SyntaxKind.SpreadElement
+                    ? thrownTypeOfExpression((arg as SpreadElement).expression)
+                    : thrownTypeOfExpression(arg);
+                if (t !== neverType) types.push(t);
+            }
+        }
+        if (types.length === 0) return neverType;
+        if (types.length === 1) return types[0];
+        return getUnionType(types);
+    }
+
+    function thrownTypeOfExpression(expr: Expression): Type {
+        expr = skipParentheses(expr);
+        switch (expr.kind) {
+            case SyntaxKind.CallExpression: {
+                const call = expr as CallExpression;
+                const signature = getResolvedSignature(call, /*candidatesOutArray*/ undefined);
+                const direct = getDirectThrownTypeOfInvocation(signature, call);
+                return collectThrownTypesFromInvocation(call, direct, thrownTypeOfExpression);
+            }
+            case SyntaxKind.NewExpression: {
+                const newExpr = expr as NewExpression;
+                const signature = getResolvedSignature(newExpr, /*candidatesOutArray*/ undefined);
+                const direct = getDirectThrownTypeOfInvocation(signature, newExpr);
+                return collectThrownTypesFromInvocation(newExpr, direct, thrownTypeOfExpression);
+            }
+            case SyntaxKind.PropertyAccessExpression:
+                return thrownTypeOfExpression((expr as PropertyAccessExpression).expression);
+            case SyntaxKind.ElementAccessExpression: {
+                const ea = expr as ElementAccessExpression;
+                const fromObj = thrownTypeOfExpression(ea.expression);
+                const fromArg = ea.argumentExpression ? thrownTypeOfExpression(ea.argumentExpression) : neverType;
+                if (fromObj === neverType && fromArg === neverType) return neverType;
+                if (fromObj !== neverType && fromArg !== neverType) return getUnionType([fromObj, fromArg]);
+                return fromObj !== neverType ? fromObj : fromArg;
+            }
+            case SyntaxKind.ParenthesizedExpression:
+                return thrownTypeOfExpression((expr as ParenthesizedExpression).expression);
+            case SyntaxKind.VoidExpression:
+                return thrownTypeOfExpression((expr as VoidExpression).expression);
+            case SyntaxKind.ArrayLiteralExpression: {
+                const arr = expr as ArrayLiteralExpression;
+                const arrTypes: Type[] = [];
+                for (const el of arr.elements) {
+                    const t = el.kind === SyntaxKind.SpreadElement
+                        ? thrownTypeOfExpression((el as SpreadElement).expression)
+                        : thrownTypeOfExpression(el);
+                    if (t !== neverType) arrTypes.push(t);
+                }
+                if (arrTypes.length === 0) return neverType;
+                if (arrTypes.length === 1) return arrTypes[0];
+                return getUnionType(arrTypes);
+            }
+            default:
+                return neverType;
+        }
+    }
+
+    /**
+     * Returns the thrown type contributed by a single statement (throw expressions, rethrows, try/catch/finally, branches).
+     * Used as a building block for inferred thrown type (Einf). Reachability: we over-approximate by unioning all branches.
+     * Try/catch/finally effect typing: catch variable = Throws(A) only; await adds Rejects at await point; .catch handles rejects only.
+     * Outward Throws: with catch returns TB ∪ TC (TA absorbed); without catch returns TA ∪ TC.
+     */
+    function thrownTypeOfStatement(stmt: Statement): Type {
+        switch (stmt.kind) {
+            case SyntaxKind.ThrowStatement: {
+                const throwStmt = stmt as ThrowStatement;
+                if (throwStmt.expression) {
+                    return getTypeOfNode(throwStmt.expression);
+                }
+                const catchClause = findAncestor(throwStmt, isCatchClause);
+                if (catchClause) {
+                    return thrownTypeOfStatement(catchClause.parent.tryBlock);
+                }
+                return unknownType;
+            }
+            case SyntaxKind.Block: {
+                const block = stmt as Block;
+                const types: Type[] = [];
+                for (const s of block.statements) {
+                    const t = thrownTypeOfStatement(s);
+                    if (t !== neverType) types.push(t);
+                }
+                return types.length === 0 ? neverType : types.length === 1 ? types[0] : getUnionType(types);
+            }
+            case SyntaxKind.TryStatement: {
+                const tryStmt = stmt as TryStatement;
+                const tTry = thrownTypeOfStatement(tryStmt.tryBlock);
+                const tCatch = tryStmt.catchClause ? thrownTypeOfStatement(tryStmt.catchClause.block) : neverType;
+                const tFinally = tryStmt.finallyBlock ? thrownTypeOfStatement(tryStmt.finallyBlock) : neverType;
+                if (tryStmt.catchClause) {
+                    const types = [tCatch, tFinally].filter(t => t !== neverType);
+                    return types.length === 0 ? neverType : types.length === 1 ? types[0] : getUnionType(types);
+                }
+                const types = [tTry, tFinally].filter(t => t !== neverType);
+                return types.length === 0 ? neverType : types.length === 1 ? types[0] : getUnionType(types);
+            }
+            case SyntaxKind.IfStatement: {
+                const ifStmt = stmt as IfStatement;
+                const tThen = thrownTypeOfStatement(ifStmt.thenStatement);
+                const tElse = ifStmt.elseStatement ? thrownTypeOfStatement(ifStmt.elseStatement) : neverType;
+                const types = [tThen, tElse].filter(t => t !== neverType);
+                return types.length === 0 ? neverType : types.length === 1 ? types[0] : getUnionType(types);
+            }
+            case SyntaxKind.ExpressionStatement: {
+                const expr = (stmt as ExpressionStatement).expression;
+                if (expr.kind === SyntaxKind.AwaitExpression) {
+                    const inner = (expr as AwaitExpression).expression;
+                    const reject = getRejectEffectOfExpression(inner);
+                    const syncThrows = thrownTypeOfExpression(inner);
+                    if (reject === neverType && syncThrows === neverType) return neverType;
+                    if (reject !== neverType && syncThrows !== neverType) return getUnionType([reject, syncThrows]);
+                    return reject !== neverType ? reject : syncThrows;
+                }
+                return thrownTypeOfExpression(expr);
+            }
+            case SyntaxKind.VariableStatement: {
+                const variableStmt = stmt as VariableStatement;
+                const types: Type[] = [];
+                for (const decl of variableStmt.declarationList.declarations) {
+                    if (decl.initializer) {
+                        const t = thrownTypeOfExpression(decl.initializer);
+                        if (t !== neverType) types.push(t);
+                        if (decl.initializer.kind === SyntaxKind.AwaitExpression) {
+                            const inner = (decl.initializer as AwaitExpression).expression;
+                            const reject = getRejectEffectOfExpression(inner);
+                            if (reject !== neverType) types.push(reject);
+                            const syncThrows = thrownTypeOfExpression(inner);
+                            if (syncThrows !== neverType) types.push(syncThrows);
+                        }
+                    }
+                }
+                return types.length === 0 ? neverType : types.length === 1 ? types[0] : getUnionType(types);
+            }
+            case SyntaxKind.ReturnStatement: {
+                const returnStmt = stmt as ReturnStatement;
+                const expr = returnStmt.expression;
+                if (expr?.kind === SyntaxKind.AwaitExpression) {
+                    const inner = (expr as AwaitExpression).expression;
+                    const reject = getRejectEffectOfExpression(inner);
+                    const syncThrows = thrownTypeOfExpression(inner);
+                    if (reject === neverType && syncThrows === neverType) return neverType;
+                    if (reject !== neverType && syncThrows !== neverType) return getUnionType([reject, syncThrows]);
+                    return reject !== neverType ? reject : syncThrows;
+                }
+                if (expr) return thrownTypeOfExpression(expr);
+                return neverType;
+            }
+            default:
+                return neverType;
+        }
+    }
+
+    function collectCallSitesFromStatement(stmt: Statement, out: (CallExpression | NewExpression)[]): void {
+        switch (stmt.kind) {
+            case SyntaxKind.ExpressionStatement: {
+                const expr = (stmt as ExpressionStatement).expression;
+                if (expr.kind === SyntaxKind.CallExpression || expr.kind === SyntaxKind.NewExpression) {
+                    out.push(expr as CallExpression | NewExpression);
+                }
+                return;
+            }
+            case SyntaxKind.Block:
+                for (const s of (stmt as Block).statements) {
+                    if (!isFunctionLike(s)) collectCallSitesFromStatement(s, out);
+                }
+                return;
+            case SyntaxKind.TryStatement: {
+                const tryStmt = stmt as TryStatement;
+                collectCallSitesFromStatement(tryStmt.tryBlock, out);
+                if (tryStmt.catchClause) collectCallSitesFromStatement(tryStmt.catchClause.block, out);
+                if (tryStmt.finallyBlock) collectCallSitesFromStatement(tryStmt.finallyBlock, out);
+                return;
+            }
+            case SyntaxKind.IfStatement: {
+                const ifStmt = stmt as IfStatement;
+                collectCallSitesFromStatement(ifStmt.thenStatement, out);
+                if (ifStmt.elseStatement) collectCallSitesFromStatement(ifStmt.elseStatement, out);
+                return;
+            }
+            default:
+                return;
+        }
+    }
+
+    function getCalleeDeclarationFromCall(node: CallExpression | NewExpression): FunctionLikeDeclaration | undefined {
+        const signature = getResolvedSignature(node, /*candidatesOutArray*/ undefined);
+        if (!signature || signature === resolvingSignature) return undefined;
+        const decl = signature.declaration;
+        if (!decl || !isFunctionLike(decl)) return undefined;
+        const funcDecl = decl as FunctionLikeDeclaration;
+        if (!getFunctionBodyForThrownType(funcDecl)) return undefined;
+        return funcDecl;
+    }
+
+    function getDeclaredThrowsType(signature: Signature): Type | undefined {
+        if (signature.target && signature.mapper) {
+            const base = getDeclaredThrowsType(signature.target);
+            return base ? instantiateType(base, signature.mapper) : undefined;
+        }
+        if (signature.declaredThrowsType !== undefined) return signature.declaredThrowsType;
+        const decl = signature.declaration;
+        const declBase = decl as SignatureDeclaration & { throwsType?: TypeNode; };
+        if (decl && declBase.throwsType) {
+            const t = getTypeFromTypeNode(declBase.throwsType);
+            signature.declaredThrowsType = t;
+            return t;
+        }
+        return undefined;
+    }
+
+    function getDeclaredRejectsType(signature: Signature): Type | undefined {
+        if (signature.target && signature.mapper) {
+            const base = getDeclaredRejectsType(signature.target);
+            return base ? instantiateType(base, signature.mapper) : undefined;
+        }
+        if (signature.declaredRejectsType !== undefined) return signature.declaredRejectsType;
+        const decl = signature.declaration;
+        const declBase = decl as SignatureDeclaration & { rejectsType?: TypeNode; };
+        if (decl && declBase.rejectsType) {
+            const t = getTypeFromTypeNode(declBase.rejectsType);
+            signature.declaredRejectsType = t;
+            return t;
+        }
+        return undefined;
+    }
+
+    function getEffectiveThrows(signature: Signature): Type {
+        const decl = signature.declaration;
+        if (decl && isFunctionLike(decl) && (getFunctionFlags(decl) & FunctionFlags.Async) !== 0) {
+            return neverType;
+        }
+        const declared = getDeclaredThrowsType(signature);
+        if (declared !== undefined) return declared;
+        if (!decl || !isFunctionLike(decl)) return neverType;
+        const funcDecl = decl as FunctionLikeDeclaration;
+        if (getFunctionBodyForThrownType(funcDecl)) {
+            return thrownTypeOfFunctionLike(funcDecl);
+        }
+
+        return neverType;
+    }
+
+    function getEffectiveRejects(signature: Signature): Type {
+        const declared = getDeclaredRejectsType(signature);
+        if (declared !== undefined) return declared;
+        const decl = signature.declaration;
+        if (!decl || !isFunctionLike(decl)) return neverType;
+        const funcDecl = decl as FunctionLikeDeclaration;
+        const body = getFunctionBodyForThrownType(funcDecl);
+        if (!body) return neverType;
+        
+        if ((getFunctionFlags(funcDecl) & FunctionFlags.Async) !== 0) {
+            return getRejectEffectOfAsyncFunction(funcDecl);
+        }
+        return getRejectEffectOfNonAsyncReturningPromise(funcDecl);
+    }
+
+    function getInferredThrowsType(signature: Signature): Type {
+        if (getDeclaredThrowsType(signature) !== undefined) return neverType;
+        return getEffectiveThrows(signature);
+    }
+
+    function getInferredRejectsType(signature: Signature): Type {
+        if (getDeclaredRejectsType(signature) !== undefined) return neverType;
+        return getEffectiveRejects(signature);
+    }
+
+    function getRejectEffectOfAsyncFunction(decl: FunctionLikeDeclaration): Type {
+        if (!checkedErrors || !rejectEffectAsyncCache) return neverType;
+        const cached = rejectEffectAsyncCache.get(decl);
+        if (cached?.kind === "done") return cached.type;
+        if (cached?.kind === "computing") return unknownType;
+        const body = getFunctionBodyForThrownType(decl);
+        if (!body) {
+            rejectEffectAsyncCache.set(decl, { kind: "done", type: neverType });
+            return neverType;
+        }
+        rejectEffectAsyncCache.set(decl, { kind: "computing" });
+        const types: Type[] = [];
+        const bodyThrown = thrownTypeOfStatement(body);
+        if (bodyThrown !== neverType) types.push(bodyThrown);
+        forEachReturnStatement(body, returnStmt => {
+            if (returnStmt.expression) {
+                const e = getRejectEffectOfExpression(returnStmt.expression);
+                if (e !== neverType && e !== unknownType) types.push(e);
+                else if (e === unknownType) types.push(unknownType);
+            }
+        });
+        const result = types.length === 0 ? neverType : types.some(t => t === unknownType) ? unknownType : types.length === 1 ? types[0] : getUnionType(types);
+        rejectEffectAsyncCache.set(decl, { kind: "done", type: result });
+        return result;
+    }
+
+    function getRejectEffectOfNonAsyncReturningPromise(decl: FunctionLikeDeclaration): Type {
+        const body = getFunctionBodyForThrownType(decl);
+        if (!body) return neverType;
+        const types: Type[] = [];
+        forEachReturnStatement(body, returnStmt => {
+            if (returnStmt.expression) {
+                const e = getRejectEffectOfExpression(returnStmt.expression);
+                if (e !== neverType) types.push(e);
+            }
+        });
+        return types.length === 0 ? neverType : types.length === 1 ? types[0] : getUnionType(types);
+    }
+
+    function getRejectEffectOfExpression(expr: Expression): Type {
+        if (!checkedErrors || !rejectEffectCache) return neverType;
+        expr = skipParentheses(expr);
+        if (expr.kind === SyntaxKind.AwaitExpression) {
+            return getRejectEffectOfExpression((expr as AwaitExpression).expression);
+        }
+        if (expr.kind !== SyntaxKind.CallExpression && expr.kind !== SyntaxKind.NewExpression) return neverType;
+        const cached = rejectEffectCache.get(expr);
+        if (cached !== undefined) return cached;
+        const call = expr as CallExpression;
+        const invoked = call.expression;
+        if (invoked.kind === SyntaxKind.PropertyAccessExpression) {
+            const pa = invoked as PropertyAccessExpression;
+            if (isIdentifier(pa.expression) && idText(pa.expression) === "Promise") {
+                const methodName = idText(pa.name);
+                if (methodName === "reject") {
+                    const reason = call.arguments?.[0];
+                    if (reason) {
+                        const effect = getTypeOfNode(reason);
+                        rejectEffectCache.set(expr, effect);
+                        return effect;
+                    }
+                }
+                if (methodName === "allSettled") {
+                    rejectEffectCache.set(expr, neverType);
+                    return neverType;
+                }
+                if (methodName === "all" || methodName === "race" || methodName === "any") {
+                    const firstArg = call.arguments?.[0];
+                    if (firstArg && firstArg.kind === SyntaxKind.ArrayLiteralExpression) {
+                        const arr = firstArg as ArrayLiteralExpression;
+                        const types: Type[] = [];
+                        for (const el of arr.elements) {
+                            if (!isSpreadElement(el)) {
+                                const e = getRejectEffectOfExpression(el);
+                                if (e !== neverType) types.push(e);
+                            }
+                        }
+                        const effect = types.length === 0 ? neverType : types.some(t => t === unknownType) ? unknownType : types.length === 1 ? types[0] : getUnionType(types);
+                        rejectEffectCache.set(expr, effect);
+                        return effect;
+                    }
+                    rejectEffectCache.set(expr, unknownType);
+                    return unknownType;
+                }
+            }
+        }
+        const signature = getResolvedSignature(call, /*candidatesOutArray*/ undefined);
+        if (!signature || signature === resolvingSignature) {
+            rejectEffectCache.set(expr, neverType);
+            return neverType;
+        }
+        const decl = signature.declaration;
+        if (!decl || !isFunctionLike(decl)) {
+            rejectEffectCache.set(expr, neverType);
+            return neverType;
+        }
+        const effect = getEffectiveRejects(signature);
+        rejectEffectCache.set(expr, effect);
+        return effect;
+    }
+
+    /**
+     * Inferred thrown type (Einf): the union of all reachable throw expressions, effective thrown types of reachable
+     * call expressions, rethrows (try-block thrown type), and finally contributions. For async functions the same
+     * idea yields the inferred rejection type. Reachability: currently we over-approximate by unioning all branches
+     * (no control-flow reachability). Returns unknownType when re-entered during recursion (validation then fails).
+     */
+    function thrownTypeOfFunctionLike(node: FunctionLikeDeclaration): Type {
+        if (!checkedErrors || !thrownTypeCache) return neverType;
+        const cached = thrownTypeCache.get(node);
+        if (cached?.kind === "done") return cached.type;
+        if (cached?.kind === "computing") return unknownType;
+        const body = getFunctionBodyForThrownType(node);
+        if (!body) {
+            thrownTypeCache.set(node, { kind: "done", type: neverType });
+            return neverType;
+        }
+        thrownTypeCache.set(node, { kind: "computing" });
+        const types: Type[] = [];
+        const direct = thrownTypeOfStatement(body);
+        if (direct !== neverType) types.push(direct);
+        const callSites: (CallExpression | NewExpression)[] = [];
+        for (const stmt of body.statements) {
+            if (!isFunctionLike(stmt)) collectCallSitesFromStatement(stmt, callSites);
+        }
+        for (const call of callSites) {
+            if (isHandledByTry(call)) continue;
+            const signature = getResolvedSignature(call, /*candidatesOutArray*/ undefined);
+            if (signature && signature !== resolvingSignature) {
+                const returnType = getReturnTypeOfSignature(signature);
+                const isAssertNeverLike = returnType === neverType
+                    && call.arguments?.length
+                    && getTypeOfNode(call.arguments[0]) === neverType;
+                if (isAssertNeverLike) continue;
+            }
+            const calleeDecl = getCalleeDeclarationFromCall(call);
+            if (calleeDecl) {
+                const calleeThrown = thrownTypeOfFunctionLike(calleeDecl);
+                if (calleeThrown !== neverType && calleeThrown !== unknownType) types.push(calleeThrown);
+                else if (calleeThrown === unknownType) types.push(unknownType);
+            }
+        }
+        const result = types.length === 0 ? neverType : types.some(t => t === unknownType) ? unknownType : types.length === 1 ? types[0] : getUnionType(types);
+        thrownTypeCache.set(node, { kind: "done", type: result });
+        return result;
+    }
+
+    function isHandledByTry(node: Node): boolean {
+        const func = getContainingFunction(node);
+        let current: Node | undefined = node;
+        while (current && current !== func) {
+            if (current.kind === SyntaxKind.TryStatement) {
+                const tryStmt = current as TryStatement;
+                if (tryStmt.catchClause) {
+                    let n: Node | undefined = node;
+                    while (n && n !== tryStmt) {
+                        if (n === tryStmt.tryBlock) return true;
+                        n = n.parent;
+                    }
+                }
+            }
+            if (isFunctionLike(current)) return false;
+            current = current.parent;
+        }
+        return false;
+    }
+
+    function isHandledByPropagation(node: Node): boolean {
+        const func = getContainingFunction(node);
+        if (func === undefined || !isFunctionLike(func)) return false;
+        return thrownTypeOfFunctionLike(func as FunctionLikeDeclaration) !== neverType;
+    }
+
     function checkThrowStatement(node: ThrowStatement) {
         // Grammar checking
         if (!checkGrammarStatementInAmbientContext(node)) {
@@ -46701,6 +47363,11 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
             // Grammar checking
             if (catchClause.variableDeclaration) {
                 const declaration = catchClause.variableDeclaration;
+                if (checkedErrors && catchVariableThrownTypeMap && !getEffectiveTypeAnnotationNode(declaration)) {
+                    // Try/catch/finally effect typing: catch variable = Throws(A) only; await adds Rejects at await point; .catch handles rejects only.
+                    const tTry = thrownTypeOfStatement(node.tryBlock);
+                    catchVariableThrownTypeMap.set(getCatchVariableMapKey(declaration), tTry);
+                }
                 checkVariableLikeDeclaration(declaration);
                 const typeNode = getEffectiveTypeAnnotationNode(declaration);
                 if (typeNode) {
@@ -48268,7 +48935,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
             case SyntaxKind.ImportEqualsDeclaration:
                 // import a = e.x; in module augmentation is ok, but not import a = require('fs)
                 if (isInternalModuleImportEqualsDeclaration(node)) break;
-                // falls through
+            // falls through
             case SyntaxKind.ImportDeclaration:
                 grammarErrorOnFirstToken(node, Diagnostics.Imports_are_not_permitted_in_module_augmentations_Consider_moving_them_to_the_enclosing_external_module);
                 break;
@@ -48282,7 +48949,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                     }
                     break;
                 }
-                // falls through
+            // falls through
             case SyntaxKind.ClassDeclaration:
             case SyntaxKind.EnumDeclaration:
             case SyntaxKind.FunctionDeclaration:
@@ -49163,7 +49830,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 return checkJSDocPropertyTag(node as JSDocPropertyTag);
             case SyntaxKind.JSDocFunctionType:
                 checkJSDocFunctionType(node as JSDocFunctionType);
-                // falls through
+            // falls through
             case SyntaxKind.JSDocNonNullableType:
             case SyntaxKind.JSDocNullableType:
             case SyntaxKind.JSDocAllType:
@@ -49772,7 +50439,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 switch (location.kind) {
                     case SyntaxKind.SourceFile:
                         if (!isExternalModule(location as SourceFile)) break;
-                        // falls through
+                    // falls through
                     case SyntaxKind.ModuleDeclaration:
                         copyLocallyVisibleExportSymbols(getSymbolOfDeclaration(location as ModuleDeclaration | SourceFile).exports!, meaning & SymbolFlags.ModuleMember);
                         break;
@@ -49937,7 +50604,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 if (isPropertyAccessExpression(entityName.parent) && getLeftmostAccessExpression(entityName.parent) === entityName) {
                     return undefined;
                 }
-                // falls through
+            // falls through
             case AssignmentDeclarationKind.ThisProperty:
             case AssignmentDeclarationKind.ModuleExports:
                 return getSymbolOfDeclaration(entityName.parent.parent as BinaryExpression);
@@ -50236,7 +50903,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 if (!isThisInTypeQuery(node)) {
                     return getSymbolOfNameOrPropertyAccessExpression(node as EntityName | PrivateIdentifier | PropertyAccessExpression);
                 }
-                // falls through
+            // falls through
 
             case SyntaxKind.ThisKeyword:
                 const container = getThisContainer(node, /*includeArrowFunctions*/ false, /*includeClassComputedPropertyName*/ false);
@@ -50249,7 +50916,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 if (isInExpressionContext(node)) {
                     return checkExpression(node as Expression).symbol;
                 }
-                // falls through
+            // falls through
 
             case SyntaxKind.ThisType:
                 return getTypeFromThisTypeNode(node as ThisExpression | ThisTypeNode).symbol;
@@ -50283,7 +50950,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 if (isCallExpression(parent) && isBindableObjectDefinePropertyCall(parent) && parent.arguments[1] === node) {
                     return getSymbolOfDeclaration(parent);
                 }
-                // falls through
+            // falls through
 
             case SyntaxKind.NumericLiteral:
                 // index access
@@ -50309,7 +50976,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 if (isMetaProperty(node.parent) && node.parent.name.escapedText === "defer") {
                     return undefined;
                 }
-                // falls through
+            // falls through
             case SyntaxKind.NewKeyword:
                 return isMetaProperty(node.parent) ? checkMetaPropertyKeyword(node.parent).symbol : undefined;
             case SyntaxKind.InstanceOfKeyword:
@@ -50326,7 +50993,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                     const symbol = getIntrinsicTagSymbol(node.parent as JsxOpeningLikeElement);
                     return symbol === unknownSymbol ? undefined : symbol;
                 }
-                // falls through
+            // falls through
 
             default:
                 return undefined;
@@ -52758,7 +53425,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                                     );
                                     break;
                                 }
-                                // fallthrough
+                            // fallthrough
                             case ModuleKind.ES2022:
                             case ModuleKind.ESNext:
                             case ModuleKind.Preserve:
@@ -52766,7 +53433,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                                 if (languageVersion >= ScriptTarget.ES2017) {
                                     break;
                                 }
-                                // fallthrough
+                            // fallthrough
                             default:
                                 diagnostics.add(
                                     createDiagnosticForNode(forInOrOfStatement.awaitModifier, Diagnostics.Top_level_for_await_loops_are_only_allowed_when_the_module_option_is_set_to_es2022_esnext_system_node16_node18_node20_nodenext_or_preserve_and_the_target_option_is_set_to_es2017_or_higher),

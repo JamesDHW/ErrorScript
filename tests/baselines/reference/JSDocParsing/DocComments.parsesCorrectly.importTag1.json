@@ -26,7 +26,7 @@
                 "modifierFlagsCache": 0,
                 "transformFlags": 1,
                 "isTypeOnly": true,
-                "phaseModifier": 156,
+                "phaseModifier": 158,
                 "name": {
                     "kind": "Identifier",
                     "pos": 16,

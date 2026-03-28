@@ -1,0 +1,46 @@
+//// [tests/cases/compiler/checkedErrors/combinators/allSettled_no_handling.ts] ////
+
+=== allSettled_no_handling.ts ===
+async function a() {
+>a : () => Promise<void>
+>  : ^^^^^^^^^^^^^^^^^^^
+
+    throw "a";
+>"a" : "a"
+>    : ^^^
+}
+async function b() {
+>b : () => Promise<void>
+>  : ^^^^^^^^^^^^^^^^^^^
+
+    throw 123;
+>123 : 123
+>    : ^^^
+}
+async function allSettledNoHandlingRequired() {
+>allSettledNoHandlingRequired : () => Promise<void>
+>                             : ^^^^^^^^^^^^^^^^^^^
+
+    await Promise.allSettled([a(), b()]);
+>await Promise.allSettled([a(), b()]) : [PromiseSettledResult<void>, PromiseSettledResult<void>]
+>                                     : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>Promise.allSettled([a(), b()]) : Promise<[PromiseSettledResult<void>, PromiseSettledResult<void>]>
+>                               : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>Promise.allSettled : { <T extends readonly unknown[] | []>(values: T): Promise<{ -readonly [P in keyof T]: PromiseSettledResult<Awaited<T[P]>>; }>; <T>(values: Iterable<T | PromiseLike<T>>): Promise<PromiseSettledResult<Awaited<T>>[]>; }
+>                   : ^^^ ^^^^^^^^^                       ^^      ^^ ^^^                                                                           ^^^ ^^      ^^                            ^^^                                           ^^^
+>Promise : PromiseConstructor
+>        : ^^^^^^^^^^^^^^^^^^
+>allSettled : { <T extends readonly unknown[] | []>(values: T): Promise<{ -readonly [P in keyof T]: PromiseSettledResult<Awaited<T[P]>>; }>; <T>(values: Iterable<T | PromiseLike<T>>): Promise<PromiseSettledResult<Awaited<T>>[]>; }
+>           : ^^^ ^^^^^^^^^                       ^^      ^^ ^^^                                                                           ^^^ ^^      ^^                            ^^^                                           ^^^
+>[a(), b()] : [Promise<void>, Promise<void>]
+>           : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>a() : Promise<void>
+>    : ^^^^^^^^^^^^^
+>a : () => Promise<void>
+>  : ^^^^^^^^^^^^^^^^^^^
+>b() : Promise<void>
+>    : ^^^^^^^^^^^^^
+>b : () => Promise<void>
+>  : ^^^^^^^^^^^^^^^^^^^
+}
+

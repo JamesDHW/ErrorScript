@@ -2293,6 +2293,8 @@ function getEntryForObjectLiteralMethodCompletion(
         method.typeParameters,
         method.parameters,
         method.type,
+        /*throwsType*/ undefined,
+        /*rejectsType*/ undefined,
     );
     const labelDetails = { detail: signaturePrinter.printNode(EmitHint.Unspecified, methodSignature, sourceFile) };
 
@@ -2375,6 +2377,8 @@ function createObjectLiteralMethod(
                 parameters,
                 /*type*/ undefined,
                 body,
+                /*throwsType*/ undefined,
+                /*rejectsType*/ undefined,
             );
         }
         default:

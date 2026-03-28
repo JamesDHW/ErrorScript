@@ -1,0 +1,14 @@
+catch_variable_excludes_rejects_without_await.ts(5,5): error TS18064: Unhandled promise rejection type: Error.
+
+
+==== catch_variable_excludes_rejects_without_await.ts (1 errors) ====
+    async function rejectingPromise() {
+        throw new Error("reject");
+    }
+    try {
+        rejectingPromise();
+        ~~~~~~~~~~~~~~~~~~
+!!! error TS18064: Unhandled promise rejection type: Error.
+    } catch (e) {
+    }
+    

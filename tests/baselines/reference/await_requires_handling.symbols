@@ -1,0 +1,16 @@
+//// [tests/cases/compiler/checkedErrors/rejects/await_requires_handling.ts] ////
+
+=== await_requires_handling.ts ===
+async function boom() {
+>boom : Symbol(boom, Decl(await_requires_handling.ts, 0, 0))
+
+    throw new Error("x");
+>Error : Symbol(Error, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2022.error.d.ts, --, --))
+}
+async function awaitRequiresHandling() {
+>awaitRequiresHandling : Symbol(awaitRequiresHandling, Decl(await_requires_handling.ts, 2, 1))
+
+    await boom();
+>boom : Symbol(boom, Decl(await_requires_handling.ts, 0, 0))
+}
+

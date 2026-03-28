@@ -21,7 +21,7 @@ describe("unittests:: FactoryAPI", () => {
             checkExpression(clazz);
             checkExpression(ts.factory.createPropertyAccessExpression(clazz, "prop"));
 
-            const func = ts.factory.createFunctionExpression(/*modifiers*/ undefined, /*asteriskToken*/ undefined, "fn", /*typeParameters*/ undefined, /*parameters*/ undefined, /*type*/ undefined, ts.factory.createBlock([]));
+            const func = ts.factory.createFunctionExpression(/*modifiers*/ undefined, /*asteriskToken*/ undefined, "fn", /*typeParameters*/ undefined, /*parameters*/ undefined, /*type*/ undefined, ts.factory.createBlock([]), /*throwsType*/ undefined, /*rejectsType*/ undefined);
             checkExpression(func);
             checkExpression(ts.factory.createCallExpression(func, /*typeArguments*/ undefined, /*argumentsArray*/ undefined));
             checkExpression(ts.factory.createTaggedTemplateExpression(func, /*typeArguments*/ undefined, ts.factory.createNoSubstitutionTemplateLiteral("")));
@@ -41,6 +41,8 @@ describe("unittests:: FactoryAPI", () => {
                     /*type*/ undefined,
                     /*equalsGreaterThanToken*/ undefined,
                     body,
+                    /*throwsType*/ undefined,
+                    /*rejectsType*/ undefined,
                 );
                 assertSyntaxKind(node.body, ts.SyntaxKind.ParenthesizedExpression);
             }
@@ -64,6 +66,8 @@ describe("unittests:: FactoryAPI", () => {
                 /*type*/ undefined,
                 /*equalsGreaterThanToken*/ undefined,
                 ts.factory.createBlock([]),
+                /*throwsType*/ undefined,
+                /*rejectsType*/ undefined,
             );
             function checkRhs(operator: ts.BinaryOperator, expectParens: boolean) {
                 const node = ts.factory.createBinaryExpression(lhs, operator, rhs);

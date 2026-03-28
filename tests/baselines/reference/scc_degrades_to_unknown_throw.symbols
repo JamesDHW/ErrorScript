@@ -1,0 +1,21 @@
+//// [tests/cases/compiler/checkedErrors/recursion/scc_degrades_to_unknown_throw.ts] ////
+
+=== scc_degrades_to_unknown_throw.ts ===
+function r1() {
+>r1 : Symbol(r1, Decl(scc_degrades_to_unknown_throw.ts, 0, 0))
+
+    r2();
+>r2 : Symbol(r2, Decl(scc_degrades_to_unknown_throw.ts, 2, 1))
+}
+function r2() {
+>r2 : Symbol(r2, Decl(scc_degrades_to_unknown_throw.ts, 2, 1))
+
+    r1();
+>r1 : Symbol(r1, Decl(scc_degrades_to_unknown_throw.ts, 0, 0))
+
+    throw new Error("x");
+>Error : Symbol(Error, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2022.error.d.ts, --, --))
+}
+r1();
+>r1 : Symbol(r1, Decl(scc_degrades_to_unknown_throw.ts, 0, 0))
+

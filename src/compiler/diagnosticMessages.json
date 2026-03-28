@@ -8355,6 +8355,14 @@
         "category": "Message",
         "code": 95197
     },
+    "Wrap in try/catch": {
+        "category": "Message",
+        "code": 95198
+    },
+    "Wrap all unhandled in try/catch": {
+        "category": "Message",
+        "code": 95199
+    },
 
     "No value exists in scope for the shorthand property '{0}'. Either declare one or provide an initializer.": {
         "category": "Error",
@@ -8551,5 +8559,45 @@
     "'{0}' is not a valid meta-property for keyword 'import'. Did you mean 'meta' or 'defer'?": {
         "category": "Error",
         "code": 18061
+    },
+    "Enforce that thrown types are handled at call sites (checked throws).": {
+        "category": "Message",
+        "code": 18062
+    },
+    "Unhandled thrown type: {0}.": {
+        "category": "Error",
+        "code": 18063
+    },
+    "Unhandled promise rejection type: {0}.": {
+        "category": "Error",
+        "code": 18064
+    },
+    "A signature cannot have both 'throws' and 'rejects' clauses.": {
+        "category": "Error",
+        "code": 18065
+    },
+    "Rejects clause requires a Promise-like return type.": {
+        "category": "Error",
+        "code": 18066
+    },
+    "Throws clause is not allowed on async functions.": {
+        "category": "Error",
+        "code": 18067
+    },
+    "Declared throws type '{0}' does not include inferred thrown type '{1}'.": {
+        "category": "Error",
+        "code": 18068
+    },
+    "Declared rejects type '{0}' does not include inferred rejection type '{1}'.": {
+        "category": "Error",
+        "code": 18069
+    },
+    "Inferred thrown type is unknown (possible recursion or analysis limit); declared type cannot be verified.": {
+        "category": "Error",
+        "code": 18070
+    },
+    "Inferred rejection type is unknown (possible recursion or analysis limit); declared type cannot be verified.": {
+        "category": "Error",
+        "code": 18071
     }
 }

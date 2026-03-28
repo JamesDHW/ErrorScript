@@ -1,0 +1,19 @@
+finally_contributes.ts(12,1): error TS18063: Unhandled thrown type: "finally".
+
+
+==== finally_contributes.ts (1 errors) ====
+    function boom() {
+        throw new Error("x");
+    }
+    function withFinally() {
+        try {
+            boom();
+        } catch (e) {
+        } finally {
+            throw "finally";
+        }
+    }
+    withFinally();
+    ~~~~~~~~~~~~~
+!!! error TS18063: Unhandled thrown type: "finally".
+    

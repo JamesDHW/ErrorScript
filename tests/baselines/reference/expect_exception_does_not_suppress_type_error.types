@@ -1,0 +1,31 @@
+//// [tests/cases/compiler/checkedErrors/suppress/expect_exception_does_not_suppress_type_error.ts] ////
+
+=== expect_exception_does_not_suppress_type_error.ts ===
+async function fail() {
+>fail : () => Promise<void>
+>     : ^^^^^^^^^^^^^^^^^^^
+
+    throw new Error("x");
+>new Error("x") : Error
+>               : ^^^^^
+>Error : ErrorConstructor
+>      : ^^^^^^^^^^^^^^^^
+>"x" : "x"
+>    : ^^^
+}
+async function ignoreThrowsDoesNotSuppressTypeError() {
+>ignoreThrowsDoesNotSuppressTypeError : () => Promise<void>
+>                                     : ^^^^^^^^^^^^^^^^^^^
+
+    // @ts-expect-exception
+    const x: number = await fail();
+>x : number
+>  : ^^^^^^
+>await fail() : void
+>             : ^^^^
+>fail() : Promise<void>
+>       : ^^^^^^^^^^^^^
+>fail : () => Promise<void>
+>     : ^^^^^^^^^^^^^^^^^^^
+}
+

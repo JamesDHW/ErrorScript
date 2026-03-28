@@ -1221,6 +1221,8 @@ export function createNodeFactory(flags: NodeFactoryFlags, baseFactory: BaseNode
         if (updated !== original) {
             // copy children used for quick info
             updated.typeArguments = original.typeArguments;
+            updated.throwsType = original.throwsType;
+            updated.rejectsType = original.rejectsType;
         }
         return update(updated, original);
     }
@@ -1817,6 +1819,8 @@ export function createNodeFactory(flags: NodeFactoryFlags, baseFactory: BaseNode
         typeParameters: readonly TypeParameterDeclaration[] | undefined,
         parameters: readonly ParameterDeclaration[],
         type: TypeNode | undefined,
+        throwsType: TypeNode | undefined,
+        rejectsType: TypeNode | undefined,
     ) {
         const node = createBaseDeclaration<MethodSignature>(SyntaxKind.MethodSignature);
         node.modifiers = asNodeArray(modifiers);
@@ -1825,6 +1829,8 @@ export function createNodeFactory(flags: NodeFactoryFlags, baseFactory: BaseNode
         node.typeParameters = asNodeArray(typeParameters);
         node.parameters = asNodeArray(parameters);
         node.type = type;
+        node.throwsType = throwsType;
+        node.rejectsType = rejectsType;
         node.transformFlags = TransformFlags.ContainsTypeScript;
 
         node.jsDoc = undefined; // initialized by parser (JsDocContainer)
@@ -1843,6 +1849,8 @@ export function createNodeFactory(flags: NodeFactoryFlags, baseFactory: BaseNode
         typeParameters: NodeArray<TypeParameterDeclaration> | undefined,
         parameters: NodeArray<ParameterDeclaration>,
         type: TypeNode | undefined,
+        throwsType: TypeNode | undefined,
+        rejectsType: TypeNode | undefined,
     ) {
         return node.modifiers !== modifiers
                 || node.name !== name
@@ -1850,7 +1858,9 @@ export function createNodeFactory(flags: NodeFactoryFlags, baseFactory: BaseNode
                 || node.typeParameters !== typeParameters
                 || node.parameters !== parameters
                 || node.type !== type
-            ? finishUpdateBaseSignatureDeclaration(createMethodSignature(modifiers, name, questionToken, typeParameters, parameters, type), node)
+                || node.throwsType !== throwsType
+                || node.rejectsType !== rejectsType
+            ? finishUpdateBaseSignatureDeclaration(createMethodSignature(modifiers, name, questionToken, typeParameters, parameters, type, throwsType, rejectsType), node)
             : node;
     }
 
@@ -1864,6 +1874,8 @@ export function createNodeFactory(flags: NodeFactoryFlags, baseFactory: BaseNode
         parameters: readonly ParameterDeclaration[],
         type: TypeNode | undefined,
         body: Block | undefined,
+        throwsType: TypeNode | undefined,
+        rejectsType: TypeNode | undefined,
     ) {
         const node = createBaseDeclaration<MethodDeclaration>(SyntaxKind.MethodDeclaration);
         node.modifiers = asNodeArray(modifiers);
@@ -1875,6 +1887,8 @@ export function createNodeFactory(flags: NodeFactoryFlags, baseFactory: BaseNode
         node.parameters = createNodeArray(parameters);
         node.type = type;
         node.body = body;
+        node.throwsType = throwsType;
+        node.rejectsType = rejectsType;
 
         if (!node.body) {
             node.transformFlags = TransformFlags.ContainsTypeScript;
@@ -1921,6 +1935,8 @@ export function createNodeFactory(flags: NodeFactoryFlags, baseFactory: BaseNode
         parameters: readonly ParameterDeclaration[],
         type: TypeNode | undefined,
         body: Block | undefined,
+        throwsType: TypeNode | undefined,
+        rejectsType: TypeNode | undefined,
     ) {
         return node.modifiers !== modifiers
                 || node.asteriskToken !== asteriskToken
@@ -1930,7 +1946,9 @@ export function createNodeFactory(flags: NodeFactoryFlags, baseFactory: BaseNode
                 || node.parameters !== parameters
                 || node.type !== type
                 || node.body !== body
-            ? finishUpdateMethodDeclaration(createMethodDeclaration(modifiers, asteriskToken, name, questionToken, typeParameters, parameters, type, body), node)
+                || node.throwsType !== throwsType
+                || node.rejectsType !== rejectsType
+            ? finishUpdateMethodDeclaration(createMethodDeclaration(modifiers, asteriskToken, name, questionToken, typeParameters, parameters, type, body, throwsType, rejectsType), node)
             : node;
     }
 
@@ -2038,6 +2056,8 @@ export function createNodeFactory(flags: NodeFactoryFlags, baseFactory: BaseNode
         parameters: readonly ParameterDeclaration[],
         type: TypeNode | undefined,
         body: Block | undefined,
+        throwsType: TypeNode | undefined,
+        rejectsType: TypeNode | undefined,
     ) {
         const node = createBaseDeclaration<GetAccessorDeclaration>(SyntaxKind.GetAccessor);
         node.modifiers = asNodeArray(modifiers);
@@ -2045,6 +2065,8 @@ export function createNodeFactory(flags: NodeFactoryFlags, baseFactory: BaseNode
         node.parameters = createNodeArray(parameters);
         node.type = type;
         node.body = body;
+        node.throwsType = throwsType;
+        node.rejectsType = rejectsType;
 
         if (!node.body) {
             node.transformFlags = TransformFlags.ContainsTypeScript;
@@ -2077,13 +2099,17 @@ export function createNodeFactory(flags: NodeFactoryFlags, baseFactory: BaseNode
         parameters: readonly ParameterDeclaration[],
         type: TypeNode | undefined,
         body: Block | undefined,
+        throwsType: TypeNode | undefined,
+        rejectsType: TypeNode | undefined,
     ) {
         return node.modifiers !== modifiers
                 || node.name !== name
                 || node.parameters !== parameters
                 || node.type !== type
                 || node.body !== body
-            ? finishUpdateGetAccessorDeclaration(createGetAccessorDeclaration(modifiers, name, parameters, type, body), node)
+                || node.throwsType !== throwsType
+                || node.rejectsType !== rejectsType
+            ? finishUpdateGetAccessorDeclaration(createGetAccessorDeclaration(modifiers, name, parameters, type, body, throwsType, rejectsType), node)
             : node;
     }
 
@@ -2161,11 +2187,15 @@ export function createNodeFactory(flags: NodeFactoryFlags, baseFactory: BaseNode
         typeParameters: readonly TypeParameterDeclaration[] | undefined,
         parameters: readonly ParameterDeclaration[],
         type: TypeNode | undefined,
+        throwsType: TypeNode | undefined,
+        rejectsType: TypeNode | undefined,
     ): CallSignatureDeclaration {
         const node = createBaseDeclaration<CallSignatureDeclaration>(SyntaxKind.CallSignature);
         node.typeParameters = asNodeArray(typeParameters);
         node.parameters = asNodeArray(parameters);
         node.type = type;
+        node.throwsType = throwsType;
+        node.rejectsType = rejectsType;
         node.transformFlags = TransformFlags.ContainsTypeScript;
 
         node.jsDoc = undefined; // initialized by parser (JsDocContainer)
@@ -2181,11 +2211,15 @@ export function createNodeFactory(flags: NodeFactoryFlags, baseFactory: BaseNode
         typeParameters: NodeArray<TypeParameterDeclaration> | undefined,
         parameters: NodeArray<ParameterDeclaration>,
         type: TypeNode | undefined,
+        throwsType: TypeNode | undefined,
+        rejectsType: TypeNode | undefined,
     ) {
         return node.typeParameters !== typeParameters
                 || node.parameters !== parameters
                 || node.type !== type
-            ? finishUpdateBaseSignatureDeclaration(createCallSignature(typeParameters, parameters, type), node)
+                || node.throwsType !== throwsType
+                || node.rejectsType !== rejectsType
+            ? finishUpdateBaseSignatureDeclaration(createCallSignature(typeParameters, parameters, type, throwsType, rejectsType), node)
             : node;
     }
 
@@ -2322,11 +2356,15 @@ export function createNodeFactory(flags: NodeFactoryFlags, baseFactory: BaseNode
         typeParameters: readonly TypeParameterDeclaration[] | undefined,
         parameters: readonly ParameterDeclaration[],
         type: TypeNode,
+        throwsType: TypeNode | undefined,
+        rejectsType: TypeNode | undefined,
     ): FunctionTypeNode {
         const node = createBaseDeclaration<FunctionTypeNode>(SyntaxKind.FunctionType);
         node.typeParameters = asNodeArray(typeParameters);
         node.parameters = asNodeArray(parameters);
         node.type = type;
+        node.throwsType = throwsType;
+        node.rejectsType = rejectsType;
         node.transformFlags = TransformFlags.ContainsTypeScript;
 
         node.modifiers = undefined; // initialized by parser for grammar errors
@@ -2343,11 +2381,15 @@ export function createNodeFactory(flags: NodeFactoryFlags, baseFactory: BaseNode
         typeParameters: NodeArray<TypeParameterDeclaration> | undefined,
         parameters: NodeArray<ParameterDeclaration>,
         type: TypeNode,
+        throwsType: TypeNode | undefined,
+        rejectsType: TypeNode | undefined,
     ) {
         return node.typeParameters !== typeParameters
                 || node.parameters !== parameters
                 || node.type !== type
-            ? finishUpdateFunctionTypeNode(createFunctionTypeNode(typeParameters, parameters, type), node)
+                || node.throwsType !== throwsType
+                || node.rejectsType !== rejectsType
+            ? finishUpdateFunctionTypeNode(createFunctionTypeNode(typeParameters, parameters, type, throwsType, rejectsType), node)
             : node;
     }
 
@@ -3182,6 +3224,8 @@ export function createNodeFactory(flags: NodeFactoryFlags, baseFactory: BaseNode
         parameters: readonly ParameterDeclaration[] | undefined,
         type: TypeNode | undefined,
         body: Block,
+        throwsType: TypeNode | undefined,
+        rejectsType: TypeNode | undefined,
     ) {
         const node = createBaseDeclaration<FunctionExpression>(SyntaxKind.FunctionExpression);
         node.modifiers = asNodeArray(modifiers);
@@ -3191,6 +3235,8 @@ export function createNodeFactory(flags: NodeFactoryFlags, baseFactory: BaseNode
         node.parameters = createNodeArray(parameters);
         node.type = type;
         node.body = body;
+        node.throwsType = throwsType;
+        node.rejectsType = rejectsType;
 
         const isAsync = modifiersToFlags(node.modifiers) & ModifierFlags.Async;
         const isGenerator = !!node.asteriskToken;
@@ -3230,6 +3276,8 @@ export function createNodeFactory(flags: NodeFactoryFlags, baseFactory: BaseNode
         parameters: readonly ParameterDeclaration[],
         type: TypeNode | undefined,
         body: Block,
+        throwsType: TypeNode | undefined,
+        rejectsType: TypeNode | undefined,
     ) {
         return node.name !== name
                 || node.modifiers !== modifiers
@@ -3238,7 +3286,9 @@ export function createNodeFactory(flags: NodeFactoryFlags, baseFactory: BaseNode
                 || node.parameters !== parameters
                 || node.type !== type
                 || node.body !== body
-            ? finishUpdateBaseSignatureDeclaration(createFunctionExpression(modifiers, asteriskToken, name, typeParameters, parameters, type, body), node)
+                || node.throwsType !== throwsType
+                || node.rejectsType !== rejectsType
+            ? finishUpdateBaseSignatureDeclaration(createFunctionExpression(modifiers, asteriskToken, name, typeParameters, parameters, type, body, throwsType, rejectsType), node)
             : node;
     }
 
@@ -3250,12 +3300,16 @@ export function createNodeFactory(flags: NodeFactoryFlags, baseFactory: BaseNode
         type: TypeNode | undefined,
         equalsGreaterThanToken: EqualsGreaterThanToken | undefined,
         body: ConciseBody,
+        throwsType: TypeNode | undefined,
+        rejectsType: TypeNode | undefined,
     ) {
         const node = createBaseDeclaration<ArrowFunction>(SyntaxKind.ArrowFunction);
         node.modifiers = asNodeArray(modifiers);
         node.typeParameters = asNodeArray(typeParameters);
         node.parameters = createNodeArray(parameters);
         node.type = type;
+        node.throwsType = throwsType;
+        node.rejectsType = rejectsType;
         node.equalsGreaterThanToken = equalsGreaterThanToken ?? createToken(SyntaxKind.EqualsGreaterThanToken);
         node.body = parenthesizerRules().parenthesizeConciseBodyOfArrowFunction(body);
 
@@ -3290,6 +3344,8 @@ export function createNodeFactory(flags: NodeFactoryFlags, baseFactory: BaseNode
         type: TypeNode | undefined,
         equalsGreaterThanToken: EqualsGreaterThanToken,
         body: ConciseBody,
+        throwsType: TypeNode | undefined,
+        rejectsType: TypeNode | undefined,
     ): ArrowFunction {
         return node.modifiers !== modifiers
                 || node.typeParameters !== typeParameters
@@ -3297,7 +3353,9 @@ export function createNodeFactory(flags: NodeFactoryFlags, baseFactory: BaseNode
                 || node.type !== type
                 || node.equalsGreaterThanToken !== equalsGreaterThanToken
                 || node.body !== body
-            ? finishUpdateBaseSignatureDeclaration(createArrowFunction(modifiers, typeParameters, parameters, type, equalsGreaterThanToken, body), node)
+                || node.throwsType !== throwsType
+                || node.rejectsType !== rejectsType
+            ? finishUpdateBaseSignatureDeclaration(createArrowFunction(modifiers, typeParameters, parameters, type, equalsGreaterThanToken, body, throwsType, rejectsType), node)
             : node;
     }
 
@@ -4305,6 +4363,8 @@ export function createNodeFactory(flags: NodeFactoryFlags, baseFactory: BaseNode
         parameters: readonly ParameterDeclaration[],
         type: TypeNode | undefined,
         body: Block | undefined,
+        throwsType: TypeNode | undefined,
+        rejectsType: TypeNode | undefined,
     ) {
         const node = createBaseDeclaration<FunctionDeclaration>(SyntaxKind.FunctionDeclaration);
         node.modifiers = asNodeArray(modifiers);
@@ -4314,6 +4374,8 @@ export function createNodeFactory(flags: NodeFactoryFlags, baseFactory: BaseNode
         node.parameters = createNodeArray(parameters);
         node.type = type;
         node.body = body;
+        node.throwsType = throwsType;
+        node.rejectsType = rejectsType;
 
         if (!node.body || modifiersToFlags(node.modifiers) & ModifierFlags.Ambient) {
             node.transformFlags = TransformFlags.ContainsTypeScript;
@@ -4357,6 +4419,8 @@ export function createNodeFactory(flags: NodeFactoryFlags, baseFactory: BaseNode
         parameters: readonly ParameterDeclaration[],
         type: TypeNode | undefined,
         body: Block | undefined,
+        throwsType: TypeNode | undefined,
+        rejectsType: TypeNode | undefined,
     ) {
         return node.modifiers !== modifiers
                 || node.asteriskToken !== asteriskToken
@@ -4365,7 +4429,9 @@ export function createNodeFactory(flags: NodeFactoryFlags, baseFactory: BaseNode
                 || node.parameters !== parameters
                 || node.type !== type
                 || node.body !== body
-            ? finishUpdateFunctionDeclaration(createFunctionDeclaration(modifiers, asteriskToken, name, typeParameters, parameters, type, body), node)
+                || node.throwsType !== throwsType
+                || node.rejectsType !== rejectsType
+            ? finishUpdateFunctionDeclaration(createFunctionDeclaration(modifiers, asteriskToken, name, typeParameters, parameters, type, body, throwsType, rejectsType), node)
             : node;
     }
 
@@ -6420,6 +6486,8 @@ export function createNodeFactory(flags: NodeFactoryFlags, baseFactory: BaseNode
                 /*parameters*/ param ? [param] : [],
                 /*type*/ undefined,
                 createBlock(statements, /*multiLine*/ true),
+                /*throwsType*/ undefined,
+                /*rejectsType*/ undefined,
             ),
             /*typeArguments*/ undefined,
             /*argumentsArray*/ paramValue ? [paramValue] : [],
@@ -6437,6 +6505,8 @@ export function createNodeFactory(flags: NodeFactoryFlags, baseFactory: BaseNode
                 /*type*/ undefined,
                 /*equalsGreaterThanToken*/ undefined,
                 createBlock(statements, /*multiLine*/ true),
+                /*throwsType*/ undefined,
+                /*rejectsType*/ undefined,
             ),
             /*typeArguments*/ undefined,
             /*argumentsArray*/ paramValue ? [paramValue] : [],
@@ -7077,17 +7147,17 @@ export function createNodeFactory(flags: NodeFactoryFlags, baseFactory: BaseNode
             isConstructorTypeNode(node) ? updateConstructorTypeNode1(node, modifierArray, node.typeParameters, node.parameters, node.type) :
             isPropertySignature(node) ? updatePropertySignature(node, modifierArray, node.name, node.questionToken, node.type) :
             isPropertyDeclaration(node) ? updatePropertyDeclaration(node, modifierArray, node.name, node.questionToken ?? node.exclamationToken, node.type, node.initializer) :
-            isMethodSignature(node) ? updateMethodSignature(node, modifierArray, node.name, node.questionToken, node.typeParameters, node.parameters, node.type) :
-            isMethodDeclaration(node) ? updateMethodDeclaration(node, modifierArray, node.asteriskToken, node.name, node.questionToken, node.typeParameters, node.parameters, node.type, node.body) :
+            isMethodSignature(node) ? updateMethodSignature(node, modifierArray, node.name, node.questionToken, node.typeParameters, node.parameters, node.type, node.throwsType, node.rejectsType) :
+            isMethodDeclaration(node) ? updateMethodDeclaration(node, modifierArray, node.asteriskToken, node.name, node.questionToken, node.typeParameters, node.parameters, node.type, node.body, node.throwsType, node.rejectsType) :
             isConstructorDeclaration(node) ? updateConstructorDeclaration(node, modifierArray, node.parameters, node.body) :
-            isGetAccessorDeclaration(node) ? updateGetAccessorDeclaration(node, modifierArray, node.name, node.parameters, node.type, node.body) :
+            isGetAccessorDeclaration(node) ? updateGetAccessorDeclaration(node, modifierArray, node.name, node.parameters, node.type, node.body, node.throwsType, node.rejectsType) :
             isSetAccessorDeclaration(node) ? updateSetAccessorDeclaration(node, modifierArray, node.name, node.parameters, node.body) :
             isIndexSignatureDeclaration(node) ? updateIndexSignature(node, modifierArray, node.parameters, node.type) :
-            isFunctionExpression(node) ? updateFunctionExpression(node, modifierArray, node.asteriskToken, node.name, node.typeParameters, node.parameters, node.type, node.body) :
-            isArrowFunction(node) ? updateArrowFunction(node, modifierArray, node.typeParameters, node.parameters, node.type, node.equalsGreaterThanToken, node.body) :
+            isFunctionExpression(node) ? updateFunctionExpression(node, modifierArray, node.asteriskToken, node.name, node.typeParameters, node.parameters, node.type, node.body, node.throwsType, node.rejectsType) :
+            isArrowFunction(node) ? updateArrowFunction(node, modifierArray, node.typeParameters, node.parameters, node.type, node.equalsGreaterThanToken, node.body, node.throwsType, node.rejectsType) :
             isClassExpression(node) ? updateClassExpression(node, modifierArray, node.name, node.typeParameters, node.heritageClauses, node.members) :
             isVariableStatement(node) ? updateVariableStatement(node, modifierArray, node.declarationList) :
-            isFunctionDeclaration(node) ? updateFunctionDeclaration(node, modifierArray, node.asteriskToken, node.name, node.typeParameters, node.parameters, node.type, node.body) :
+            isFunctionDeclaration(node) ? updateFunctionDeclaration(node, modifierArray, node.asteriskToken, node.name, node.typeParameters, node.parameters, node.type, node.body, node.throwsType, node.rejectsType) :
             isClassDeclaration(node) ? updateClassDeclaration(node, modifierArray, node.name, node.typeParameters, node.heritageClauses, node.members) :
             isInterfaceDeclaration(node) ? updateInterfaceDeclaration(node, modifierArray, node.name, node.typeParameters, node.heritageClauses, node.members) :
             isTypeAliasDeclaration(node) ? updateTypeAliasDeclaration(node, modifierArray, node.name, node.typeParameters, node.type) :
@@ -7104,8 +7174,8 @@ export function createNodeFactory(flags: NodeFactoryFlags, baseFactory: BaseNode
     function replaceDecoratorsAndModifiers(node: HasModifiers & HasDecorators, modifierArray: readonly ModifierLike[]) {
         return isParameter(node) ? updateParameterDeclaration(node, modifierArray, node.dotDotDotToken, node.name, node.questionToken, node.type, node.initializer) :
             isPropertyDeclaration(node) ? updatePropertyDeclaration(node, modifierArray, node.name, node.questionToken ?? node.exclamationToken, node.type, node.initializer) :
-            isMethodDeclaration(node) ? updateMethodDeclaration(node, modifierArray, node.asteriskToken, node.name, node.questionToken, node.typeParameters, node.parameters, node.type, node.body) :
-            isGetAccessorDeclaration(node) ? updateGetAccessorDeclaration(node, modifierArray, node.name, node.parameters, node.type, node.body) :
+            isMethodDeclaration(node) ? updateMethodDeclaration(node, modifierArray, node.asteriskToken, node.name, node.questionToken, node.typeParameters, node.parameters, node.type, node.body, node.throwsType, node.rejectsType) :
+            isGetAccessorDeclaration(node) ? updateGetAccessorDeclaration(node, modifierArray, node.name, node.parameters, node.type, node.body, node.throwsType, node.rejectsType) :
             isSetAccessorDeclaration(node) ? updateSetAccessorDeclaration(node, modifierArray, node.name, node.parameters, node.body) :
             isClassExpression(node) ? updateClassExpression(node, modifierArray, node.name, node.typeParameters, node.heritageClauses, node.members) :
             isClassDeclaration(node) ? updateClassDeclaration(node, modifierArray, node.name, node.typeParameters, node.heritageClauses, node.members) :
@@ -7116,13 +7186,13 @@ export function createNodeFactory(flags: NodeFactoryFlags, baseFactory: BaseNode
     function replacePropertyName(node: AccessorDeclaration | MethodDeclaration | MethodSignature | PropertyDeclaration | PropertySignature | PropertyAssignment, name: PropertyName) {
         switch (node.kind) {
             case SyntaxKind.GetAccessor:
-                return updateGetAccessorDeclaration(node, node.modifiers, name, node.parameters, node.type, node.body);
+                return updateGetAccessorDeclaration(node, node.modifiers, name, node.parameters, node.type, node.body, node.throwsType, node.rejectsType);
             case SyntaxKind.SetAccessor:
                 return updateSetAccessorDeclaration(node, node.modifiers, name, node.parameters, node.body);
             case SyntaxKind.MethodDeclaration:
-                return updateMethodDeclaration(node, node.modifiers, node.asteriskToken, name, node.questionToken, node.typeParameters, node.parameters, node.type, node.body);
+                return updateMethodDeclaration(node, node.modifiers, node.asteriskToken, name, node.questionToken, node.typeParameters, node.parameters, node.type, node.body, node.throwsType, node.rejectsType);
             case SyntaxKind.MethodSignature:
-                return updateMethodSignature(node, node.modifiers, name, node.questionToken, node.typeParameters, node.parameters, node.type);
+                return updateMethodSignature(node, node.modifiers, name, node.questionToken, node.typeParameters, node.parameters, node.type, node.throwsType, node.rejectsType);
             case SyntaxKind.PropertyDeclaration:
                 return updatePropertyDeclaration(node, node.modifiers, name, node.questionToken ?? node.exclamationToken, node.type, node.initializer);
             case SyntaxKind.PropertySignature:
